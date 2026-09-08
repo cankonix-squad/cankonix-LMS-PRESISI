@@ -1,0 +1,8 @@
+.DS_Store
+**/.DS_Store
+
+# Local development artifacts
+.env
+.env.*
+node_modules/
+*.log

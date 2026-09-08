@@ -1,0 +1,13 @@
+[
+  {
+    "id": "spn-jabar",
+    "name": "SPN Polda Jawa Barat",
+    "region": "Jawa Barat",
+    "lat": -6.918,
+    "lng": 107.508,
+    "programs": 8,
+    "participants": 720,
+    "instructors": 76,
+    "status": "Aktif"
+  }
+]

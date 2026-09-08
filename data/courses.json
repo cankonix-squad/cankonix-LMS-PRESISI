@@ -1,0 +1,34 @@
+[
+  {
+    "id": "leadership-strategy",
+    "name": "Leadership Strategy",
+    "instructor": "Kombes Pol. Arif Pratama",
+    "progress": 72,
+    "next": "30 Agu 2026, 08:00",
+    "program": "SPPK Angkatan 2026"
+  },
+  {
+    "id": "strategic-management",
+    "name": "Strategic Management",
+    "instructor": "Kombes Pol. R. Mahendra",
+    "progress": 61,
+    "next": "30 Agu 2026, 10:30",
+    "program": "SPPK Angkatan 2026"
+  },
+  {
+    "id": "investigation-technique",
+    "name": "Investigation Technique",
+    "instructor": "AKBP D. Santoso",
+    "progress": 48,
+    "next": "31 Agu 2026, 09:00",
+    "program": "Dikbangspes Reskrim"
+  },
+  {
+    "id": "public-order",
+    "name": "Public Order Management",
+    "instructor": "Kombes Pol. F. Hidayat",
+    "progress": 83,
+    "next": "1 Sep 2026, 13:00",
+    "program": "SPPK Angkatan 2026"
+  }
+]

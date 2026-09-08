@@ -1,0 +1,22 @@
+[
+  {
+    "id": "diktuk-bintara-jabar",
+    "name": "Diktuk Bintara Polri",
+    "institution": "SPN Polda Jawa Barat",
+    "participants": 720,
+    "classes": 18,
+    "period": "Jul–Dec 2026",
+    "progress": 51,
+    "status": "Berjalan"
+  },
+  {
+    "id": "dikbangspes-fungsi-teknis",
+    "name": "Dikbangspes Fungsi Teknis",
+    "institution": "SPN Polda Jawa Barat",
+    "participants": 160,
+    "classes": 4,
+    "period": "Aug–Nov 2026",
+    "progress": 68,
+    "status": "Berjalan"
+  }
+]
