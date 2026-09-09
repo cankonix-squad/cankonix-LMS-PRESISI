@@ -47,6 +47,7 @@ const app = fs.readFileSync(path.join(root, "assets/js/app.js"), "utf8");
 const auth = fs.readFileSync(path.join(root, "assets/js/auth-launcher.js"), "utf8");
 check(css.includes(":focus-visible"), "focus-visible global tidak tersedia");
 check(css.includes("prefers-reduced-motion:reduce"), "reduced motion tidak didukung");
+check(css.includes(".modal-layer{position:fixed;inset:0;z-index:2000") && css.includes(".toast{position:fixed;right:24px;bottom:24px;z-index:2100"), "modal dan toast belum berada di atas layer peta");
 check(app.includes('aria-label="Navigasi utama"'), "sidebar belum memakai landmark navigasi berlabel");
 check(app.includes("requireDemoSession()"), "session guard halaman terlindungi tidak tersedia");
 check(app.includes('aria-haspopup="dialog"') && app.includes("openProfileSettings"), "thumbnail pengguna belum membuka dialog pengaturan profil");
