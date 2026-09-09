@@ -1,0 +1,22 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cankonix-lms-presisi
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=cankonix-proxy"
+      - "traefik.http.routers.lms-presisi.rule=Host(`new.digitallearningcenter.id`)"
+      - "traefik.http.routers.lms-presisi.entrypoints=websecure"
+      - "traefik.http.routers.lms-presisi.tls=true"
+      - "traefik.http.routers.lms-presisi.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-presisi.loadbalancer.server.port=80"
+
+networks:
+  proxy:
+    name: cankonix-proxy
+    external: true
