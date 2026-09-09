@@ -54,6 +54,9 @@ check(app.includes('id="mobileMenuToggle"') && app.includes('aria-controls="side
 check(app.includes('event.key === "Escape"'), "menu mobile tidak dapat ditutup dengan Escape");
 check(app.includes('sidebar?.querySelector(".nav-item")?.focus()'), "fokus tidak dipindahkan ke menu saat dibuka");
 check(app.includes('window.matchMedia?.("(max-width: 860px)")') && app.includes('sidebar?.removeAttribute("aria-hidden")'), "state aksesibilitas sidebar tidak mengikuti perubahan viewport");
+check(css.includes("body.sidebar-collapsed .sidebar{transform:translateX(-105%)") && css.includes("body.sidebar-collapsed .main{margin-left:0;width:100%}"), "sidebar desktop belum mendukung mode hide dan perluasan konten");
+check(app.includes('sidebarPreferenceKey = "presisiSidebarCollapsed"') && app.includes("localStorage.setItem(sidebarPreferenceKey"), "preferensi sidebar desktop belum disimpan");
+check(app.includes('aria-label", collapsed ? "Tampilkan menu navigasi" : "Sembunyikan menu navigasi"'), "status tombol sidebar desktop belum aksesibel");
 
 console.log(JSON.stringify({
   result: failures.length ? "FAIL" : "PASS",

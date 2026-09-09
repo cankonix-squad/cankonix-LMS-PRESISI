@@ -175,33 +175,51 @@ function renderHeader(title, breadcrumb = "") {
   const current = getWorkspace();
   const options = accessibleWorkspaces(role).map(item => `<option value="${item.id}" ${item.id === current.id ? "selected" : ""}>${item.code}</option>`).join("");
   const date = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "long", year: "numeric" }).format(new Date());
-  h.innerHTML = `<button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Buka menu navigasi" aria-controls="sidebar" aria-expanded="false">☰</button><div class="topbar-heading"><div class="breadcrumb">${breadcrumb || APP_NAME}</div><div class="page-title">${title}</div></div><div class="userbox">
+  h.innerHTML = `<button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Sembunyikan menu navigasi" aria-controls="sidebar" aria-expanded="true" title="Sembunyikan sidebar"><svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button><div class="topbar-heading"><div class="breadcrumb">${breadcrumb || APP_NAME}</div><div class="page-title">${title}</div></div><div class="userbox">
     <select class="control workspace-switch" id="workspaceSwitch" aria-label="Pilih workspace">${options}</select><a class="launcher-link" href="${resolveHref("launcher.html")}">Launcher</a>
     <div class="header-date"><b>${date}</b><span>${roleLabels[role]}</span></div><button class="avatar" id="profileMenu" title="Keluar" aria-label="Keluar dari prototype">${role.substring(0, 2).toUpperCase()}</button></div>`;
   const menuToggle = document.querySelector("#mobileMenuToggle");
   const sidebar = document.querySelector("#sidebar");
+  const sidebarPreferenceKey = "presisiSidebarCollapsed";
   const setMobileMenu = open => {
     document.body.classList.toggle("sidebar-open", open);
     menuToggle?.setAttribute("aria-expanded", String(open));
     menuToggle?.setAttribute("aria-label", open ? "Tutup menu navigasi" : "Buka menu navigasi");
+    menuToggle?.setAttribute("title", open ? "Tutup sidebar" : "Buka sidebar");
     sidebar?.setAttribute("aria-hidden", String(!open));
     if (open) sidebar?.querySelector(".nav-item")?.focus();
   };
   const mobileViewport = window.matchMedia?.("(max-width: 860px)");
+  const setDesktopSidebar = (collapsed, persist = true) => {
+    document.body.classList.toggle("sidebar-collapsed", collapsed);
+    menuToggle?.setAttribute("aria-expanded", String(!collapsed));
+    menuToggle?.setAttribute("aria-label", collapsed ? "Tampilkan menu navigasi" : "Sembunyikan menu navigasi");
+    menuToggle?.setAttribute("title", collapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar");
+    sidebar?.setAttribute("aria-hidden", String(collapsed));
+    if (persist) localStorage.setItem(sidebarPreferenceKey, String(collapsed));
+  };
   const syncMobileMenu = event => {
-    if (event.matches) setMobileMenu(false);
+    if (event.matches) {
+      document.body.classList.remove("sidebar-collapsed");
+      setMobileMenu(false);
+    }
     else {
       document.body.classList.remove("sidebar-open");
-      menuToggle?.setAttribute("aria-expanded", "false");
       sidebar?.removeAttribute("aria-hidden");
+      setDesktopSidebar(localStorage.getItem(sidebarPreferenceKey) === "true", false);
     }
   };
   if (mobileViewport) {
     syncMobileMenu(mobileViewport);
     mobileViewport.addEventListener?.("change", syncMobileMenu);
   }
-  menuToggle?.addEventListener("click", () => setMobileMenu(!document.body.classList.contains("sidebar-open")));
-  document.addEventListener("keydown", event => { if (event.key === "Escape") setMobileMenu(false); });
+  menuToggle?.addEventListener("click", () => {
+    if (mobileViewport?.matches) setMobileMenu(!document.body.classList.contains("sidebar-open"));
+    else setDesktopSidebar(!document.body.classList.contains("sidebar-collapsed"));
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && mobileViewport?.matches && document.body.classList.contains("sidebar-open")) setMobileMenu(false);
+  });
   document.addEventListener("click", event => {
     if (!document.body.classList.contains("sidebar-open") || sidebar?.contains(event.target) || menuToggle?.contains(event.target)) return;
     setMobileMenu(false);
