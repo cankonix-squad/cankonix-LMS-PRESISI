@@ -153,6 +153,118 @@ function openRoleHome() { location.href = resolveHref(getHomeForRole()); }
 const sharedServiceRoutes = { "Master Library": "pages/master-library.html", "LSP & Kompetensi": "pages/lsp-dashboard.html", "Integration Hub": "pages/integration-dashboard.html", "Command Center": "pages/command-center.html" };
 function accessibleSharedServices(role = getRole()) { const routes = new Set((roleMenus[role] || []).map(item => item[1].split("#")[0])); return Object.entries(sharedServiceRoutes).filter(([, route]) => routes.has(route)).map(([name]) => name); }
 
+function profileStorageKey(role = getRole()) { return `presisiProfile:${role}`; }
+function getRoleProfile(role = getRole()) {
+  const session = getDemoSession();
+  const centralRole = ["pimpinan", "adminpusat", "adminti"].includes(role);
+  const defaults = {
+    fullName: `Demo ${roleLabels[role] || "Pengguna"}`,
+    personnelId: `DEMO-${role.toUpperCase()}`,
+    position: roleLabels[role] || "Pengguna",
+    unit: centralRole ? "Lemdiklat Polri Nasional" : "SPN Polda Jawa Barat",
+    email: session?.username?.includes("@") ? session.username : `${role}@presisi.demo`,
+    phone: "",
+    photo: ""
+  };
+  try { return { ...defaults, ...JSON.parse(localStorage.getItem(profileStorageKey(role)) || "{}") }; }
+  catch { return defaults; }
+}
+function saveRoleProfile(profile, role = getRole()) { localStorage.setItem(profileStorageKey(role), JSON.stringify(profile)); }
+function profileInitials(name = "") {
+  return String(name).trim().split(/\s+/).filter(Boolean).slice(-2).map(part => part[0]).join("").toUpperCase() || "PR";
+}
+function profileAvatarContent(profile) {
+  return profile.photo ? `<img src="${escapeHtml(profile.photo)}" alt="Foto profil ${escapeHtml(profile.fullName)}">` : `<span>${escapeHtml(profileInitials(profile.fullName))}</span>`;
+}
+function showProfileToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.setAttribute("role", "status");
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 220); }, 2200);
+}
+function resizeProfileImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { reject(new Error("Gunakan gambar JPG, PNG, atau WebP.")); return; }
+    if (file.size > 3 * 1024 * 1024) { reject(new Error("Ukuran foto maksimal 3 MB.")); return; }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Foto tidak dapat dibaca."));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("Format foto tidak valid."));
+      image.onload = () => {
+        const size = 512;
+        const scale = Math.max(size / image.width, size / image.height);
+        const width = image.width * scale, height = image.height * scale;
+        const canvas = document.createElement("canvas");
+        canvas.width = size; canvas.height = size;
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#ffffff"; context.fillRect(0, 0, size, size);
+        context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
+        resolve(canvas.toDataURL("image/jpeg", .84));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function updateHeaderProfile(profile = getRoleProfile()) {
+  const button = document.querySelector("#profileMenu");
+  if (!button) return;
+  button.innerHTML = profileAvatarContent(profile);
+  button.title = `Profil ${profile.fullName}`;
+  button.setAttribute("aria-label", `Buka pengaturan profil ${profile.fullName}`);
+}
+function openProfileSettings() {
+  const role = getRole();
+  const current = getRoleProfile(role);
+  let pendingPhoto = current.photo;
+  const trigger = document.querySelector("#profileMenu");
+  const layer = document.createElement("div");
+  layer.className = "modal-layer profile-settings-layer";
+  layer.innerHTML = `<section class="modal-card profile-settings-card" role="dialog" aria-modal="true" aria-labelledby="profileSettingsTitle">
+    <div class="modal-head"><div><h2 id="profileSettingsTitle">Profil Saya</h2><p>${escapeHtml(roleLabels[role])} • ${escapeHtml(getWorkspace().code)}</p></div><button class="modal-close" type="button" aria-label="Tutup pengaturan profil">×</button></div>
+    <form id="profileSettingsForm"><div class="profile-settings-layout"><aside class="profile-photo-panel"><div class="profile-photo-preview" id="profilePhotoPreview">${profileAvatarContent(current)}</div><b>Foto profil</b><small>JPG, PNG, atau WebP. Maksimal 3 MB.</small><label class="btn btn-light profile-upload-button" for="profilePhotoInput">Pilih Foto</label><input class="profile-file-input" id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"><button class="text-action profile-remove-photo" id="removeProfilePhoto" type="button" ${current.photo ? "" : "hidden"}>Hapus foto</button><span class="field-error" id="profilePhotoError" aria-live="polite"></span></aside>
+    <div class="profile-fields"><div class="form-grid"><div class="form-row"><label for="profileFullName">Nama lengkap</label><input id="profileFullName" name="fullName" value="${escapeHtml(current.fullName)}" required maxlength="80"></div><div class="form-row"><label for="profilePersonnelId">NRP / NIP</label><input id="profilePersonnelId" name="personnelId" value="${escapeHtml(current.personnelId)}" maxlength="40"></div><div class="form-row"><label for="profilePosition">Jabatan</label><input id="profilePosition" name="position" value="${escapeHtml(current.position)}" maxlength="80"></div><div class="form-row"><label for="profileUnit">Satuan kerja</label><input id="profileUnit" name="unit" value="${escapeHtml(current.unit)}" maxlength="100"></div><div class="form-row"><label for="profileEmail">Email</label><input id="profileEmail" name="email" type="email" value="${escapeHtml(current.email)}" maxlength="100"></div><div class="form-row"><label for="profilePhone">Nomor telepon</label><input id="profilePhone" name="phone" type="tel" value="${escapeHtml(current.phone)}" placeholder="Contoh: 0812 3456 7890" maxlength="30"></div></div><div class="profile-scope-note"><b>Profil khusus role</b><span>Perubahan ini hanya berlaku untuk role ${escapeHtml(roleLabels[role])} pada browser ini.</span></div></div></div>
+    <div class="modal-actions profile-settings-actions"><button class="btn profile-logout-button" id="profileLogout" type="button">Keluar</button><span><button class="btn btn-light modal-cancel" type="button">Batal</button><button class="btn btn-primary" type="submit">Simpan Perubahan</button></span></div></form></section>`;
+  document.body.appendChild(layer);
+  const preview = layer.querySelector("#profilePhotoPreview");
+  const removeButton = layer.querySelector("#removeProfilePhoto");
+  const photoError = layer.querySelector("#profilePhotoError");
+  const updatePreview = () => {
+    const name = layer.querySelector("#profileFullName").value || current.fullName;
+    preview.innerHTML = profileAvatarContent({ fullName: name, photo: pendingPhoto });
+    removeButton.hidden = !pendingPhoto;
+  };
+  const close = () => { layer.remove(); trigger?.focus(); };
+  layer.querySelector(".modal-close").addEventListener("click", close);
+  layer.querySelector(".modal-cancel").addEventListener("click", close);
+  layer.addEventListener("click", event => { if (event.target === layer) close(); });
+  layer.addEventListener("keydown", event => { if (event.key === "Escape") close(); });
+  layer.querySelector("#profileFullName").addEventListener("input", () => { if (!pendingPhoto) updatePreview(); });
+  layer.querySelector("#profilePhotoInput").addEventListener("change", async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    photoError.textContent = "";
+    try { pendingPhoto = await resizeProfileImage(file); updatePreview(); }
+    catch (error) { photoError.textContent = error.message; event.target.value = ""; }
+  });
+  removeButton.addEventListener("click", () => { pendingPhoto = ""; layer.querySelector("#profilePhotoInput").value = ""; photoError.textContent = ""; updatePreview(); });
+  layer.querySelector("#profileLogout").addEventListener("click", () => { endDemoSession(); location.href = resolveHref("login.html"); });
+  layer.querySelector("#profileSettingsForm").addEventListener("submit", event => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const data = new FormData(event.currentTarget);
+    const profile = { fullName: String(data.get("fullName") || "").trim(), personnelId: String(data.get("personnelId") || "").trim(), position: String(data.get("position") || "").trim(), unit: String(data.get("unit") || "").trim(), email: String(data.get("email") || "").trim(), phone: String(data.get("phone") || "").trim(), photo: pendingPhoto, updatedAt: new Date().toISOString() };
+    try { saveRoleProfile(profile, role); }
+    catch { photoError.textContent = "Penyimpanan browser penuh. Hapus foto lama atau gunakan gambar yang lebih kecil."; return; }
+    updateHeaderProfile(profile); close(); showProfileToast("Profil berhasil diperbarui.");
+  });
+  layer.querySelector("#profileFullName").focus();
+}
+
 function renderSidebar(activeLabel = "") {
   if (!requireDemoSession()) return;
   const el = document.querySelector("#sidebar");
@@ -177,7 +289,8 @@ function renderHeader(title, breadcrumb = "") {
   const date = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "long", year: "numeric" }).format(new Date());
   h.innerHTML = `<button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Sembunyikan menu navigasi" aria-controls="sidebar" aria-expanded="true" title="Sembunyikan sidebar"><svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button><div class="topbar-heading"><div class="breadcrumb">${breadcrumb || APP_NAME}</div><div class="page-title">${title}</div></div><div class="userbox">
     <select class="control workspace-switch" id="workspaceSwitch" aria-label="Pilih workspace">${options}</select><a class="launcher-link" href="${resolveHref("launcher.html")}">Launcher</a>
-    <div class="header-date"><b>${date}</b><span>${roleLabels[role]}</span></div><button class="avatar" id="profileMenu" title="Keluar" aria-label="Keluar dari prototype">${role.substring(0, 2).toUpperCase()}</button></div>`;
+    <div class="header-date"><b>${date}</b><span>${roleLabels[role]}</span></div><button class="avatar" id="profileMenu" type="button" title="Buka profil" aria-label="Buka pengaturan profil" aria-haspopup="dialog"></button></div>`;
+  updateHeaderProfile();
   const menuToggle = document.querySelector("#mobileMenuToggle");
   const sidebar = document.querySelector("#sidebar");
   const sidebarPreferenceKey = "presisiSidebarCollapsed";
@@ -225,9 +338,7 @@ function renderHeader(title, breadcrumb = "") {
     setMobileMenu(false);
   });
   document.querySelector("#workspaceSwitch")?.addEventListener("change", event => { setWorkspace(event.target.value); location.reload(); });
-  document.querySelector("#profileMenu")?.addEventListener("click", () => {
-    if (confirm("Keluar dari sesi prototype?")) { localStorage.removeItem("presisiSession"); location.href = resolveHref("login.html"); }
-  });
+  document.querySelector("#profileMenu")?.addEventListener("click", openProfileSettings);
 }
 
 function startDemoSession(role, username) {

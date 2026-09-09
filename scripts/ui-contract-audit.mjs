@@ -49,6 +49,10 @@ check(css.includes(":focus-visible"), "focus-visible global tidak tersedia");
 check(css.includes("prefers-reduced-motion:reduce"), "reduced motion tidak didukung");
 check(app.includes('aria-label="Navigasi utama"'), "sidebar belum memakai landmark navigasi berlabel");
 check(app.includes("requireDemoSession()"), "session guard halaman terlindungi tidak tersedia");
+check(app.includes('aria-haspopup="dialog"') && app.includes("openProfileSettings"), "thumbnail pengguna belum membuka dialog pengaturan profil");
+check(app.includes('`presisiProfile:${role}`') && app.includes("saveRoleProfile(profile, role)"), "profil belum disimpan terpisah per role");
+check(app.includes('accept="image/jpeg,image/png,image/webp"') && app.includes("resizeProfileImage"), "unggah dan optimasi foto profil belum tersedia");
+check(app.includes('role="dialog" aria-modal="true" aria-labelledby="profileSettingsTitle"'), "dialog profil belum memiliki semantik aksesibel");
 check(auth.includes("Password prototype tidak sesuai."), "error credential demo tidak spesifik");
 check(auth.includes("button.hidden = !allowed") && auth.includes("button.disabled = !allowed"), "shared service di luar scope belum disembunyikan dan dinonaktifkan");
 
