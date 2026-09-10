@@ -1,8 +1,48 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login — LMS PRESISI LEMDIKLAT POLRI</title><link rel="stylesheet" href="assets/css/main.css"></head>
-<body><div class="login-shell"><section class="login-visual"><div class="eyebrow">Lemdiklat Polri</div><div class="login-mark"><img src="assets/logos/logo-lemdiklat-polri.png" alt="Logo Lemdiklat Polri"></div><h1>LMS PRESISI<br>LEMDIKLAT POLRI</h1><p>Platform induk pendidikan Polri untuk pembelajaran, pengelolaan satdik, kompetensi, penjaminan mutu, dan monitoring nasional dalam satu ekosistem.</p><div class="login-pill-row"><span>Satu Sistem</span><span>Satu Data</span><span>Satu Ekosistem</span></div></section>
-<main class="login-panel"><form class="login-card" id="loginForm" novalidate><div class="login-brand-mobile"><img src="assets/logos/logo-lemdiklat-polri.png" alt="Logo Lemdiklat Polri"><span>LMS PRESISI LEMDIKLAT POLRI</span></div><h2>Selamat datang</h2><p class="muted">Masuk ke prototype menggunakan akun dan role simulasi.</p>
-<div class="form-row"><label for="username">NRP / NIP / Email</label><input id="username" autocomplete="username" value="demo.presisi" required><small class="field-error" id="usernameError"></small></div>
-<div class="form-row"><label for="password">Password</label><div class="input-action"><input id="password" type="password" autocomplete="current-password" value="prototype" required><button type="button" id="togglePassword">Lihat</button></div><small class="field-error" id="passwordError"></small></div>
-<div class="form-row"><label for="role">Role simulasi</label><select id="role"><option value="adminpusat">Admin Pusat</option><option value="pimpinan">Pimpinan Lemdiklat</option><option value="pimpinansatdik">Pimpinan Satdik</option><option value="adminunit">Admin Satdik</option><option value="akademik">Pengelola Akademik</option><option value="gadik">Gadik / Instruktur</option><option value="pengasuh">Pengasuh</option><option value="peserta">Peserta Didik</option><option value="asesor">Asesor LSP</option><option value="auditor">Auditor / Pengawas Mutu</option><option value="adminti">Admin TI</option></select></div>
-<label class="check-row"><input type="checkbox" checked> Ingat perangkat ini</label><div class="form-alert" id="formAlert" hidden>Lengkapi data login terlebih dahulu.</div><button class="btn btn-primary login-submit" type="submit">Masuk ke LMS PRESISI</button><div class="prototype-note"><b>Mode Prototype</b><span>Tidak menggunakan autentikasi atau data produksi.</span></div></form></main></div>
-<script src="assets/js/app.js"></script><script src="assets/js/auth-launcher.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a254a">
+  <title>Masuk — LMS PRESISI Lemdiklat Polri</title>
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body class="login-page">
+  <div class="login-shell">
+    <section class="login-visual" aria-label="LMS PRESISI Lemdiklat Polri">
+      <div class="login-visual-shape" aria-hidden="true"></div>
+      <img class="login-building" src="assets/images/login-building.png" alt="Gedung Lemdiklat Polri">
+      <header class="login-institution"><img src="assets/logos/logo-lemdiklat-polri.png" alt="Logo Lemdiklat Polri"><div><strong>LEMDIKLAT POLRI</strong><span>Lembaga Pendidikan dan Pelatihan Polri</span></div></header>
+      <p class="login-motto">SDM UNGGUL POLRI PRESISI<br>UNTUK INDONESIA MAJU</p>
+      <div class="login-hero-copy">
+        <span class="login-kicker">Platform Induk Pendidikan Polri</span>
+        <h1><span>LMS PRESISI</span>LEMDIKLAT POLRI</h1>
+        <p>Ekosistem pembelajaran terintegrasi untuk membangun kompetensi, menjaga mutu, dan memperkuat profesionalisme insan Polri.</p>
+        <div class="login-values" aria-label="Nilai utama LMS PRESISI">
+          <article><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 12 3l8 3.5-8 3.5-8-3.5Z"/><path d="M6 9v6l6 3 6-3V9"/></svg><div><strong>Satu Sistem</strong><span>Terintegrasi nasional</span></div></article>
+          <article><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg><div><strong>Satu Data</strong><span>Akurat dan tepercaya</span></div></article>
+          <article><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 4v5m0 6v5M4 12h5m6 0h5"/></svg><div><strong>Satu Ekosistem</strong><span>Kolaboratif dan adaptif</span></div></article>
+        </div>
+      </div>
+      <footer class="login-visual-footer">LEMDIKLAT POLRI <i></i> ILMU BHAKTI UNTUK NEGERI</footer>
+    </section>
+    <main class="login-panel">
+      <p class="login-principles">PRESISI <i></i> PROFESIONAL <i></i> BERINTEGRITAS</p>
+      <form class="login-card" id="loginForm" novalidate>
+        <div class="login-brand-mobile"><img src="assets/logos/logo-lemdiklat-polri.png" alt="Logo Lemdiklat Polri"><span>LMS PRESISI<br>LEMDIKLAT POLRI</span></div>
+        <div class="login-card-heading"><span class="login-card-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v5c0 5.1 3.4 8.3 8 10 4.6-1.7 8-4.9 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span><div><h2>Selamat datang</h2><p>Masuk ke LMS PRESISI Lemdiklat Polri</p></div></div>
+        <p class="login-intro">Gunakan identitas pengguna dan pilih peran untuk mengakses ruang kerja Anda.</p>
+        <div class="form-row"><label for="username">NRP / NIP / Email</label><div class="login-input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg><input id="username" autocomplete="username" value="demo.presisi" placeholder="Masukkan NRP, NIP, atau email" required></div><small class="field-error" id="usernameError"></small></div>
+        <div class="form-row"><label for="password">Kata sandi</label><div class="input-action login-input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="password" type="password" autocomplete="current-password" value="prototype" placeholder="Masukkan kata sandi" required><button type="button" id="togglePassword">Lihat</button></div><small class="field-error" id="passwordError"></small></div>
+        <div class="form-row"><label for="role">Pilih peran</label><div class="login-input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0m0-5a5 5 0 0 1 6 5"/></svg><select id="role"><option value="adminpusat">Admin Pusat</option><option value="pimpinan">Pimpinan Lemdiklat</option><option value="pimpinansatdik">Pimpinan Satdik</option><option value="adminunit">Admin Satdik</option><option value="akademik">Pengelola Akademik</option><option value="gadik">Gadik / Instruktur</option><option value="pengasuh">Pengasuh</option><option value="peserta">Peserta Didik</option><option value="asesor">Asesor LSP</option><option value="auditor">Auditor / Pengawas Mutu</option><option value="adminti">Admin TI</option></select></div></div>
+        <div class="login-options"><label class="check-row"><input type="checkbox" checked><span>Ingat perangkat ini</span></label><button class="forgot-password" type="button" title="Fitur tersedia pada versi produksi">Lupa kata sandi?</button></div>
+        <div class="form-alert" id="formAlert" hidden>Periksa kembali data login Anda.</div>
+        <button class="btn btn-primary login-submit" type="submit"><span>Masuk ke LMS PRESISI</span><b aria-hidden="true">→</b></button>
+        <div class="prototype-note"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><div><b>Mode prototipe</b><span>Gunakan akun demo untuk menjelajahi fitur sesuai peran yang dipilih.</span></div></div>
+      </form>
+      <footer class="login-panel-footer">PENDIDIKAN <i></i> KOMPETENSI <i></i> MUTU <i></i> PENGAWASAN <i></i> UNTUK INDONESIA</footer>
+    </main>
+  </div>
+  <script src="assets/js/app.js"></script><script src="assets/js/auth-launcher.js"></script>
+</body>
+</html>

@@ -10,7 +10,7 @@ function initLoginPage() {
     const username = document.querySelector("#username").value.trim(), role = document.querySelector("#role").value;
     const usernameValid = Boolean(username), passwordValid = password.value === "prototype";
     document.querySelector("#usernameError").textContent = usernameValid ? "" : "NRP, NIP, atau email wajib diisi.";
-    document.querySelector("#passwordError").textContent = passwordValid ? "" : "Password prototype tidak sesuai.";
+    document.querySelector("#passwordError").textContent = passwordValid ? "" : "Kata sandi prototipe tidak sesuai.";
     const valid = validateDemoCredentials(username, password.value, role);
     document.querySelector("#formAlert").hidden = valid;
     if (!valid) return;

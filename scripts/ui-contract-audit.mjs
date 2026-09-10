@@ -54,7 +54,7 @@ check(app.includes('aria-haspopup="dialog"') && app.includes("openProfileSetting
 check(app.includes('`presisiProfile:${role}`') && app.includes("saveRoleProfile(profile, role)"), "profil belum disimpan terpisah per role");
 check(app.includes('accept="image/jpeg,image/png,image/webp"') && app.includes("resizeProfileImage"), "unggah dan optimasi foto profil belum tersedia");
 check(app.includes('role="dialog" aria-modal="true" aria-labelledby="profileSettingsTitle"'), "dialog profil belum memiliki semantik aksesibel");
-check(auth.includes("Password prototype tidak sesuai."), "error credential demo tidak spesifik");
+check(auth.includes("Kata sandi prototipe tidak sesuai."), "error kredensial demo tidak spesifik");
 check(auth.includes("button.hidden = !allowed") && auth.includes("button.disabled = !allowed"), "shared service di luar scope belum disembunyikan dan dinonaktifkan");
 
 console.log(JSON.stringify({ result: failures.length ? "FAIL" : "PASS", htmlPages: htmlFiles.length, checks, failures }, null, 2));
