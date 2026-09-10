@@ -43,6 +43,10 @@ check(css.includes(".attendance-analytics{grid-template-columns:1fr}"), "analyti
 check(css.includes(".attendance-trend{overflow-x:auto;justify-content:flex-start}"), "tren Attendance tidak memiliki overflow aman");
 check(css.includes(".toolbar .control{width:100%;min-width:0}"), "filter ponsel kecil tidak memakai lebar penuh");
 check(css.includes(".table-wrap{overflow:auto}"), "tabel tidak memiliki pembungkus overflow global");
+check(css.includes(".login-page .login-shell{min-height:100svh;grid-template-columns:minmax(0,3fr) minmax(420px,2fr)"), "kolom login desktop belum memakai lebar fluida yang aman");
+check(css.includes("@media(max-width:980px)") && css.includes(".login-page .login-visual{display:none}"), "login tablet belum beralih konsisten ke satu kolom");
+check(css.includes("@media(max-width:560px)") && css.includes(".login-page .login-panel{justify-content:flex-start"), "login ponsel belum memiliki tata letak khusus");
+check(css.includes("@media(min-width:981px) and (max-height:800px)"), "login laptop berlayar pendek belum memiliki penyesuaian tinggi");
 
 const attendanceTables = (attendanceSources.match(/<table\b/g) || []).length;
 const wrappedAttendanceTables = (attendanceSources.match(/class="table-wrap"><table\b/g) || []).length;
