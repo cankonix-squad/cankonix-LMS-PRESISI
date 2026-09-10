@@ -18,6 +18,7 @@ Jalankan pemeriksaan otomatis dari terminal lain:
 node scripts/prototype-smoke.mjs http://127.0.0.1:8080
 node scripts/attendance-smoke.mjs
 node scripts/responsive-audit.mjs
+node scripts/indonesian-ui-audit.mjs
 node scripts/cross-role-journey.mjs
 node scripts/care-journey.mjs
 node scripts/lsp-journey.mjs
