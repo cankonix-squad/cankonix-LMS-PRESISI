@@ -1,0 +1,32 @@
+{
+  "name": "@lms/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.cjs",
+    "db:validate": "prisma validate",
+    "db:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.2.5",
+    "@nestjs/core": "11.2.5",
+    "@nestjs/platform-express": "11.2.5",
+    "@nestjs/swagger": "^11.2.6",
+    "@prisma/client": "6.19.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@lms/tsconfig": "workspace:*",
+    "@lms/eslint-config": "workspace:*",
+    "@nestjs/cli": "11.0.14",
+    "prisma": "6.19.3"
+  }
+}

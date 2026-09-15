@@ -1,0 +1,27 @@
+{
+  "name": "lemdiklat-lms",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22.12.0 <25"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint && prettier --check .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test --filter=@lms/api --filter=@lms/api-client",
+    "format": "prettier --write .",
+    "db:validate": "pnpm --filter @lms/api db:validate"
+  },
+  "devDependencies": {
+    "turbo": "2.10.13",
+    "typescript": "5.9.3",
+    "eslint": "^9.39.0",
+    "@eslint/js": "^9.39.0",
+    "typescript-eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "@types/node": "^22.19.0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@lms/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./index.mjs",
+  "dependencies": {
+    "@eslint/js": "^9.39.0",
+    "typescript-eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8"
+  }
+}

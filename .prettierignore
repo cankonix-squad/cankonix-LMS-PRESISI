@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+.turbo
+pnpm-lock.yaml
+docs
+tasks
+AGENTS.md
+START-HERE.md
+next-env.d.ts
