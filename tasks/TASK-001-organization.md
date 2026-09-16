@@ -1,6 +1,6 @@
 # TASK-001 — Organization Foundation
 
-**Status:** NOT STARTED
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-000 = DONE atau DONE-WITH-DEFERRED.
@@ -21,7 +21,22 @@ Minimal endpoint: `POST /api/v1/organizations`, `GET /api/v1/organizations`, `GE
 Code unik dan dinormalisasi. Parent harus ada. Organization tidak boleh menjadi parent dirinya sendiri. Update parent wajib mencegah circular hierarchy termasuk indirect cycle. Organization inactive tetap dipertahankan; jangan hard delete bila sudah direferensikan. Hierarchy depth tidak di-hardcode. Siapkan service/repository agar descendant resolution dapat dipakai TASK scope berikutnya. Permission hook boleh disiapkan tetapi jangan implement RBAC TASK-004.
 
 ## Acceptance Criteria
-[ ] migration valid; [ ] CRUD/list/tree bekerja di unit/service test; [ ] duplicate code ditolak; [ ] invalid parent ditolak; [ ] self-parent dan indirect cycle ditolak; [ ] pagination/filter tervalidasi; [ ] controller tanpa Prisma; [ ] Swagger DTO terdokumentasi; [ ] lint/typecheck/test/build green.
+[x] migration valid; [x] CRUD/list/tree bekerja di unit/service test; [x] duplicate code ditolak; [x] invalid parent ditolak; [x] self-parent dan indirect cycle ditolak; [x] pagination/filter tervalidasi; [x] controller tanpa Prisma; [x] Swagger DTO terdokumentasi; [x] lint/typecheck/test/build green.
+
+## Verification Evidence
+- PASS: `pnpm lint`
+- PASS: `pnpm typecheck`
+- PASS: `pnpm test`
+- PASS: `pnpm build`
+- PASS: `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/lemdiklat_lms?schema=public" pnpm --filter @lms/api db:validate`
+- PASS: `pnpm --filter @lms/api db:generate`
+- DEFERRED: executing migration against PostgreSQL runtime. Docker/container runtime verification remains deferred from TASK-000 and is required before integration testing, UAT, or production readiness.
+
+## Review Decision
+- Reviewer approved TASK-001 as `DONE-WITH-DEFERRED` on 2026-09-16.
+- Approved for development sequencing only. Executing the TASK-001 migration against PostgreSQL runtime remains DEFERRED and is not technically blocking TASK-002, which depends on organization persistence through the Prisma client layer already generated in this task.
+- Deferred items must be closed before integration testing, UAT, or production readiness.
+- Reviewer instructed that only TASK-001 work be committed; unrelated worktree changes are excluded.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.

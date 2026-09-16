@@ -40,7 +40,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | Task | Specification | Status | Dependency |
 | --- | --- | --- | --- |
 | TASK-000 | `tasks/TASK-000-foundation.md` | DONE-WITH-DEFERRED | None |
-| TASK-001 | `tasks/TASK-001-organization.md` | NOT STARTED | TASK-000 = DONE atau DONE-WITH-DEFERRED |
+| TASK-001 | `tasks/TASK-001-organization.md` | DONE-WITH-DEFERRED | TASK-000 = DONE atau DONE-WITH-DEFERRED |
 | TASK-002 | `tasks/TASK-002-person-user.md` | NOT STARTED | TASK-001 = DONE |
 | TASK-003 | `tasks/TASK-003-auth-keycloak.md` | NOT STARTED | TASK-002 = DONE |
 | TASK-004 | `tasks/TASK-004-role-permission.md` | NOT STARTED | TASK-003 = DONE |
@@ -91,6 +91,4 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 
 ## Next Eligible Development Task
 
-TASK-001 is the next eligible development task after governance recovery because TASK-000 is recorded as `DONE-WITH-DEFERRED`, and its deferred infrastructure verification is documented as not blocking development sequencing.
-
-Do not start TASK-001 as part of this recovery step.
+TASK-002 is the next eligible development task because TASK-001 is recorded as `DONE-WITH-DEFERRED` after reviewer approval on 2026-09-16, and its deferred PostgreSQL runtime migration verification is documented as not technically blocking TASK-002.

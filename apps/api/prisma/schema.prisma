@@ -7,3 +7,27 @@ datasource db {
   provider = "postgresql"
   url = env("DATABASE_URL")
 }
+
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Organization {
+  id               String             @id @default(uuid()) @db.Uuid
+  code             String             @unique
+  name             String
+  parentId         String?            @map("parent_id") @db.Uuid
+  parent           Organization?      @relation("OrganizationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children         Organization[]     @relation("OrganizationHierarchy")
+  organizationType String?            @map("organization_type")
+  status           OrganizationStatus @default(ACTIVE)
+  metadata         Json?
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  @@index([parentId])
+  @@index([status])
+  @@index([organizationType])
+  @@map("organizations")
+}
