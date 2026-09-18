@@ -1,6 +1,6 @@
 # TASK-024 — Assignment & Submission
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-015 (Enrollment), TASK-017 (Educator Assignment), TASK-021 (Learning Activity Content), TASK-022 (File Management) = tersedia.

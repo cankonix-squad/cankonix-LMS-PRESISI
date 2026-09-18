@@ -1,6 +1,6 @@
 # TASK-021 — Learning Activity & Content
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-020 = REVIEW (implementation complete).

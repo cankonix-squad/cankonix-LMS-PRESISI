@@ -1,6 +1,6 @@
 # TASK-020 — Learning Meeting
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-014 = DONE.

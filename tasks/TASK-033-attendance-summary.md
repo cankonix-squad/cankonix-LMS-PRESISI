@@ -1,6 +1,6 @@
 # TASK-033 — Attendance Summary
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-031 = DONE.

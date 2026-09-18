@@ -1,6 +1,6 @@
 # TASK-022 — File Management
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-000 = DONE-WITH-DEFERRED atau DONE.

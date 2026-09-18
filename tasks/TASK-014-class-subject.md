@@ -1,6 +1,6 @@
 # TASK-014 — Class Subject
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-013 = DONE.

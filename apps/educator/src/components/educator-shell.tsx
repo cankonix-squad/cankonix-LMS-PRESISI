@@ -6,6 +6,7 @@ const navigation = [
   { href: '/pertemuan', label: 'Pertemuan' },
   { href: '/aktivitas', label: 'Aktivitas' },
   { href: '/tugas', label: 'Tugas & Penilaian' },
+  { href: '/exam', label: 'Exam' },
   { href: '/kehadiran', label: 'Kehadiran' },
   { href: '/pemantauan', label: 'Pemantauan' },
 ];

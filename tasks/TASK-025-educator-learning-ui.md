@@ -1,6 +1,6 @@
 # TASK-025 — Educator Learning UI
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-020, TASK-021, TASK-024 = DONE.

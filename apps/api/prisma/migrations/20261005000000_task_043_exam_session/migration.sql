@@ -1,0 +1,12 @@
+CREATE TYPE "ExamSessionStatus" AS ENUM ('DRAFT', 'SCHEDULED', 'OPEN', 'CLOSED', 'CANCELLED');
+CREATE TYPE "ExamParticipantStatus" AS ENUM ('INVITED', 'ELIGIBLE', 'DISQUALIFIED', 'COMPLETED');
+CREATE TABLE "exam_sessions" ("id" UUID NOT NULL DEFAULT gen_random_uuid(), "exam_id" UUID NOT NULL, "start_at" TIMESTAMP(3) NOT NULL, "end_at" TIMESTAMP(3) NOT NULL, "status" "ExamSessionStatus" NOT NULL DEFAULT 'DRAFT', "settings" JSONB, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP(3) NOT NULL, CONSTRAINT "exam_sessions_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "exam_participants" ("id" UUID NOT NULL DEFAULT gen_random_uuid(), "session_id" UUID NOT NULL, "enrollment_id" UUID NOT NULL, "status" "ExamParticipantStatus" NOT NULL DEFAULT 'INVITED', "accommodations" JSONB, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP(3) NOT NULL, CONSTRAINT "exam_participants_pkey" PRIMARY KEY ("id"));
+CREATE INDEX "exam_sessions_exam_id_idx" ON "exam_sessions"("exam_id");
+CREATE INDEX "exam_sessions_status_start_at_end_at_idx" ON "exam_sessions"("status", "start_at", "end_at");
+CREATE UNIQUE INDEX "exam_participants_session_id_enrollment_id_key" ON "exam_participants"("session_id", "enrollment_id");
+CREATE INDEX "exam_participants_enrollment_id_idx" ON "exam_participants"("enrollment_id");
+CREATE INDEX "exam_participants_session_id_status_idx" ON "exam_participants"("session_id", "status");
+ALTER TABLE "exam_sessions" ADD CONSTRAINT "exam_sessions_exam_id_fkey" FOREIGN KEY ("exam_id") REFERENCES "exams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "exam_participants" ADD CONSTRAINT "exam_participants_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "exam_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "exam_participants" ADD CONSTRAINT "exam_participants_enrollment_id_fkey" FOREIGN KEY ("enrollment_id") REFERENCES "enrollments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

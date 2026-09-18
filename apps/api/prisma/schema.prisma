@@ -34,18 +34,18 @@ enum CurriculumStatus {
 }
 
 model Organization {
-  id               String               @id @default(uuid()) @db.Uuid
-  code             String               @unique
-  name             String
-  parentId         String?              @map("parent_id") @db.Uuid
-  parent           Organization?        @relation("OrganizationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children         Organization[]       @relation("OrganizationHierarchy")
-  organizationType String?              @map("organization_type")
-  status           OrganizationStatus   @default(ACTIVE)
-  metadata         Json?
-  createdAt        DateTime             @default(now()) @map("created_at")
-  updatedAt        DateTime             @updatedAt @map("updated_at")
-  placements       PersonOrganization[]
+  id                String               @id @default(uuid()) @db.Uuid
+  code              String               @unique
+  name              String
+  parentId          String?              @map("parent_id") @db.Uuid
+  parent            Organization?        @relation("OrganizationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children          Organization[]       @relation("OrganizationHierarchy")
+  organizationType  String?              @map("organization_type")
+  status            OrganizationStatus   @default(ACTIVE)
+  metadata          Json?
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  placements        PersonOrganization[]
   educationPrograms EducationProgram[]
 
   @@index([parentId])
@@ -55,17 +55,17 @@ model Organization {
 }
 
 model EducationProgram {
-  id             String                 @id @default(uuid()) @db.Uuid
-  organizationId String                 @map("organization_id") @db.Uuid
-  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  code           String
-  name           String
-  description    String?
-  status         EducationProgramStatus @default(ACTIVE)
-  metadata       Json?
-  createdAt      DateTime               @default(now()) @map("created_at")
-  updatedAt      DateTime               @updatedAt @map("updated_at")
-  curriculums    Curriculum[]
+  id               String                 @id @default(uuid()) @db.Uuid
+  organizationId   String                 @map("organization_id") @db.Uuid
+  organization     Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  code             String
+  name             String
+  description      String?
+  status           EducationProgramStatus @default(ACTIVE)
+  metadata         Json?
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  curriculums      Curriculum[]
   educationBatches EducationBatch[]
 
   @@unique([organizationId, code])
@@ -75,13 +75,13 @@ model EducationProgram {
 }
 
 model Subject {
-  id                String            @id @default(uuid()) @db.Uuid
-  code              String            @unique
-  name              String
-  description       String?
-  status            SubjectStatus     @default(ACTIVE)
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
+  id                 String              @id @default(uuid()) @db.Uuid
+  code               String              @unique
+  name               String
+  description        String?
+  status             SubjectStatus       @default(ACTIVE)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
   curriculumSubjects CurriculumSubject[]
 
   @@index([status])
@@ -89,17 +89,17 @@ model Subject {
 }
 
 model Curriculum {
-  id                String            @id @default(uuid()) @db.Uuid
-  educationProgramId String            @map("education_program_id") @db.Uuid
-  educationProgram   EducationProgram  @relation(fields: [educationProgramId], references: [id], onDelete: Restrict)
-  version           String
-  name              String
-  effectiveFrom     DateTime?         @map("effective_from") @db.Date
-  status            CurriculumStatus  @default(ACTIVE)
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
+  id                 String              @id @default(uuid()) @db.Uuid
+  educationProgramId String              @map("education_program_id") @db.Uuid
+  educationProgram   EducationProgram    @relation(fields: [educationProgramId], references: [id], onDelete: Restrict)
+  version            String
+  name               String
+  effectiveFrom      DateTime?           @map("effective_from") @db.Date
+  status             CurriculumStatus    @default(ACTIVE)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
   curriculumSubjects CurriculumSubject[]
-  educationBatches  EducationBatch[]
+  educationBatches   EducationBatch[]
 
   @@unique([educationProgramId, version])
   @@index([educationProgramId])
@@ -108,16 +108,16 @@ model Curriculum {
 }
 
 model CurriculumSubject {
-  id           String    @id @default(uuid()) @db.Uuid
-  curriculumId String    @map("curriculum_id") @db.Uuid
-  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
-  subjectId    String    @map("subject_id") @db.Uuid
-  subject      Subject   @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  sequence     Int       @default(1)
-  creditHours  Int?      @map("credit_hours")
-  required     Boolean   @default(false)
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id            String         @id @default(uuid()) @db.Uuid
+  curriculumId  String         @map("curriculum_id") @db.Uuid
+  curriculum    Curriculum     @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
+  subjectId     String         @map("subject_id") @db.Uuid
+  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  sequence      Int            @default(1)
+  creditHours   Int?           @map("credit_hours")
+  required      Boolean        @default(false)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
   classSubjects ClassSubject[]
   questionBanks QuestionBank[]
 
@@ -128,29 +128,29 @@ model CurriculumSubject {
 }
 
 model ClassSubject {
-  id                  String             @id @default(uuid()) @db.Uuid
-  academicClassId     String             @map("academic_class_id") @db.Uuid
-  academicClass       AcademicClass      @relation(fields: [academicClassId], references: [id], onDelete: Restrict)
-  curriculumSubjectId String             @map("curriculum_subject_id") @db.Uuid
-  curriculumSubject   CurriculumSubject  @relation(fields: [curriculumSubjectId], references: [id], onDelete: Restrict)
+  id                  String               @id @default(uuid()) @db.Uuid
+  academicClassId     String               @map("academic_class_id") @db.Uuid
+  academicClass       AcademicClass        @relation(fields: [academicClassId], references: [id], onDelete: Restrict)
+  curriculumSubjectId String               @map("curriculum_subject_id") @db.Uuid
+  curriculumSubject   CurriculumSubject    @relation(fields: [curriculumSubjectId], references: [id], onDelete: Restrict)
   code                String?
-  displayName         String?            @map("display_name")
-  startDate           DateTime?          @map("start_date") @db.Date
-  endDate             DateTime?          @map("end_date") @db.Date
-  status              ClassSubjectStatus @default(ACTIVE)
-  createdAt           DateTime           @default(now()) @map("created_at")
-  updatedAt           DateTime           @updatedAt @map("updated_at")
+  displayName         String?              @map("display_name")
+  startDate           DateTime?            @map("start_date") @db.Date
+  endDate             DateTime?            @map("end_date") @db.Date
+  status              ClassSubjectStatus   @default(ACTIVE)
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  educatorAssignments EducatorAssignment[]
+  schedules           AcademicSchedule[]
+  meetings            LearningMeeting[]
+  attendanceSessions  AttendanceSession[]
+  assessments         Assessment[]
 
   @@unique([academicClassId, curriculumSubjectId])
   @@index([academicClassId])
   @@index([curriculumSubjectId])
   @@index([status])
   @@map("class_subjects")
-  educatorAssignments EducatorAssignment[]
-  schedules           AcademicSchedule[]
-  meetings            LearningMeeting[]
-  attendanceSessions  AttendanceSession[]
-  assessments         Assessment[]
 }
 
 enum ClassSubjectStatus {
@@ -163,20 +163,25 @@ enum ClassSubjectStatus {
 /// withdrawal and completion change `status`, they never delete the row, so the
 /// education history of a person stays reconstructible.
 model Enrollment {
-  id              String           @id @default(uuid()) @db.Uuid
-  personId        String           @map("person_id") @db.Uuid
-  person          Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
-  educationBatchId String          @map("education_batch_id") @db.Uuid
-  educationBatch  EducationBatch   @relation(fields: [educationBatchId], references: [id], onDelete: Restrict)
-  academicClassId String?          @map("academic_class_id") @db.Uuid
-  academicClass   AcademicClass?   @relation(fields: [academicClassId], references: [id], onDelete: Restrict)
-  enrollmentNumber String?         @unique @map("enrollment_number")
-  enrolledAt      DateTime         @map("enrolled_at") @db.Date
-  status          EnrollmentStatus @default(ACTIVE)
-  completedAt     DateTime?        @map("completed_at") @db.Date
-  metadata        Json?
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  id               String           @id @default(uuid()) @db.Uuid
+  personId         String           @map("person_id") @db.Uuid
+  person           Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+  educationBatchId String           @map("education_batch_id") @db.Uuid
+  educationBatch   EducationBatch   @relation(fields: [educationBatchId], references: [id], onDelete: Restrict)
+  academicClassId  String?          @map("academic_class_id") @db.Uuid
+  academicClass    AcademicClass?   @relation(fields: [academicClassId], references: [id], onDelete: Restrict)
+  enrollmentNumber String?          @unique @map("enrollment_number")
+  enrolledAt       DateTime         @map("enrolled_at") @db.Date
+  status           EnrollmentStatus @default(ACTIVE)
+  completedAt      DateTime?        @map("completed_at") @db.Date
+  metadata         Json?
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  progress          LearningProgress[]
+  submissions       AssignmentSubmission[]
+  attendanceRecords AttendanceRecord[]
+  examParticipants ExamParticipant[]
 
   @@unique([personId, educationBatchId])
   @@index([personId])
@@ -184,10 +189,6 @@ model Enrollment {
   @@index([academicClassId])
   @@index([status])
   @@map("enrollments")
-
-  progress    LearningProgress[]
-  submissions AssignmentSubmission[]
-  attendanceRecords AttendanceRecord[]
 }
 
 enum EnrollmentStatus {
@@ -222,18 +223,18 @@ model EducatorType {
 /// A person may hold assignments across institutions and programs; nothing here
 /// ties a person to a single organization.
 model EducatorAssignment {
-  id              String            @id @default(uuid()) @db.Uuid
-  personId        String            @map("person_id") @db.Uuid
-  person          Person            @relation(fields: [personId], references: [id], onDelete: Restrict)
-  classSubjectId  String            @map("class_subject_id") @db.Uuid
-  classSubject    ClassSubject      @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
-  educatorTypeId  String            @map("educator_type_id") @db.Uuid
-  educatorType    EducatorType      @relation(fields: [educatorTypeId], references: [id], onDelete: Restrict)
-  validFrom       DateTime          @map("valid_from") @db.Date
-  validUntil      DateTime?         @map("valid_until") @db.Date
-  status          AssignmentStatus  @default(ACTIVE)
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
+  id             String           @id @default(uuid()) @db.Uuid
+  personId       String           @map("person_id") @db.Uuid
+  person         Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+  classSubjectId String           @map("class_subject_id") @db.Uuid
+  classSubject   ClassSubject     @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  educatorTypeId String           @map("educator_type_id") @db.Uuid
+  educatorType   EducatorType     @relation(fields: [educatorTypeId], references: [id], onDelete: Restrict)
+  validFrom      DateTime         @map("valid_from") @db.Date
+  validUntil     DateTime?        @map("valid_until") @db.Date
+  status         AssignmentStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
 
   @@index([personId])
   @@index([classSubjectId])
@@ -276,20 +277,20 @@ enum AssignmentStatus {
 /// separate from learning content: a timetable entry exists whether or not any
 /// material has been authored yet, and content can be reused across schedules.
 model AcademicSchedule {
-  id             String                @id @default(uuid()) @db.Uuid
-  classSubjectId String                @map("class_subject_id") @db.Uuid
-  classSubject   ClassSubject          @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  id             String                 @id @default(uuid()) @db.Uuid
+  classSubjectId String                 @map("class_subject_id") @db.Uuid
+  classSubject   ClassSubject           @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
   title          String
   description    String?
-  startAt        DateTime              @map("start_at")
-  endAt          DateTime              @map("end_at")
-  mode           AcademicScheduleMode  @default(FACE_TO_FACE)
+  startAt        DateTime               @map("start_at")
+  endAt          DateTime               @map("end_at")
+  mode           AcademicScheduleMode   @default(FACE_TO_FACE)
   location       String?
   url            String?
   status         AcademicScheduleStatus @default(SCHEDULED)
   metadata       Json?
-  createdAt      DateTime              @default(now()) @map("created_at")
-  updatedAt      DateTime              @updatedAt @map("updated_at")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
 
   @@index([classSubjectId])
   @@index([startAt, endAt])
@@ -327,7 +328,7 @@ model LearningMeeting {
   createdAt      DateTime              @default(now()) @map("created_at")
   updatedAt      DateTime              @updatedAt @map("updated_at")
 
-  activities LearningActivity[]
+  activities         LearningActivity[]
   attendanceSessions AttendanceSession[]
 
   @@unique([classSubjectId, sequence])
@@ -344,19 +345,19 @@ model LearningMeeting {
 /// update changes nothing and produces no duplicate audit entry, because the
 /// caller's retry must not look like a second business event.
 model LearningProgress {
-  id              String               @id @default(uuid()) @db.Uuid
-  enrollmentId    String               @map("enrollment_id") @db.Uuid
-  enrollment      Enrollment           @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  activityId      String               @map("activity_id") @db.Uuid
-  activity        LearningActivity     @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  id              String                 @id @default(uuid()) @db.Uuid
+  enrollmentId    String                 @map("enrollment_id") @db.Uuid
+  enrollment      Enrollment             @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  activityId      String                 @map("activity_id") @db.Uuid
+  activity        LearningActivity       @relation(fields: [activityId], references: [id], onDelete: Restrict)
   status          LearningProgressStatus @default(NOT_STARTED)
-  progressPercent Int                  @default(0) @map("progress_percent")
-  startedAt       DateTime?            @map("started_at")
-  completedAt     DateTime?            @map("completed_at")
-  lastAccessedAt  DateTime?            @map("last_accessed_at")
+  progressPercent Int                    @default(0) @map("progress_percent")
+  startedAt       DateTime?              @map("started_at")
+  completedAt     DateTime?              @map("completed_at")
+  lastAccessedAt  DateTime?              @map("last_accessed_at")
   metadata        Json?
-  createdAt       DateTime             @default(now()) @map("created_at")
-  updatedAt       DateTime             @updatedAt @map("updated_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
 
   @@unique([enrollmentId, activityId])
   @@index([enrollmentId, status])
@@ -380,18 +381,18 @@ enum LearningProgressStatus {
 /// participant's every activity. It is derived data — rebuildable from
 /// `learning_progress` and never a source of truth.
 model ClassSubjectProgressAggregate {
-  id                 String      @id @default(uuid()) @db.Uuid
-  classSubjectId     String      @map("class_subject_id") @db.Uuid
-  enrollmentId       String      @map("enrollment_id") @db.Uuid
-  totalActivities    Int         @default(0) @map("total_activities")
-  completedActivities Int        @default(0) @map("completed_activities")
-  requiredActivities Int         @default(0) @map("required_activities")
-  completedRequiredActivities Int @default(0) @map("completed_required_activities")
-  progressPercent    Int         @default(0) @map("progress_percent")
-  lastActivityAt     DateTime?   @map("last_activity_at")
-  recalculatedAt     DateTime    @default(now()) @map("recalculated_at")
-  createdAt          DateTime    @default(now()) @map("created_at")
-  updatedAt          DateTime    @updatedAt @map("updated_at")
+  id                          String    @id @default(uuid()) @db.Uuid
+  classSubjectId              String    @map("class_subject_id") @db.Uuid
+  enrollmentId                String    @map("enrollment_id") @db.Uuid
+  totalActivities             Int       @default(0) @map("total_activities")
+  completedActivities         Int       @default(0) @map("completed_activities")
+  requiredActivities          Int       @default(0) @map("required_activities")
+  completedRequiredActivities Int       @default(0) @map("completed_required_activities")
+  progressPercent             Int       @default(0) @map("progress_percent")
+  lastActivityAt              DateTime? @map("last_activity_at")
+  recalculatedAt              DateTime  @default(now()) @map("recalculated_at")
+  createdAt                   DateTime  @default(now()) @map("created_at")
+  updatedAt                   DateTime  @updatedAt @map("updated_at")
 
   @@unique([classSubjectId, enrollmentId])
   @@index([classSubjectId, progressPercent])
@@ -408,19 +409,19 @@ model ClassSubjectProgressAggregate {
 /// a deadline, but the service treats the stored value as the single authority —
 /// the client never decides whether a submission is late.
 model Assignment {
-  id              String           @id @default(uuid()) @db.Uuid
-  activityId      String           @map("activity_id") @db.Uuid
-  activity        LearningActivity @relation(fields: [activityId], references: [id], onDelete: Restrict)
-  assessmentId    String?          @map("assessment_id") @db.Uuid
-  assessment      Assessment?      @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  id              String                    @id @default(uuid()) @db.Uuid
+  activityId      String                    @map("activity_id") @db.Uuid
+  activity        LearningActivity          @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  assessmentId    String?                   @map("assessment_id") @db.Uuid
+  assessment      Assessment?               @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
   title           String
   instructions    String?
-  dueAt           DateTime?        @map("due_at")
-  maxScore        Int              @default(100) @map("max_score")
-  attemptsAllowed Int              @default(1) @map("attempts_allowed")
+  dueAt           DateTime?                 @map("due_at")
+  maxScore        Int                       @default(100) @map("max_score")
+  attemptsAllowed Int                       @default(1) @map("attempts_allowed")
   status          AssignmentLifecycleStatus @default(DRAFT)
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
 
   submissions AssignmentSubmission[]
 
@@ -446,18 +447,18 @@ enum AssignmentLifecycleStatus {
 /// was handed in and when stays reconstructible, and an educator can still see
 /// an earlier attempt after a later one was graded.
 model AssignmentSubmission {
-  id               String                     @id @default(uuid()) @db.Uuid
-  assignmentId     String                     @map("assignment_id") @db.Uuid
-  assignment       Assignment                 @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
-  enrollmentId     String                     @map("enrollment_id") @db.Uuid
-  enrollment       Enrollment                 @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  attemptNo        Int                        @map("attempt_no")
-  submittedAt      DateTime?                  @map("submitted_at")
-  textAnswer       String?                    @map("text_answer")
-  isLate           Boolean                    @default(false) @map("is_late")
-  status           AssignmentSubmissionStatus @default(DRAFT)
-  createdAt        DateTime                   @default(now()) @map("created_at")
-  updatedAt        DateTime                   @updatedAt @map("updated_at")
+  id           String                     @id @default(uuid()) @db.Uuid
+  assignmentId String                     @map("assignment_id") @db.Uuid
+  assignment   Assignment                 @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  enrollmentId String                     @map("enrollment_id") @db.Uuid
+  enrollment   Enrollment                 @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  attemptNo    Int                        @map("attempt_no")
+  submittedAt  DateTime?                  @map("submitted_at")
+  textAnswer   String?                    @map("text_answer")
+  isLate       Boolean                    @default(false) @map("is_late")
+  status       AssignmentSubmissionStatus @default(DRAFT)
+  createdAt    DateTime                   @default(now()) @map("created_at")
+  updatedAt    DateTime                   @updatedAt @map("updated_at")
 
   files AssignmentSubmissionFile[]
   grade AssignmentGrade?
@@ -482,13 +483,13 @@ enum AssignmentSubmissionStatus {
 /// `stored_files` (TASK-022); this table only records which already-uploaded,
 /// already-confirmed file belongs to which submission attempt.
 model AssignmentSubmissionFile {
-  id            String               @id @default(uuid()) @db.Uuid
-  submissionId  String               @map("submission_id") @db.Uuid
-  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  storedFileId  String               @map("stored_file_id") @db.Uuid
-  storedFile    StoredFile           @relation(fields: [storedFileId], references: [id], onDelete: Restrict)
-  label         String?
-  createdAt     DateTime             @default(now()) @map("created_at")
+  id           String               @id @default(uuid()) @db.Uuid
+  submissionId String               @map("submission_id") @db.Uuid
+  submission   AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  storedFileId String               @map("stored_file_id") @db.Uuid
+  storedFile   StoredFile           @relation(fields: [storedFileId], references: [id], onDelete: Restrict)
+  label        String?
+  createdAt    DateTime             @default(now()) @map("created_at")
 
   @@unique([submissionId, storedFileId])
   @@index([submissionId])
@@ -501,16 +502,16 @@ model AssignmentSubmissionFile {
 /// Grading is keyed to the attempt, not to the assignment: a re-grade replaces
 /// this row for its own attempt and never touches a previous attempt's score.
 model AssignmentGrade {
-  id            String               @id @default(uuid()) @db.Uuid
-  submissionId  String               @unique @map("submission_id") @db.Uuid
-  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
-  score         Decimal              @db.Decimal(7, 2)
-  graderPersonId String              @map("grader_person_id") @db.Uuid
-  graderPerson  Person               @relation(fields: [graderPersonId], references: [id], onDelete: Restrict)
-  feedback      String?
-  gradedAt      DateTime             @map("graded_at")
-  createdAt     DateTime             @default(now()) @map("created_at")
-  updatedAt     DateTime             @updatedAt @map("updated_at")
+  id             String               @id @default(uuid()) @db.Uuid
+  submissionId   String               @unique @map("submission_id") @db.Uuid
+  submission     AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  score          Decimal              @db.Decimal(7, 2)
+  graderPersonId String               @map("grader_person_id") @db.Uuid
+  graderPerson   Person               @relation(fields: [graderPersonId], references: [id], onDelete: Restrict)
+  feedback       String?
+  gradedAt       DateTime             @map("graded_at")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
 
   @@index([graderPersonId])
   @@index([gradedAt])
@@ -565,14 +566,14 @@ model LearningActivity {
 
   contents LearningContent[]
 
+  progress   LearningProgress[]
+  assignment Assignment?
+
   @@unique([meetingId, sequence])
   @@index([meetingId])
   @@index([activityTypeId])
   @@index([status])
   @@map("learning_activities")
-
-  progress    LearningProgress[]
-  assignment  Assignment?
 }
 
 enum LearningActivityStatus {
@@ -624,19 +625,21 @@ enum LearningContentStatus {
 }
 
 model EducationBatch {
-  id                 String              @id @default(uuid()) @db.Uuid
-  educationProgramId String              @map("education_program_id") @db.Uuid
-  educationProgram   EducationProgram    @relation(fields: [educationProgramId], references: [id], onDelete: Restrict)
-  curriculumId     String             @map("curriculum_id") @db.Uuid
-  curriculum       Curriculum         @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
-  code             String
-  name             String
-  startDate        DateTime           @map("start_date") @db.Date
-  endDate          DateTime           @map("end_date") @db.Date
-  status           EducationBatchStatus @default(ACTIVE)
-  capacity         Int?
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime           @updatedAt @map("updated_at")
+  id                 String               @id @default(uuid()) @db.Uuid
+  educationProgramId String               @map("education_program_id") @db.Uuid
+  educationProgram   EducationProgram     @relation(fields: [educationProgramId], references: [id], onDelete: Restrict)
+  curriculumId       String               @map("curriculum_id") @db.Uuid
+  curriculum         Curriculum           @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
+  code               String
+  name               String
+  startDate          DateTime             @map("start_date") @db.Date
+  endDate            DateTime             @map("end_date") @db.Date
+  status             EducationBatchStatus @default(ACTIVE)
+  capacity           Int?
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  classes            AcademicClass[]
+  enrollments        Enrollment[]
 
   @@unique([educationProgramId, code])
   @@index([educationProgramId])
@@ -644,28 +647,26 @@ model EducationBatch {
   @@index([status])
   @@index([startDate, endDate])
   @@map("education_batches")
-  classes          AcademicClass[]
-  enrollments      Enrollment[]
 }
 
 model AcademicClass {
-  id               String              @id @default(uuid()) @db.Uuid
-  educationBatchId String              @map("education_batch_id") @db.Uuid
-  educationBatch   EducationBatch      @relation(fields: [educationBatchId], references: [id], onDelete: Restrict)
+  id               String                 @id @default(uuid()) @db.Uuid
+  educationBatchId String                 @map("education_batch_id") @db.Uuid
+  educationBatch   EducationBatch         @relation(fields: [educationBatchId], references: [id], onDelete: Restrict)
   code             String
   name             String
   capacity         Int?
-  status           AcademicClassStatus @default(ACTIVE)
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
+  status           AcademicClassStatus    @default(ACTIVE)
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  classSubjects    ClassSubject[]
+  enrollments      Enrollment[]
+  staffAssignments ClassStaffAssignment[]
 
   @@unique([educationBatchId, code])
   @@index([educationBatchId])
   @@index([status])
   @@map("academic_classes")
-  classSubjects    ClassSubject[]
-  enrollments      Enrollment[]
-  staffAssignments ClassStaffAssignment[]
 }
 
 enum AcademicClassStatus {
@@ -686,23 +687,24 @@ enum UserAccountStatus {
 }
 
 model Person {
-  id              String               @id @default(uuid()) @db.Uuid
-  personnelNumber String               @unique @map("personnel_number")
-  fullName        String               @map("full_name")
-  rank            String?
-  title           String?
-  email           String?
-  phone           String?
-  status          PersonStatus         @default(ACTIVE)
-  metadata        Json?
-  createdAt       DateTime             @default(now()) @map("created_at")
-  updatedAt       DateTime             @updatedAt @map("updated_at")
-  userAccount     UserAccount?
-  placements      PersonOrganization[]
-  enrollments     Enrollment[]
+  id                  String                 @id @default(uuid()) @db.Uuid
+  personnelNumber     String                 @unique @map("personnel_number")
+  fullName            String                 @map("full_name")
+  rank                String?
+  title               String?
+  email               String?
+  phone               String?
+  status              PersonStatus           @default(ACTIVE)
+  metadata            Json?
+  createdAt           DateTime               @default(now()) @map("created_at")
+  updatedAt           DateTime               @updatedAt @map("updated_at")
+  userAccount         UserAccount?
+  placements          PersonOrganization[]
+  enrollments         Enrollment[]
   educatorAssignments EducatorAssignment[]
-  staffAssignments ClassStaffAssignment[]
-  assignmentGrades AssignmentGrade[]
+  staffAssignments    ClassStaffAssignment[]
+  assignmentGrades    AssignmentGrade[]
+  answerGrades        AnswerGrade[]
 
   @@index([status])
   @@index([fullName])
@@ -710,19 +712,19 @@ model Person {
 }
 
 model UserAccount {
-  id             String               @id @default(uuid()) @db.Uuid
-  personId       String               @unique @map("person_id") @db.Uuid
-  person         Person               @relation(fields: [personId], references: [id], onDelete: Restrict)
-  externalAuthId String?              @unique @map("external_auth_id")
-  username       String?
-  email          String?
-  status         UserAccountStatus    @default(ACTIVE)
-  lastLoginAt    DateTime?            @map("last_login_at")
-  createdAt      DateTime             @default(now()) @map("created_at")
-  updatedAt      DateTime             @updatedAt @map("updated_at")
-  roleAssignments UserRoleAssignment[]
-  storedFiles     StoredFile[]
-  recordedAttendanceRecords AttendanceRecord[]
+  id                             String                 @id @default(uuid()) @db.Uuid
+  personId                       String                 @unique @map("person_id") @db.Uuid
+  person                         Person                 @relation(fields: [personId], references: [id], onDelete: Restrict)
+  externalAuthId                 String?                @unique @map("external_auth_id")
+  username                       String?
+  email                          String?
+  status                         UserAccountStatus      @default(ACTIVE)
+  lastLoginAt                    DateTime?              @map("last_login_at")
+  createdAt                      DateTime               @default(now()) @map("created_at")
+  updatedAt                      DateTime               @updatedAt @map("updated_at")
+  roleAssignments                UserRoleAssignment[]
+  storedFiles                    StoredFile[]
+  recordedAttendanceRecords      AttendanceRecord[]
   requestedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionRequester")
   approvedAttendanceCorrections  AttendanceCorrection[] @relation("AttendanceCorrectionApprover")
 
@@ -756,12 +758,12 @@ model StoredFile {
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
+  submissionFiles AssignmentSubmissionFile[]
+
   @@index([namespace])
   @@index([ownerUserId])
   @@index([status])
   @@map("stored_files")
-
-  submissionFiles AssignmentSubmissionFile[]
 }
 
 enum StoredFileStatus {
@@ -906,18 +908,18 @@ model RoleAssignmentScope {
 /// self-documenting and avoid quoting the `BEFORE` trigger keyword when the
 /// append-only guard in the migration references them.
 model AuditLog {
-  id                String   @id @default(uuid()) @db.Uuid
-  actorUserAccountId String? @map("actor_user_account_id") @db.Uuid
-  action            String
-  resourceType      String   @map("resource_type")
-  resourceId        String?  @map("resource_id")
-  organizationId    String?  @map("organization_id") @db.Uuid
-  before            Json?    @map("before_state") @db.JsonB
-  after             Json?    @map("after_state") @db.JsonB
-  metadata          Json?    @db.JsonB
-  ipAddress         String?  @map("ip_address")
-  userAgent         String?  @map("user_agent")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(uuid()) @db.Uuid
+  actorUserAccountId String?  @map("actor_user_account_id") @db.Uuid
+  action             String
+  resourceType       String   @map("resource_type")
+  resourceId         String?  @map("resource_id")
+  organizationId     String?  @map("organization_id") @db.Uuid
+  before             Json?    @map("before_state") @db.JsonB
+  after              Json?    @map("after_state") @db.JsonB
+  metadata           Json?    @db.JsonB
+  ipAddress          String?  @map("ip_address")
+  userAgent          String?  @map("user_agent")
+  createdAt          DateTime @default(now()) @map("created_at")
 
   @@index([actorUserAccountId, createdAt])
   @@index([resourceType, resourceId, createdAt])
@@ -972,18 +974,18 @@ enum AttendanceSessionStatus {
 /// status, the reason and who approved it — so "who changed this, when, and why"
 /// stays reconstructible instead of being overwritten.
 model AttendanceRecord {
-  id               String           @id @default(uuid()) @db.Uuid
-  sessionId        String           @map("session_id") @db.Uuid
+  id               String            @id @default(uuid()) @db.Uuid
+  sessionId        String            @map("session_id") @db.Uuid
   session          AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  enrollmentId     String           @map("enrollment_id") @db.Uuid
-  enrollment       Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  status           AttendanceStatus @default(ABSENT)
-  checkInAt        DateTime?        @map("check_in_at")
+  enrollmentId     String            @map("enrollment_id") @db.Uuid
+  enrollment       Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  status           AttendanceStatus  @default(ABSENT)
+  checkInAt        DateTime?         @map("check_in_at")
   note             String?
-  recordedByUserId String?          @map("recorded_by_user_id") @db.Uuid
-  recordedByUser   UserAccount?     @relation(fields: [recordedByUserId], references: [id], onDelete: Restrict)
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
+  recordedByUserId String?           @map("recorded_by_user_id") @db.Uuid
+  recordedByUser   UserAccount?      @relation(fields: [recordedByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
 
   corrections AttendanceCorrection[]
 
@@ -1011,19 +1013,19 @@ enum AttendanceStatus {
 /// full chain of corrections survives, and the audit trail can point at one
 /// immutable row per correction.
 model AttendanceCorrection {
-  id                 String                    @id @default(uuid()) @db.Uuid
-  attendanceRecordId String                    @map("attendance_record_id") @db.Uuid
-  attendanceRecord   AttendanceRecord          @relation(fields: [attendanceRecordId], references: [id], onDelete: Restrict)
-  previousStatus     AttendanceStatus          @map("previous_status")
-  newStatus          AttendanceStatus          @map("new_status")
+  id                 String                     @id @default(uuid()) @db.Uuid
+  attendanceRecordId String                     @map("attendance_record_id") @db.Uuid
+  attendanceRecord   AttendanceRecord           @relation(fields: [attendanceRecordId], references: [id], onDelete: Restrict)
+  previousStatus     AttendanceStatus           @map("previous_status")
+  newStatus          AttendanceStatus           @map("new_status")
   reason             String
-  requestedByUserId  String?                   @map("requested_by_user_id") @db.Uuid
-  requestedByUser    UserAccount?              @relation("AttendanceCorrectionRequester", fields: [requestedByUserId], references: [id], onDelete: Restrict)
-  approvedByUserId   String?                   @map("approved_by_user_id") @db.Uuid
-  approvedByUser     UserAccount?              @relation("AttendanceCorrectionApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
-  approvedAt         DateTime?                 @map("approved_at")
+  requestedByUserId  String?                    @map("requested_by_user_id") @db.Uuid
+  requestedByUser    UserAccount?               @relation("AttendanceCorrectionRequester", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  approvedByUserId   String?                    @map("approved_by_user_id") @db.Uuid
+  approvedByUser     UserAccount?               @relation("AttendanceCorrectionApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  approvedAt         DateTime?                  @map("approved_at")
   status             AttendanceCorrectionStatus @default(APPLIED)
-  createdAt          DateTime                  @default(now()) @map("created_at")
+  createdAt          DateTime                   @default(now()) @map("created_at")
 
   @@index([attendanceRecordId, createdAt])
   @@index([requestedByUserId])
@@ -1126,23 +1128,24 @@ model AssessmentType {
 /// through CLOSED/ARCHIVED so anything already shown to participants stays
 /// reconstructible.
 model Assessment {
-  id               String             @id @default(uuid()) @db.Uuid
-  classSubjectId   String             @map("class_subject_id") @db.Uuid
-  classSubject     ClassSubject       @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
-  assessmentTypeId String             @map("assessment_type_id") @db.Uuid
-  assessmentType   AssessmentType     @relation(fields: [assessmentTypeId], references: [id], onDelete: Restrict)
+  id               String           @id @default(uuid()) @db.Uuid
+  classSubjectId   String           @map("class_subject_id") @db.Uuid
+  classSubject     ClassSubject     @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  assessmentTypeId String           @map("assessment_type_id") @db.Uuid
+  assessmentType   AssessmentType   @relation(fields: [assessmentTypeId], references: [id], onDelete: Restrict)
   title            String
   description      String?
-  maxScore         Decimal            @db.Decimal(7, 2) @map("max_score")
-  weight           Decimal?           @db.Decimal(5, 2)
-  availableFrom    DateTime?          @map("available_from")
-  availableUntil    DateTime?         @map("available_until")
-  status           AssessmentStatus   @default(DRAFT)
+  maxScore         Decimal          @map("max_score") @db.Decimal(7, 2)
+  weight           Decimal?         @db.Decimal(5, 2)
+  availableFrom    DateTime?        @map("available_from")
+  availableUntil   DateTime?        @map("available_until")
+  status           AssessmentStatus @default(DRAFT)
   metadata         Json?
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime           @updatedAt @map("updated_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
 
   assignments Assignment[]
+  exam        Exam?
 
   @@index([classSubjectId])
   @@index([assessmentTypeId])
@@ -1181,6 +1184,8 @@ model QuestionBank {
 
   questions Question[]
 
+  blueprintRules ExamBlueprintRule[]
+
   @@unique([curriculumSubjectId, code])
   @@index([curriculumSubjectId])
   @@index([status])
@@ -1207,6 +1212,7 @@ model QuestionType {
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
   questions Question[]
+  blueprintRules ExamBlueprintRule[]
 
   @@index([status])
   @@map("question_types")
@@ -1261,12 +1267,13 @@ model QuestionVersion {
   explanation String?
   difficulty  String?
   topic       String?
-  maxScore    Decimal               @default(1) @db.Decimal(7, 2) @map("max_score")
+  maxScore    Decimal               @default(1) @map("max_score") @db.Decimal(7, 2)
   status      QuestionVersionStatus @default(DRAFT)
   createdAt   DateTime              @default(now()) @map("created_at")
   updatedAt   DateTime              @updatedAt @map("updated_at")
 
   options QuestionOption[]
+  attemptQuestions AttemptQuestion[]
 
   @@unique([questionId, version])
   @@index([questionId])
@@ -1287,18 +1294,306 @@ enum QuestionVersionStatus {
 /// participant. `versionId` (not `questionId`) is the owner precisely so a
 /// historical attempt resolves the option set that existed at the time.
 model QuestionOption {
-  id         String          @id @default(uuid()) @db.Uuid
-  versionId  String          @map("version_id") @db.Uuid
-  version    QuestionVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  id        String          @id @default(uuid()) @db.Uuid
+  versionId String          @map("version_id") @db.Uuid
+  version   QuestionVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
   /// Stable within a version; a scoring rule refers to this, not to the row id.
-  key        String
-  label      String
-  isCorrect  Boolean         @default(false) @map("is_correct")
-  value      Decimal?        @db.Decimal(7, 2)
-  sortOrder  Int             @default(0) @map("sort_order")
-  createdAt  DateTime        @default(now()) @map("created_at")
+  key       String
+  label     String
+  isCorrect Boolean         @default(false) @map("is_correct")
+  value     Decimal?        @db.Decimal(7, 2)
+  sortOrder Int             @default(0) @map("sort_order")
+  createdAt DateTime        @default(now()) @map("created_at")
 
   @@unique([versionId, key])
   @@index([versionId])
   @@map("question_options")
+}
+
+/// Exam definition (TASK-042).
+///
+/// An exam is the DELIVERY configuration of exactly one assessment: how long a
+/// participant gets, how many attempts they may take, and how the question set
+/// is drawn. It occupies its own table rather than adding columns to
+/// `Assessment` because an assessment is the graded umbrella — a quiz, a
+/// practical or an essay — while only some of those are delivered as an online
+/// timed exam. Keeping them apart lets TASK-050 grade a practical that has no
+/// exam row at all, and lets an exam's randomization policy change without
+/// touching the record participants were measured against.
+///
+/// `assessmentId` is unique: one assessment has at most one delivery
+/// configuration, so "which exam grades this assessment" never has two answers.
+///
+/// `durationMinutes` is the base clock. It is deliberately NOT the authoritative
+/// deadline — TASK-044 computes `expiresAt` on the server from the actual start
+/// instant, bounded by the session window (TASK-043). `timeZone` exists only so
+/// a printed schedule renders in institutional local time; it never shifts the
+/// stored instants, which are UTC.
+///
+/// Randomization is split into three independent switches because they solve
+/// different problems: shuffling questions defeats copy-from-neighbour,
+/// shuffling options defeats "the answer is B", and drawing from a declared pool
+/// is what lets two participants in the same session sit different papers while
+/// still being measured against the same blueprint.
+model Exam {
+  id     String @id @default(uuid()) @db.Uuid
+  /// Unique: one assessment has at most one exam delivery configuration.
+  assessmentId String     @unique @map("assessment_id") @db.Uuid
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  title        String
+  instructions String?
+  durationMinutes Int     @map("duration_minutes")
+  /// NULL means unlimited attempts. Bounded by the session window in TASK-043.
+  attemptsAllowed Int?    @map("attempts_allowed")
+  shuffleQuestions    Boolean @default(true) @map("shuffle_questions")
+  shuffleOptions      Boolean @default(true) @map("shuffle_options")
+  /// Whether the participant sees their score immediately after submitting.
+  /// Defaults to false so a shared cohort result cannot leak between sessions.
+  showResultImmediately Boolean @default(false) @map("show_result_immediately")
+  /// IANA time-zone name used for display only. Instants stay UTC.
+  timeZone String? @map("time_zone")
+  status   ExamStatus @default(DRAFT)
+  /// Blueprint version this configuration reflects; started attempts pin it.
+  configVersion Int @default(1) @map("config_version")
+  metadata Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  blueprint ExamBlueprint?
+  rules     ExamBlueprintRule[]
+  sessions  ExamSession[]
+
+  @@index([status])
+  @@index([assessmentId])
+  @@map("exams")
+}
+
+/// Lifecycle of an exam definition.
+///
+/// `DRAFT -> VALIDATED` records that the blueprint was checked against the live
+/// question pool and passed. `VALIDATED -> SCHEDULED` is the point of no return:
+/// from there the configuration is frozen because sessions and attempts may
+/// depend on it, and a correction is a new configuration version, not an edit.
+/// `ARCHIVED` is terminal so historical attempts stay reconstructible.
+enum ExamStatus {
+  DRAFT
+  VALIDATED
+  SCHEDULED
+  CLOSED
+  ARCHIVED
+}
+
+/// The declared shape of an exam paper.
+///
+/// The blueprint answers "how many questions do we ask, how many points is the
+/// paper worth, and how is that composed". It is stored per exam (one-to-one)
+/// because it is edited together with the exam and never reused across exams —
+/// a reusable blueprint would be a separate concept with its own identity.
+///
+/// `totalQuestions` and `totalPoints` are denormalized from the rules so the
+/// expensive part of validation — "is the pool deep enough" — can be answered
+/// without re-aggregating rules, and so a discrepancy between the declared total
+/// and the sum of the rules is detectable rather than silently averaged away.
+/// The service recomputes them from the rules on every write; they are never
+/// accepted from the client.
+model ExamBlueprint {
+  id        String @id @default(uuid()) @db.Uuid
+  examId    String @unique @map("exam_id") @db.Uuid
+  exam      Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  title     String?
+  description String?
+  totalQuestions Int @map("total_questions")
+  totalPoints Decimal @map("total_points") @db.Decimal(9, 2)
+  /// How the draw behaves when a rule's bank holds MORE qualifying questions
+  /// than the rule asks for. Static configurations pick a fixed subset per
+  /// participant set; `POOL` means each attempt draws its own subset.
+  selectionMode ExamSelectionMode @default(FIXED) @map("selection_mode")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rules ExamBlueprintRule[]
+
+  @@index([examId])
+  @@map("exam_blueprints")
+}
+
+enum ExamSelectionMode {
+  /// Every attempt for this exam draws the same subset from each rule's pool.
+  FIXED
+  /// Each attempt draws its own subset from each rule's pool.
+  POOL
+}
+
+enum ExamSessionStatus {
+  DRAFT
+  SCHEDULED
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum ExamParticipantStatus {
+  INVITED
+  ELIGIBLE
+  DISQUALIFIED
+  COMPLETED
+}
+
+enum ExamAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+  CANCELLED
+}
+
+model ExamAttempt {
+  id            String            @id @default(uuid()) @db.Uuid
+  participantId String            @map("participant_id") @db.Uuid
+  participant   ExamParticipant   @relation(fields: [participantId], references: [id], onDelete: Restrict)
+  attemptNo     Int               @map("attempt_no")
+  startedAt     DateTime          @map("started_at")
+  expiresAt     DateTime          @map("expires_at")
+  submittedAt   DateTime?         @map("submitted_at")
+  status        ExamAttemptStatus @default(IN_PROGRESS)
+  score         Decimal?          @db.Decimal(9, 2)
+  questions     AttemptQuestion[]
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@unique([participantId, attemptNo])
+  @@index([participantId, status])
+  @@index([expiresAt, status])
+  @@map("exam_attempts")
+}
+
+model AttemptQuestion {
+  id                String          @id @default(uuid()) @db.Uuid
+  attemptId         String          @map("attempt_id") @db.Uuid
+  attempt           ExamAttempt     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionVersionId String          @map("question_version_id") @db.Uuid
+  questionVersion   QuestionVersion @relation(fields: [questionVersionId], references: [id], onDelete: Restrict)
+  sequence          Int
+  points            Decimal         @db.Decimal(7, 2)
+  optionOrder       Json?           @map("option_order")
+  answer            AttemptAnswer?
+
+  @@unique([attemptId, sequence])
+  @@unique([attemptId, questionVersionId])
+  @@index([questionVersionId])
+  @@map("attempt_questions")
+}
+
+model AttemptAnswer {
+  id               String         @id @default(uuid()) @db.Uuid
+  attemptQuestionId String        @unique @map("attempt_question_id") @db.Uuid
+  attemptQuestion  AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+  grade            AnswerGrade?
+  answerPayload    Json           @map("answer_payload")
+  revision         Int            @default(1)
+  savedAt          DateTime       @default(now()) @map("saved_at")
+
+  @@index([savedAt])
+  @@map("attempt_answers")
+}
+
+model AnswerGrade {
+  id               String        @id @default(uuid()) @db.Uuid
+  attemptAnswerId  String        @unique @map("attempt_answer_id") @db.Uuid
+  attemptAnswer    AttemptAnswer @relation(fields: [attemptAnswerId], references: [id], onDelete: Cascade)
+  autoScore        Decimal?      @map("auto_score") @db.Decimal(9, 2)
+  manualScore      Decimal?      @map("manual_score") @db.Decimal(9, 2)
+  finalScore       Decimal       @map("final_score") @db.Decimal(9, 2)
+  graderPersonId   String?       @map("grader_person_id") @db.Uuid
+  grader           Person?       @relation(fields: [graderPersonId], references: [id], onDelete: Restrict)
+  feedback         String?
+  gradedAt         DateTime      @default(now()) @map("graded_at")
+
+  @@index([graderPersonId, gradedAt])
+  @@index([gradedAt])
+  @@map("answer_grades")
+}
+
+model ExamSession {
+  id           String            @id @default(uuid()) @db.Uuid
+  examId       String            @map("exam_id") @db.Uuid
+  exam         Exam              @relation(fields: [examId], references: [id], onDelete: Restrict)
+  startAt      DateTime          @map("start_at")
+  endAt        DateTime          @map("end_at")
+  status       ExamSessionStatus @default(DRAFT)
+  settings     Json?
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  participants ExamParticipant[]
+
+  @@index([examId])
+  @@index([status, startAt, endAt])
+  @@map("exam_sessions")
+}
+
+model ExamParticipant {
+  id             String                @id @default(uuid()) @db.Uuid
+  sessionId      String                @map("session_id") @db.Uuid
+  session        ExamSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  enrollmentId   String                @map("enrollment_id") @db.Uuid
+  enrollment     Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  status         ExamParticipantStatus @default(INVITED)
+  accommodations Json?
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  attempts       ExamAttempt[]
+
+  @@unique([sessionId, enrollmentId])
+  @@index([enrollmentId])
+  @@index([sessionId, status])
+  @@map("exam_participants")
+}
+
+/// One line of the blueprint: "draw N questions from bank X, filtered by topic
+/// and difficulty, worth P points each".
+///
+/// Every filter except `count` and `pointsPerQuestion` is nullable, and a NULL
+/// filter means "do not constrain on this axis" rather than "match NULL". This
+/// is what makes a blueprint composable: a rule can pin a bank and a topic while
+/// leaving difficulty open, or pin difficulty while drawing from any bank in the
+/// curriculum subject.
+///
+/// `questionBankId` is nullable because a rule may legitimately draw from every
+/// bank in the exam's curriculum subject. `questionTypeId` is also nullable so a
+/// rule can mix types; option-based-count validation is therefore applied to the
+/// bank+type pairs actually present in the pool rather than to the rule.
+///
+/// `pointsPerQuestion` is the per-question value. The paper's score is the sum of
+/// `count * pointsPerQuestion` over all rules, which the service checks against
+/// the assessment's `maxScore` — a mismatch would silently rescale every grade.
+model ExamBlueprintRule {
+  id          String        @id @default(uuid()) @db.Uuid
+  examId      String        @map("exam_id") @db.Uuid
+  exam        Exam          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  blueprintId String        @map("blueprint_id") @db.Uuid
+  blueprint   ExamBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
+  /// Stable within a blueprint; audit entries and validation messages refer to
+  /// this instead of to the row id, which changes when rules are reordered.
+  code        String
+  label       String?
+  sortOrder   Int           @default(0) @map("sort_order")
+  questionBankId String?    @map("question_bank_id") @db.Uuid
+  questionBank   QuestionBank? @relation(fields: [questionBankId], references: [id], onDelete: Restrict)
+  questionTypeId String?    @map("question_type_id") @db.Uuid
+  questionType   QuestionType? @relation(fields: [questionTypeId], references: [id], onDelete: Restrict)
+  /// Matches `QuestionVersion.topic` exactly; NULL means any topic.
+  topic       String?
+  /// Matches `QuestionVersion.difficulty` exactly; NULL means any difficulty.
+  difficulty  String?
+  count       Int
+  pointsPerQuestion Decimal @map("points_per_question") @db.Decimal(7, 2)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@unique([blueprintId, code])
+  @@index([blueprintId])
+  @@index([examId])
+  @@index([questionBankId])
+  @@index([questionTypeId])
+  @@map("exam_blueprint_rules")
 }

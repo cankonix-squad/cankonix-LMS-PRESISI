@@ -1,6 +1,6 @@
 # TASK-040 — Assessment Foundation
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-014 = DONE.

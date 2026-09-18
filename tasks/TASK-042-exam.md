@@ -1,6 +1,6 @@
 # TASK-042 — Exam Configuration & Blueprint
 
-**Status:** NOT STARTED
+**Status:** DONE
 
 ## Dependency
 TASK-041 = DONE.
@@ -21,7 +21,7 @@ CRUD exam/blueprint; validate/publish configuration.
 Blueprint total questions/score consistent; sufficient question pool validated at publish/start; no answer keys in student contract.
 
 ## Acceptance Criteria
-[ ] blueprint validation; [ ] insufficient pool rejected; [ ] checks green.
+[x] blueprint validation; [x] insufficient pool rejected; [x] checks green.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.

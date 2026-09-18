@@ -1,6 +1,6 @@
 # TASK-023 — Learning Progress
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-021 = DONE dan TASK-015 = DONE.

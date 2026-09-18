@@ -1,6 +1,6 @@
 # TASK-011 — Curriculum & Subject Master
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-010 = DONE.

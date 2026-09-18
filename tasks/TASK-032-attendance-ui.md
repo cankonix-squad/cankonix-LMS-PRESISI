@@ -1,6 +1,6 @@
 # TASK-032 — Attendance UI
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Implementation Report (2026-09-17)
 

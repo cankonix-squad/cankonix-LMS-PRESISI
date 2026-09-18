@@ -5,6 +5,7 @@ import { AssignmentsModule } from './assignments/assignments.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { AttendanceCorrectionsModule } from './attendance-corrections/attendance-corrections.module';
 import { AttendanceSummaryModule } from './attendance-summary/attendance-summary.module';
+import { AttemptsModule } from './attempts/attempts.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule, AuthModuleOptions } from './auth/auth.module';
 import { ClassStaffAssignmentsModule } from './class-staff-assignments/class-staff-assignments.module';
@@ -22,8 +23,11 @@ import { EducationProgramsModule } from './education-programs/education-programs
 import { EducatorAssignmentsModule } from './educator-assignments/educator-assignments.module';
 import { EducatorTypesModule } from './educator-types/educator-types.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
+import { ExamsModule } from './exams/exams.module';
+import { ExamSessionsModule } from './exam-sessions/exam-sessions.module';
 import { FilesModule } from './files/files.module';
 import { HealthModule } from './health/health.module';
+import { GradingModule } from './grading/grading.module';
 import { LearningActivitiesModule } from './learning-activities/learning-activities.module';
 import { LearningActivityTypesModule } from './learning-activity-types/learning-activity-types.module';
 import { LearningMeetingsModule } from './learning-meetings/learning-meetings.module';
@@ -31,6 +35,7 @@ import { LearningProgressModule } from './learning-progress/learning-progress.mo
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PersonsModule } from './persons/persons.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { QuestionBanksModule } from './question-banks/question-banks.module';
 import { UserAccountsModule } from './user-accounts/user-accounts.module';
 
 export type AppModuleOptions = AuthModuleOptions & AuthorizationModuleOptions;
@@ -76,8 +81,13 @@ export class AppModule {
         AttendanceModule,
         AttendanceCorrectionsModule,
         AttendanceSummaryModule,
+        AttemptsModule,
+        GradingModule,
         AssessmentTypesModule,
         AssessmentsModule,
+        QuestionBanksModule,
+        ExamsModule,
+        ExamSessionsModule,
         FilesModule,
         PersonsModule,
         UserAccountsModule,

@@ -645,6 +645,72 @@ export type ChangeAssessmentStatusInput = {
   reason?: string;
 };
 
+export type Exam = {
+  id: string;
+  assessmentId: string;
+  title: string;
+  instructions: string | null;
+  durationMinutes: number;
+  attemptsAllowed: number | null;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  showResultImmediately: boolean;
+  status: string;
+  blueprint?: ExamBlueprint | null;
+};
+export type ExamBlueprintRule = {
+  id?: string;
+  code: string;
+  label: string | null;
+  count: number;
+  pointsPerQuestion: number;
+  questionBankId: string | null;
+  questionTypeId: string | null;
+  topic: string | null;
+  difficulty: string | null;
+};
+export type ExamBlueprint = {
+  id: string;
+  title: string | null;
+  selectionMode?: string;
+  rules: ExamBlueprintRule[];
+};
+export type ExamSession = {
+  id: string;
+  examId: string;
+  startAt: string;
+  endAt: string;
+  status: 'DRAFT' | 'SCHEDULED' | 'OPEN' | 'CLOSED' | 'CANCELLED';
+  participants?: ExamParticipant[];
+};
+export type ExamParticipant = {
+  id: string;
+  sessionId: string;
+  enrollmentId: string;
+  status: string;
+};
+export type CreateExamInput = Omit<Partial<Exam>, 'id' | 'status'> & {
+  assessmentId: string;
+  title: string;
+  durationMinutes: number;
+};
+export type CreateExamSessionInput = {
+  examId: string;
+  startAt: string;
+  endAt: string;
+  settings?: Record<string, unknown>;
+};
+export type AddExamParticipantInput = {
+  enrollmentId: string;
+  status?: string;
+  accommodations?: Record<string, unknown>;
+};
+export type ManualExamGradeInput = {
+  score: number;
+  feedback?: string | null;
+  graderPersonId: string;
+};
+
 function isHealthResponse(body: unknown): body is HealthResponse {
   return (
     typeof body === 'object' &&
@@ -1282,6 +1348,78 @@ export function createApiClient(
       changeStatus(id: string, input: ChangeAssessmentStatusInput) {
         return mutate<Assessment>(`/assessments/${id}/status`, {
           method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+    exams: {
+      get(id: string) {
+        return request<Exam>(`/exams/${id}`);
+      },
+      create(input: CreateExamInput) {
+        return mutate<Exam>('/exams', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: Partial<CreateExamInput>) {
+        return mutate<Exam>(`/exams/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+      saveBlueprint(
+        id: string,
+        input: {
+          title?: string;
+          description?: string;
+          rules: ExamBlueprintRule[];
+        },
+      ) {
+        return mutate<ExamBlueprint>(`/exams/${id}/blueprint`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      changeStatus(id: string, status: string) {
+        return mutate<Exam>(`/exams/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        });
+      },
+    },
+    examSessions: {
+      get(id: string) {
+        return request<ExamSession>(`/exam-sessions/${id}`);
+      },
+      create(input: CreateExamSessionInput) {
+        return mutate<ExamSession>('/exam-sessions', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      changeStatus(id: string, status: ExamSession['status']) {
+        return mutate<ExamSession>(`/exam-sessions/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        });
+      },
+      addParticipant(id: string, input: AddExamParticipantInput) {
+        return mutate<ExamParticipant>(`/exam-sessions/${id}/participants`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+    examGrading: {
+      autoGrade(attemptId: string) {
+        return mutate<unknown>(`/exam-grading/${attemptId}/auto`, {
+          method: 'POST',
+        });
+      },
+      manualGrade(answerId: string, input: ManualExamGradeInput) {
+        return mutate<unknown>(`/exam-grading/answers/${answerId}`, {
+          method: 'PUT',
           body: JSON.stringify(input),
         });
       },

@@ -1,6 +1,6 @@
 # TASK-012 — Batch / Angkatan
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-011 = DONE.

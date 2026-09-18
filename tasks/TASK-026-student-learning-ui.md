@@ -1,6 +1,6 @@
 # TASK-026 — Student Learning UI
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-023, TASK-024 = DONE.

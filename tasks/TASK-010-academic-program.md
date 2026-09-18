@@ -1,6 +1,6 @@
 # TASK-010 — Program Pendidikan
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-005 = DONE.

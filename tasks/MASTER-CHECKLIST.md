@@ -46,34 +46,34 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-004 | `tasks/TASK-004-role-permission.md` | DONE-WITH-DEFERRED | TASK-003 = DONE |
 | TASK-005 | `tasks/TASK-005-scope.md` | DONE-WITH-DEFERRED | TASK-004 = DONE atau DONE-WITH-DEFERRED |
 | TASK-006 | `tasks/TASK-006-audit.md` | DONE-WITH-DEFERRED | TASK-005 = DONE-WITH-DEFERRED |
-| TASK-007 | `tasks/TASK-007-admin-foundation-ui.md` | REVIEW | TASK-001, TASK-002, TASK-004, TASK-005 = DONE |
-| TASK-010 | `tasks/TASK-010-academic-program.md` | REVIEW | TASK-005 = DONE |
-| TASK-011 | `tasks/TASK-011-curriculum-subject.md` | REVIEW | TASK-010 = DONE |
-| TASK-012 | `tasks/TASK-012-batch.md` | REVIEW | TASK-011 = DONE |
-| TASK-013 | `tasks/TASK-013-class.md` | REVIEW | TASK-012 = DONE |
-| TASK-014 | `tasks/TASK-014-class-subject.md` | REVIEW | TASK-013 = DONE |
-| TASK-015 | `tasks/TASK-015-enrollment.md` | REVIEW | TASK-013 = DONE |
-| TASK-016 | `tasks/TASK-016-educator-assignment.md` | REVIEW | TASK-014 = DONE |
-| TASK-017 | `tasks/TASK-017-academic-scheduling.md` | REVIEW | TASK-014 = DONE |
-| TASK-020 | `tasks/TASK-020-learning.md` | REVIEW | TASK-014 = DONE |
-| TASK-021 | `tasks/TASK-021-learning-activity-content.md` | REVIEW | TASK-020 = DONE |
-| TASK-022 | `tasks/TASK-022-file-management.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED atau DONE |
-| TASK-023 | `tasks/TASK-023-learning-progress.md` | REVIEW | TASK-021 = DONE dan TASK-015 = DONE |
-| TASK-024 | `tasks/TASK-024-assignment-submission.md` | REVIEW | TASK-021, TASK-022, TASK-015 = DONE |
-| TASK-025 | `tasks/TASK-025-educator-learning-ui.md` | REVIEW | TASK-020, TASK-021, TASK-024 = DONE |
-| TASK-026 | `tasks/TASK-026-student-learning-ui.md` | REVIEW | TASK-023, TASK-024 = DONE |
-| TASK-030 | `tasks/TASK-030-attendance.md` | REVIEW | TASK-017 dan TASK-015 = DONE |
-| TASK-031 | `tasks/TASK-031-attendance-correction-audit.md` | REVIEW | TASK-030 dan TASK-006 = DONE |
-| TASK-032 | `tasks/TASK-032-attendance-ui.md` | REVIEW | TASK-031 = DONE |
-| TASK-033 | `tasks/TASK-033-attendance-summary.md` | REVIEW | TASK-031 = DONE |
-| TASK-040 | `tasks/TASK-040-assessment.md` | REVIEW | TASK-014 = DONE |
-| TASK-041 | `tasks/TASK-041-question-bank.md` | NOT STARTED | TASK-040 = DONE |
-| TASK-042 | `tasks/TASK-042-exam.md` | NOT STARTED | TASK-041 = DONE |
-| TASK-043 | `tasks/TASK-043-exam-session.md` | NOT STARTED | TASK-042 dan TASK-015 = DONE |
-| TASK-044 | `tasks/TASK-044-attempt-runtime.md` | NOT STARTED | TASK-043 = DONE |
-| TASK-045 | `tasks/TASK-045-autosave.md` | NOT STARTED | TASK-044 = DONE |
-| TASK-046 | `tasks/TASK-046-auto-manual-scoring.md` | NOT STARTED | TASK-045 = DONE |
-| TASK-047 | `tasks/TASK-047-educator-exam-ui.md` | NOT STARTED | TASK-042, TASK-043, TASK-046 = DONE |
+| TASK-007 | `tasks/TASK-007-admin-foundation-ui.md` | DONE-WITH-DEFERRED | TASK-001, TASK-002, TASK-004, TASK-005 = DONE |
+| TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
+| TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
+| TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |
+| TASK-013 | `tasks/TASK-013-class.md` | DONE-WITH-DEFERRED | TASK-012 = DONE |
+| TASK-014 | `tasks/TASK-014-class-subject.md` | DONE-WITH-DEFERRED | TASK-013 = DONE |
+| TASK-015 | `tasks/TASK-015-enrollment.md` | DONE-WITH-DEFERRED | TASK-013 = DONE |
+| TASK-016 | `tasks/TASK-016-educator-assignment.md` | DONE-WITH-DEFERRED | TASK-014 = DONE |
+| TASK-017 | `tasks/TASK-017-academic-scheduling.md` | DONE-WITH-DEFERRED | TASK-014 = DONE |
+| TASK-020 | `tasks/TASK-020-learning.md` | DONE-WITH-DEFERRED | TASK-014 = DONE |
+| TASK-021 | `tasks/TASK-021-learning-activity-content.md` | DONE-WITH-DEFERRED | TASK-020 = DONE |
+| TASK-022 | `tasks/TASK-022-file-management.md` | DONE-WITH-DEFERRED | TASK-000 = DONE-WITH-DEFERRED atau DONE |
+| TASK-023 | `tasks/TASK-023-learning-progress.md` | DONE-WITH-DEFERRED | TASK-021 = DONE dan TASK-015 = DONE |
+| TASK-024 | `tasks/TASK-024-assignment-submission.md` | DONE-WITH-DEFERRED | TASK-021, TASK-022, TASK-015 = DONE |
+| TASK-025 | `tasks/TASK-025-educator-learning-ui.md` | DONE-WITH-DEFERRED | TASK-020, TASK-021, TASK-024 = DONE |
+| TASK-026 | `tasks/TASK-026-student-learning-ui.md` | DONE-WITH-DEFERRED | TASK-023, TASK-024 = DONE |
+| TASK-030 | `tasks/TASK-030-attendance.md` | DONE-WITH-DEFERRED | TASK-017 dan TASK-015 = DONE |
+| TASK-031 | `tasks/TASK-031-attendance-correction-audit.md` | DONE-WITH-DEFERRED | TASK-030 dan TASK-006 = DONE |
+| TASK-032 | `tasks/TASK-032-attendance-ui.md` | DONE-WITH-DEFERRED | TASK-031 = DONE |
+| TASK-033 | `tasks/TASK-033-attendance-summary.md` | DONE-WITH-DEFERRED | TASK-031 = DONE |
+| TASK-040 | `tasks/TASK-040-assessment.md` | DONE-WITH-DEFERRED | TASK-014 = DONE |
+| TASK-041 | `tasks/TASK-041-question-bank.md` | DONE | TASK-040 = DONE |
+| TASK-042 | `tasks/TASK-042-exam.md` | DONE | TASK-041 = DONE |
+| TASK-043 | `tasks/TASK-043-exam-session.md` | DONE | TASK-042 dan TASK-015 = DONE |
+| TASK-044 | `tasks/TASK-044-attempt-runtime.md` | DONE | TASK-043 = DONE |
+| TASK-045 | `tasks/TASK-045-autosave.md` | DONE | TASK-044 = DONE |
+| TASK-046 | `tasks/TASK-046-auto-manual-scoring.md` | DONE | TASK-045 = DONE |
+| TASK-047 | `tasks/TASK-047-educator-exam-ui.md` | IN PROGRESS | TASK-042, TASK-043, TASK-046 = DONE |
 | TASK-048 | `tasks/TASK-048-student-exam-ui.md` | NOT STARTED | TASK-044, TASK-045 = DONE |
 | TASK-049 | `tasks/TASK-049-exam-load-security-tests.md` | NOT STARTED | TASK-044, TASK-045, TASK-046 = DONE |
 | TASK-050 | `tasks/TASK-050-grading.md` | NOT STARTED | TASK-040 dan TASK-024/046 sesuai component yang dipakai = DONE |
@@ -126,6 +126,8 @@ Status note (2026-09-17, chained under standing user permission): TASK-032 (Atte
 Status note (2026-09-18, chained under standing user permission): TASK-033 (Attendance Summary) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm test` (**180 API + 2 api-client = 182**, 0 fail; 14 new tests in `apps/api/test/attendance-summary.test.cjs`), `pnpm build` (11/11 successful), `db:validate`, `db:generate` → PASS. Migration `apps/api/prisma/migrations/20261001000000_task_033_attendance_summary/` (1 table, 1 enum, 1 unique + 7 index, no FK deliberately: a summary is derived data and must not block or cascade a domain delete). New reporting read model `attendance_summaries` keyed by unique `(scopeType, scopeId)`, covering `ENROLLMENT`, `ENROLLMENT_SUBJECT`, `CLASS_SUBJECT`, `CLASS`, `BATCH`, `PROGRAM`. 7 routes at `/api/v1/attendance-summary` gated by `attendance.summary.read` / `attendance.summary.refresh`. Denominator rule: only `CLOSED` sessions are eligible; a closed session without a record counts as ABSENT; a group scope is the exact participant-weighted sum of the personal scopes inside it. Refresh is idempotent and bound to attendance writes, session CLOSE/CANCEL transitions, and corrections, so a report never shows a stale figure. The reporting read path is a single indexed lookup — a test asserts repeated reads do not re-run the raw calculation. Deferred: runtime end-to-end against a live PostgreSQL + Keycloak (no container runtime available; not installed automatically); not a technical blocker as the counting rules are covered by an in-memory Prisma double. Next eligible development task after TASK-033: TASK-040 (`tasks/TASK-040-assessment.md`, needs TASK-014).
 
 Status note (2026-09-18, chained under standing user permission): TASK-040 (Assessment Foundation) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm test` (**193 API + 2 api-client = 195**, 0 fail; 13 new tests in `apps/api/test/assessments.test.cjs`), `pnpm build` (11/11 successful), `db:validate` ("schema is valid 🚀"), `db:generate` → PASS. Migration `apps/api/prisma/migrations/20261002000000_task_040_assessment/` (2 tables `assessment_types`/`assessments`, 1 enum `AssessmentStatus`, 3 FK, 7 index) and it **seeds the six baseline types** QUIZ/EXAM/ASSIGNMENT/PRACTICAL/OBSERVATION/COMPETENCY with `ON CONFLICT (code) DO NOTHING` — types are data-driven rows, never an enum in code, so a new method needs no schema or service change. `Assignment.assessmentId` was a bare UUID column with no relation; it is now a real optional FK (`ON DELETE SET NULL`, indexed), honest for TASK-024's assignment↔assessment link. 9 routes at `/api/v1/assessment-types` and `/api/v1/assessments` gated by `assessment.type.read` / `assessment.type.manage` / `assessment.read` / `assessment.manage` (Permission + Scope only, no role-name branching). Lifecycle `DRAFT -> PUBLISHED -> CLOSED -> ARCHIVED` with `PUBLISHED -> DRAFT` allowed as a correction and `CLOSED`/`ARCHIVED` one-way; illegal edges are 422 and a same-status request is an idempotent no-op with no audit write. A `PUBLISHED`/`CLOSED` assessment is **protected from destructive mutation**: `maxScore` and `weight` are frozen (422 naming the field) on both `PATCH /assessments/:id` and the status endpoint, and unpublishing is the documented way to unlock them. `maxScore` required `> 0`, `weight` nullable but `> 0` when set (`null` = not yet weighted, distinct from `0`), availability window must be ordered even when only one edge moves, and an `INACTIVE` type or a non-`ACTIVE` class subject blocks selection/publishing. Deferred: runtime end-to-end against a live PostgreSQL + Keycloak (no container runtime available; not installed automatically); not a technical blocker as every rule is covered by tests driving the real services. Next eligible development task after TASK-040: TASK-041 (`tasks/TASK-041-question-bank.md`, needs TASK-040).
+
+Status note (2026-09-18, chained under standing user permission): TASK-041 (Question Bank & Versioning) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm test` (**206 API + 2 api-client = 208**, 0 fail; 13 new tests in `apps/api/test/question-banks.test.cjs`), `pnpm build` (11/11 successful), `db:validate` ("schema is valid 🚀"), `db:generate` → PASS. Migration `apps/api/prisma/migrations/20261003000000_task_041_question_bank/` (5 tables `question_banks`/`question_types`/`questions`/`question_versions`/`question_options`, 1 enum `QuestionVersionStatus`, 5 FK, 14 index) and it **seeds the five baseline question types** SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE/ESSAY/SHORT_ANSWER with `ON CONFLICT (code) DO NOTHING` — option validation is DATA-DRIVEN through `has_options`/`multi_select`, so no service code compares a type against a string code. 15 routes at `/api/v1/question-banks`, `/api/v1/question-types`, and `/api/v1/questions` gated by `question.bank.read` / `question.bank.manage` / `question.type.read` / `question.read` / `question.manage` / `question.participate` (Permission + Scope only, no role-name branching). **Version immutability is structural**: `(question_id, version)` is unique, only a DRAFT version can be edited (a PUBLISHED or SUPERSEDED row answers 422 and directs the caller to create a new version), and publishing a new version supersedes the previous one in ONE transaction so a question never has two published versions or none. The **student-safe projection is a separate DTO and a separate permission** (`question.participate`) built from an explicit allow-list — `isCorrect`, `value`, `scoringRule` and `explanation` are not properties of it at all, and the leak test walks the whole payload plus its JSON serialization to prove none can appear; a DRAFT version is never readable, while PUBLISHED/SUPERSEDED versions stay readable so a historical attempt renders exactly what the participant saw. Audit snapshots deliberately omit the answer key. Deferred: runtime end-to-end against a live PostgreSQL + Keycloak (no container runtime available; not installed automatically); not a technical blocker as the immutability, option-validation, and leak rules are covered by in-memory repository doubles. Next eligible development task after TASK-041: TASK-042 (`tasks/TASK-042-exam.md`, needs TASK-041).
 
 Closed TASK-005 fix summary (kept for history):
 

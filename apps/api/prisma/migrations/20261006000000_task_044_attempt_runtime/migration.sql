@@ -1,0 +1,12 @@
+CREATE TYPE "ExamAttemptStatus" AS ENUM ('IN_PROGRESS', 'SUBMITTED', 'EXPIRED', 'CANCELLED');
+CREATE TABLE "exam_attempts" ("id" UUID NOT NULL DEFAULT gen_random_uuid(), "participant_id" UUID NOT NULL, "attempt_no" INTEGER NOT NULL, "started_at" TIMESTAMP(3) NOT NULL, "expires_at" TIMESTAMP(3) NOT NULL, "submitted_at" TIMESTAMP(3), "status" "ExamAttemptStatus" NOT NULL DEFAULT 'IN_PROGRESS', "score" DECIMAL(9,2), "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP(3) NOT NULL, CONSTRAINT "exam_attempts_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "attempt_questions" ("id" UUID NOT NULL DEFAULT gen_random_uuid(), "attempt_id" UUID NOT NULL, "question_version_id" UUID NOT NULL, "sequence" INTEGER NOT NULL, "points" DECIMAL(7,2) NOT NULL, "option_order" JSONB, CONSTRAINT "attempt_questions_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "exam_attempts_participant_id_attempt_no_key" ON "exam_attempts"("participant_id", "attempt_no");
+CREATE INDEX "exam_attempts_participant_id_status_idx" ON "exam_attempts"("participant_id", "status");
+CREATE INDEX "exam_attempts_expires_at_status_idx" ON "exam_attempts"("expires_at", "status");
+CREATE UNIQUE INDEX "attempt_questions_attempt_id_sequence_key" ON "attempt_questions"("attempt_id", "sequence");
+CREATE UNIQUE INDEX "attempt_questions_attempt_id_question_version_id_key" ON "attempt_questions"("attempt_id", "question_version_id");
+CREATE INDEX "attempt_questions_question_version_id_idx" ON "attempt_questions"("question_version_id");
+ALTER TABLE "exam_attempts" ADD CONSTRAINT "exam_attempts_participant_id_fkey" FOREIGN KEY ("participant_id") REFERENCES "exam_participants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "attempt_questions" ADD CONSTRAINT "attempt_questions_attempt_id_fkey" FOREIGN KEY ("attempt_id") REFERENCES "exam_attempts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "attempt_questions" ADD CONSTRAINT "attempt_questions_question_version_id_fkey" FOREIGN KEY ("question_version_id") REFERENCES "question_versions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

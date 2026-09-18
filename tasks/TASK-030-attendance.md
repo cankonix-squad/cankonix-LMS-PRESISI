@@ -1,6 +1,6 @@
 # TASK-030 — Attendance Session & Record
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Implementation Report (2026-09-17)
 

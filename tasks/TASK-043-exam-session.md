@@ -1,6 +1,6 @@
 # TASK-043 — Exam Session & Eligibility
 
-**Status:** NOT STARTED
+**Status:** DONE
 
 ## Dependency
 TASK-042 dan TASK-015 = DONE.
@@ -21,7 +21,7 @@ Create/schedule/open/close session; assign participants; eligibility check endpo
 Eligibility: authenticated → valid enrollment → participant → session active → attempt allowed. Server time authoritative.
 
 ## Acceptance Criteria
-[ ] eligibility matrix tests; [ ] duplicate participant blocked; [ ] lifecycle/time validation; [ ] checks green.
+[x] eligibility matrix tests; [x] duplicate participant blocked; [x] lifecycle/time validation; [x] checks green.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.

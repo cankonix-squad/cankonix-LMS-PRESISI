@@ -1,6 +1,6 @@
 # TASK-047 — Educator Exam UI
 
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
 ## Dependency
 TASK-042, TASK-043, TASK-046 = DONE.

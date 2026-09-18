@@ -1,6 +1,6 @@
 # TASK-046 — Auto / Manual Scoring
 
-**Status:** NOT STARTED
+**Status:** DONE
 
 ## Dependency
 TASK-045 = DONE.

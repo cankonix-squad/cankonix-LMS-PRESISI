@@ -1,6 +1,6 @@
 # TASK-007 — Admin Foundation UI
 
-**Status:** REVIEW
+**Status:** DONE-WITH-DEFERRED
 
 ## Dependency
 TASK-001, TASK-002, TASK-004, TASK-005 = DONE-WITH-DEFERRED atau DONE. TASK-006 = DONE-WITH-DEFERRED (approved; audit foundation available).

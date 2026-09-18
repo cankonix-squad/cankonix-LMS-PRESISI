@@ -1,6 +1,6 @@
 # TASK-044 — Attempt Runtime & Server Timer
 
-**Status:** NOT STARTED
+**Status:** DONE
 
 ## Dependency
 TASK-043 = DONE.
@@ -21,7 +21,7 @@ Start attempt; get safe attempt/questions; submit/finalize attempt.
 Start transactional dan idempotent. expiresAt = server start + duration bounded by session end policy. Frozen versions/order. Client clock tidak dipercaya. Redis bukan source of truth.
 
 ## Acceptance Criteria
-[ ] concurrent start safe; [ ] frozen set; [ ] timer tests; [ ] expired attempt rejected/finalized; [ ] no answer leak; [ ] checks green.
+[x] concurrent start safe; [x] frozen set; [x] timer tests; [x] expired attempt rejected/finalized; [x] no answer leak; [x] checks green.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.
