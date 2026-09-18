@@ -1,6 +1,6 @@
 # TASK-047 — Educator Exam UI
 
-**Status:** IN PROGRESS
+**Status:** REVIEW
 
 ## Dependency
 TASK-042, TASK-043, TASK-046 = DONE.
@@ -21,7 +21,7 @@ Question bank, exam blueprint, sessions/participants, grading queue.
 Never render student secrets unnecessarily; permissions via API.
 
 ## Acceptance Criteria
-[ ] educator build; [ ] workflows usable; [ ] errors handled.
+[x] educator build; [x] workflows usable; [x] errors handled.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.

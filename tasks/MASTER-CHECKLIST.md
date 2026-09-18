@@ -73,7 +73,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-044 | `tasks/TASK-044-attempt-runtime.md` | DONE | TASK-043 = DONE |
 | TASK-045 | `tasks/TASK-045-autosave.md` | DONE | TASK-044 = DONE |
 | TASK-046 | `tasks/TASK-046-auto-manual-scoring.md` | DONE | TASK-045 = DONE |
-| TASK-047 | `tasks/TASK-047-educator-exam-ui.md` | IN PROGRESS | TASK-042, TASK-043, TASK-046 = DONE |
+| TASK-047 | `tasks/TASK-047-educator-exam-ui.md` | REVIEW | TASK-042, TASK-043, TASK-046 = DONE |
 | TASK-048 | `tasks/TASK-048-student-exam-ui.md` | NOT STARTED | TASK-044, TASK-045 = DONE |
 | TASK-049 | `tasks/TASK-049-exam-load-security-tests.md` | NOT STARTED | TASK-044, TASK-045, TASK-046 = DONE |
 | TASK-050 | `tasks/TASK-050-grading.md` | NOT STARTED | TASK-040 dan TASK-024/046 sesuai component yang dipakai = DONE |
