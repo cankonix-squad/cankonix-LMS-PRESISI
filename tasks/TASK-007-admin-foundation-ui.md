@@ -1,9 +1,16 @@
 # TASK-007 — Admin Foundation UI
 
-**Status:** NOT STARTED
+**Status:** REVIEW
 
 ## Dependency
-TASK-001, TASK-002, TASK-004, TASK-005 = DONE.
+TASK-001, TASK-002, TASK-004, TASK-005 = DONE-WITH-DEFERRED atau DONE. TASK-006 = DONE-WITH-DEFERRED (approved; audit foundation available).
+
+## Verification Result
+- `pnpm --filter @lms/admin lint` → PASS
+- `pnpm --filter @lms/admin typecheck` → PASS
+- `pnpm --filter @lms/admin build` → PASS
+
+Implemented foundation shell and dashboard in the admin app, including organization, person, role/permission, and assignment/scope views consuming API contracts with loading/error/empty handling.
 
 ## Objective
 Membuat shell Admin portal dan UI foundation untuk organization/person/RBAC yang sudah tersedia.

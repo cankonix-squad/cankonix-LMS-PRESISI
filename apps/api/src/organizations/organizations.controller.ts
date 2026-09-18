@@ -9,6 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { AllowAuthenticated } from '../authorization/authorization.decorators';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { ListOrganizationsQueryDto } from './dto/list-organizations-query.dto';
 import {
@@ -19,7 +20,18 @@ import {
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { OrganizationsService } from './organizations.service';
 
+/**
+ * Organization master data (TASK-001 foundation).
+ *
+ * These routes are explicitly allow-listed for authenticated callers so the
+ * fail-closed `PermissionGuard` has an auditable decision instead of silently
+ * granting access. The permission vocabulary for this domain is owned by the
+ * task that owns the module and must replace this allow-list before production
+ * readiness; until then the route is no more permissive than the reviewed
+ * TASK-001 baseline (authentication only).
+ */
 @ApiTags('organizations')
+@AllowAuthenticated()
 @Controller('organizations')
 export class OrganizationsController {
   constructor(private readonly organizations: OrganizationsService) {}

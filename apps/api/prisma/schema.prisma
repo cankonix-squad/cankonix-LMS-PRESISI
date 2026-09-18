@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum OrganizationStatus {
@@ -13,21 +13,1292 @@ enum OrganizationStatus {
   INACTIVE
 }
 
+enum EducationProgramStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EducationBatchStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SubjectStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CurriculumStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Organization {
-  id               String             @id @default(uuid()) @db.Uuid
-  code             String             @unique
+  id               String               @id @default(uuid()) @db.Uuid
+  code             String               @unique
   name             String
-  parentId         String?            @map("parent_id") @db.Uuid
-  parent           Organization?      @relation("OrganizationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children         Organization[]     @relation("OrganizationHierarchy")
-  organizationType String?            @map("organization_type")
-  status           OrganizationStatus @default(ACTIVE)
+  parentId         String?              @map("parent_id") @db.Uuid
+  parent           Organization?        @relation("OrganizationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children         Organization[]       @relation("OrganizationHierarchy")
+  organizationType String?              @map("organization_type")
+  status           OrganizationStatus   @default(ACTIVE)
   metadata         Json?
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime           @updatedAt @map("updated_at")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  placements       PersonOrganization[]
+  educationPrograms EducationProgram[]
 
   @@index([parentId])
   @@index([status])
   @@index([organizationType])
   @@map("organizations")
+}
+
+model EducationProgram {
+  id             String                 @id @default(uuid()) @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  code           String
+  name           String
+  description    String?
+  status         EducationProgramStatus @default(ACTIVE)
+  metadata       Json?
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+  curriculums    Curriculum[]
+  educationBatches EducationBatch[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([status])
+  @@map("education_programs")
+}
+
+model Subject {
+  id                String            @id @default(uuid()) @db.Uuid
+  code              String            @unique
+  name              String
+  description       String?
+  status            SubjectStatus     @default(ACTIVE)
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  curriculumSubjects CurriculumSubject[]
+
+  @@index([status])
+  @@map("subjects")
+}
+
+model Curriculum {
+  id                String            @id @default(uuid()) @db.Uuid
+  educationProgramId String            @map("education_program_id") @db.Uuid
+  educationProgram   EducationProgram  @relation(fields: [educationProgramId], references: [id], onDelete: Restrict)
+  version           String
+  name              String
+  effectiveFrom     DateTime?         @map("effective_from") @db.Date
+  status            CurriculumStatus  @default(ACTIVE)
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  curriculumSubjects CurriculumSubject[]
+  educationBatches  EducationBatch[]
+
+  @@unique([educationProgramId, version])
+  @@index([educationProgramId])
+  @@index([status])
+  @@map("curriculums")
+}
+
+model CurriculumSubject {
+  id           String    @id @default(uuid()) @db.Uuid
+  curriculumId String    @map("curriculum_id") @db.Uuid
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
+  subjectId    String    @map("subject_id") @db.Uuid
+  subject      Subject   @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  sequence     Int       @default(1)
+  creditHours  Int?      @map("credit_hours")
+  required     Boolean   @default(false)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  classSubjects ClassSubject[]
+  questionBanks QuestionBank[]
+
+  @@unique([curriculumId, subjectId])
+  @@index([curriculumId])
+  @@index([subjectId])
+  @@map("curriculum_subjects")
+}
+
+model ClassSubject {
+  id                  String             @id @default(uuid()) @db.Uuid
+  academicClassId     String             @map("academic_class_id") @db.Uuid
+  academicClass       AcademicClass      @relation(fields: [academicClassId], references: [id], onDelete: Restrict)
+  curriculumSubjectId String             @map("curriculum_subject_id") @db.Uuid
+  curriculumSubject   CurriculumSubject  @relation(fields: [curriculumSubjectId], references: [id], onDelete: Restrict)
+  code                String?
+  displayName         String?            @map("display_name")
+  startDate           DateTime?          @map("start_date") @db.Date
+  endDate             DateTime?          @map("end_date") @db.Date
+  status              ClassSubjectStatus @default(ACTIVE)
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  @@unique([academicClassId, curriculumSubjectId])
+  @@index([academicClassId])
+  @@index([curriculumSubjectId])
+  @@index([status])
+  @@map("class_subjects")
+  educatorAssignments EducatorAssignment[]
+  schedules           AcademicSchedule[]
+  meetings            LearningMeeting[]
+  attendanceSessions  AttendanceSession[]
+  assessments         Assessment[]
+}
+
+enum ClassSubjectStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+}
+
+/// A person's participation in a batch. This is the enduring education record:
+/// withdrawal and completion change `status`, they never delete the row, so the
+/// education history of a person stays reconstructible.
+model Enrollment {
+  id              String           @id @default(uuid()) @db.Uuid
+  personId        String           @map("person_id") @db.Uuid
+  person          Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+  educationBatchId String          @map("education_batch_id") @db.Uuid
+  educationBatch  EducationBatch   @relation(fields: [educationBatchId], references: [id], onDelete: Restrict)
+  academicClassId String?          @map("academic_class_id") @db.Uuid
+  academicClass   AcademicClass?   @relation(fields: [academicClassId], references: [id], onDelete: Restrict)
+  enrollmentNumber String?         @unique @map("enrollment_number")
+  enrolledAt      DateTime         @map("enrolled_at") @db.Date
+  status          EnrollmentStatus @default(ACTIVE)
+  completedAt     DateTime?        @map("completed_at") @db.Date
+  metadata        Json?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  @@unique([personId, educationBatchId])
+  @@index([personId])
+  @@index([educationBatchId])
+  @@index([academicClassId])
+  @@index([status])
+  @@map("enrollments")
+
+  progress    LearningProgress[]
+  submissions AssignmentSubmission[]
+  attendanceRecords AttendanceRecord[]
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  WITHDRAWN
+  COMPLETED
+}
+
+enum MasterStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// Educator type is data, not an enum: Gadik, instruktur, penguji, pembimbing and
+/// any future role are seeded rows so the institution can extend its own
+/// vocabulary without a code change.
+model EducatorType {
+  id          String               @id @default(uuid()) @db.Uuid
+  code        String               @unique
+  name        String
+  description String?
+  status      MasterStatus         @default(ACTIVE)
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  assignments EducatorAssignment[]
+
+  @@index([status])
+  @@map("educator_types")
+}
+
+/// Teaching assignment: one person teaches one class subject for a period.
+/// A person may hold assignments across institutions and programs; nothing here
+/// ties a person to a single organization.
+model EducatorAssignment {
+  id              String            @id @default(uuid()) @db.Uuid
+  personId        String            @map("person_id") @db.Uuid
+  person          Person            @relation(fields: [personId], references: [id], onDelete: Restrict)
+  classSubjectId  String            @map("class_subject_id") @db.Uuid
+  classSubject    ClassSubject      @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  educatorTypeId  String            @map("educator_type_id") @db.Uuid
+  educatorType    EducatorType      @relation(fields: [educatorTypeId], references: [id], onDelete: Restrict)
+  validFrom       DateTime          @map("valid_from") @db.Date
+  validUntil      DateTime?         @map("valid_until") @db.Date
+  status          AssignmentStatus  @default(ACTIVE)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@index([personId])
+  @@index([classSubjectId])
+  @@index([educatorTypeId])
+  @@index([status])
+  @@index([validFrom, validUntil])
+  @@map("educator_assignments")
+}
+
+/// Class staff (wali kelas, admin kelas, ...) is a separate assignment from
+/// teaching: a homeroom teacher is not thereby a subject educator.
+model ClassStaffAssignment {
+  id              String           @id @default(uuid()) @db.Uuid
+  personId        String           @map("person_id") @db.Uuid
+  person          Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+  academicClassId String           @map("academic_class_id") @db.Uuid
+  academicClass   AcademicClass    @relation(fields: [academicClassId], references: [id], onDelete: Restrict)
+  staffType       String           @map("staff_type")
+  validFrom       DateTime         @map("valid_from") @db.Date
+  validUntil      DateTime?        @map("valid_until") @db.Date
+  status          AssignmentStatus @default(ACTIVE)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  @@index([personId])
+  @@index([academicClassId])
+  @@index([staffType])
+  @@index([status])
+  @@index([validFrom, validUntil])
+  @@map("class_staff_assignments")
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+/// A scheduled academic activity for one class subject. Scheduling is kept
+/// separate from learning content: a timetable entry exists whether or not any
+/// material has been authored yet, and content can be reused across schedules.
+model AcademicSchedule {
+  id             String                @id @default(uuid()) @db.Uuid
+  classSubjectId String                @map("class_subject_id") @db.Uuid
+  classSubject   ClassSubject          @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  title          String
+  description    String?
+  startAt        DateTime              @map("start_at")
+  endAt          DateTime              @map("end_at")
+  mode           AcademicScheduleMode  @default(FACE_TO_FACE)
+  location       String?
+  url            String?
+  status         AcademicScheduleStatus @default(SCHEDULED)
+  metadata       Json?
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  @@index([classSubjectId])
+  @@index([startAt, endAt])
+  @@index([status])
+  @@map("academic_schedules")
+}
+
+enum AcademicScheduleMode {
+  FACE_TO_FACE
+  ONLINE
+  BLENDED
+}
+
+enum AcademicScheduleStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+/// A learning meeting is the container for learning activities. The sequence is
+/// the pedagogical order of the meeting inside its class subject (Pertemuan 1,
+/// 2, ...) and is unique per class subject, so content and progress can address
+/// a meeting deterministically instead of by date.
+model LearningMeeting {
+  id             String                @id @default(uuid()) @db.Uuid
+  classSubjectId String                @map("class_subject_id") @db.Uuid
+  classSubject   ClassSubject          @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  sequence       Int
+  title          String
+  description    String?
+  plannedStartAt DateTime?             @map("planned_start_at")
+  plannedEndAt   DateTime?             @map("planned_end_at")
+  status         LearningMeetingStatus @default(DRAFT)
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  activities LearningActivity[]
+  attendanceSessions AttendanceSession[]
+
+  @@unique([classSubjectId, sequence])
+  @@index([classSubjectId])
+  @@index([status])
+  @@map("learning_meetings")
+}
+
+/// Per-participant, per-activity progress.
+///
+/// One row per (enrollment, activity). `progressPercent` is the authority for
+/// how far the participant got; `status` is the coarse lifecycle and must agree
+/// with it (100 <=> COMPLETED). Completion is idempotent: re-sending a completed
+/// update changes nothing and produces no duplicate audit entry, because the
+/// caller's retry must not look like a second business event.
+model LearningProgress {
+  id              String               @id @default(uuid()) @db.Uuid
+  enrollmentId    String               @map("enrollment_id") @db.Uuid
+  enrollment      Enrollment           @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  activityId      String               @map("activity_id") @db.Uuid
+  activity        LearningActivity     @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  status          LearningProgressStatus @default(NOT_STARTED)
+  progressPercent Int                  @default(0) @map("progress_percent")
+  startedAt       DateTime?            @map("started_at")
+  completedAt     DateTime?            @map("completed_at")
+  lastAccessedAt  DateTime?            @map("last_accessed_at")
+  metadata        Json?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@unique([enrollmentId, activityId])
+  @@index([enrollmentId, status])
+  @@index([activityId])
+  @@index([status])
+  @@map("learning_progress")
+}
+
+enum LearningProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+/// Read model for dashboard and reporting reads.
+///
+/// "Aggregate disimpan/dioptimalkan; jangan hitung seluruh histori setiap
+/// dashboard request" is satisfied literally: this table is maintained
+/// incrementally inside the same transaction that writes `learning_progress`,
+/// so a class-subject summary is one indexed lookup instead of a scan over every
+/// participant's every activity. It is derived data — rebuildable from
+/// `learning_progress` and never a source of truth.
+model ClassSubjectProgressAggregate {
+  id                 String      @id @default(uuid()) @db.Uuid
+  classSubjectId     String      @map("class_subject_id") @db.Uuid
+  enrollmentId       String      @map("enrollment_id") @db.Uuid
+  totalActivities    Int         @default(0) @map("total_activities")
+  completedActivities Int        @default(0) @map("completed_activities")
+  requiredActivities Int         @default(0) @map("required_activities")
+  completedRequiredActivities Int @default(0) @map("completed_required_activities")
+  progressPercent    Int         @default(0) @map("progress_percent")
+  lastActivityAt     DateTime?   @map("last_activity_at")
+  recalculatedAt     DateTime    @default(now()) @map("recalculated_at")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+
+  @@unique([classSubjectId, enrollmentId])
+  @@index([classSubjectId, progressPercent])
+  @@index([enrollmentId])
+  @@map("class_subject_progress_aggregates")
+}
+
+/// An assignment is coursework attached to a learning activity. `activityId` is
+/// mandatory because an assignment only exists inside the learning flow; the
+/// optional `assessmentId` lets the same work also feed the assessment domain
+/// without duplicating the activity.
+///
+/// `dueAt` is nullable so an educator can publish the work before committing to
+/// a deadline, but the service treats the stored value as the single authority —
+/// the client never decides whether a submission is late.
+model Assignment {
+  id              String           @id @default(uuid()) @db.Uuid
+  activityId      String           @map("activity_id") @db.Uuid
+  activity        LearningActivity @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  assessmentId    String?          @map("assessment_id") @db.Uuid
+  assessment      Assessment?      @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  title           String
+  instructions    String?
+  dueAt           DateTime?        @map("due_at")
+  maxScore        Int              @default(100) @map("max_score")
+  attemptsAllowed Int              @default(1) @map("attempts_allowed")
+  status          AssignmentLifecycleStatus @default(DRAFT)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  submissions AssignmentSubmission[]
+
+  @@unique([activityId])
+  @@index([activityId])
+  @@index([assessmentId])
+  @@index([status])
+  @@index([dueAt])
+  @@map("assignments")
+}
+
+enum AssignmentLifecycleStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+/// One attempt by one participant.
+///
+/// `attemptNo` is unique per assignment and enrollment, and rows are never
+/// overwritten: a resubmission appends the next attempt so the history of what
+/// was handed in and when stays reconstructible, and an educator can still see
+/// an earlier attempt after a later one was graded.
+model AssignmentSubmission {
+  id               String                     @id @default(uuid()) @db.Uuid
+  assignmentId     String                     @map("assignment_id") @db.Uuid
+  assignment       Assignment                 @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  enrollmentId     String                     @map("enrollment_id") @db.Uuid
+  enrollment       Enrollment                 @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  attemptNo        Int                        @map("attempt_no")
+  submittedAt      DateTime?                  @map("submitted_at")
+  textAnswer       String?                    @map("text_answer")
+  isLate           Boolean                    @default(false) @map("is_late")
+  status           AssignmentSubmissionStatus @default(DRAFT)
+  createdAt        DateTime                   @default(now()) @map("created_at")
+  updatedAt        DateTime                   @updatedAt @map("updated_at")
+
+  files AssignmentSubmissionFile[]
+  grade AssignmentGrade?
+
+  @@unique([assignmentId, enrollmentId, attemptNo])
+  @@index([assignmentId])
+  @@index([enrollmentId])
+  @@index([status])
+  @@map("assignment_submissions")
+}
+
+enum AssignmentSubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+  RETURNED
+}
+
+/// Join between a submission and a stored file.
+///
+/// The binary itself lives in object storage and is addressed through
+/// `stored_files` (TASK-022); this table only records which already-uploaded,
+/// already-confirmed file belongs to which submission attempt.
+model AssignmentSubmissionFile {
+  id            String               @id @default(uuid()) @db.Uuid
+  submissionId  String               @map("submission_id") @db.Uuid
+  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  storedFileId  String               @map("stored_file_id") @db.Uuid
+  storedFile    StoredFile           @relation(fields: [storedFileId], references: [id], onDelete: Restrict)
+  label         String?
+  createdAt     DateTime             @default(now()) @map("created_at")
+
+  @@unique([submissionId, storedFileId])
+  @@index([submissionId])
+  @@index([storedFileId])
+  @@map("assignment_submission_files")
+}
+
+/// One grade per submission, enforced by the unique key on `submissionId`.
+///
+/// Grading is keyed to the attempt, not to the assignment: a re-grade replaces
+/// this row for its own attempt and never touches a previous attempt's score.
+model AssignmentGrade {
+  id            String               @id @default(uuid()) @db.Uuid
+  submissionId  String               @unique @map("submission_id") @db.Uuid
+  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  score         Decimal              @db.Decimal(7, 2)
+  graderPersonId String              @map("grader_person_id") @db.Uuid
+  graderPerson  Person               @relation(fields: [graderPersonId], references: [id], onDelete: Restrict)
+  feedback      String?
+  gradedAt      DateTime             @map("graded_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@index([graderPersonId])
+  @@index([gradedAt])
+  @@map("assignment_grades")
+}
+
+enum LearningMeetingStatus {
+  DRAFT
+  PUBLISHED
+  COMPLETED
+  ARCHIVED
+}
+
+/// Activity types are data-driven so a new pedagogical form (discussion,
+/// upload, reading, practice) is a row, not a schema change or a code branch.
+/// `requiresContent` carries the publish rule per type: a reading activity
+/// cannot be published without material, while a discussion activity may.
+model LearningActivityType {
+  id              String       @id @default(uuid()) @db.Uuid
+  code            String       @unique
+  name            String
+  description     String?
+  requiresContent Boolean      @default(true) @map("requires_content")
+  status          MasterStatus @default(ACTIVE)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  activities LearningActivity[]
+
+  @@index([status])
+  @@map("learning_activity_types")
+}
+
+/// An activity is one actionable item inside a meeting. `sequence` is the order
+/// the student walks through and is unique per meeting, so ordering is stable
+/// and addressable rather than implied by dates.
+model LearningActivity {
+  id             String                 @id @default(uuid()) @db.Uuid
+  meetingId      String                 @map("meeting_id") @db.Uuid
+  meeting        LearningMeeting        @relation(fields: [meetingId], references: [id], onDelete: Restrict)
+  activityTypeId String                 @map("activity_type_id") @db.Uuid
+  activityType   LearningActivityType   @relation(fields: [activityTypeId], references: [id], onDelete: Restrict)
+  sequence       Int
+  title          String
+  instructions   String?
+  required       Boolean                @default(false)
+  availableFrom  DateTime?              @map("available_from")
+  availableUntil DateTime?              @map("available_until")
+  status         LearningActivityStatus @default(DRAFT)
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+
+  contents LearningContent[]
+
+  @@unique([meetingId, sequence])
+  @@index([meetingId])
+  @@index([activityTypeId])
+  @@index([status])
+  @@map("learning_activities")
+
+  progress    LearningProgress[]
+  assignment  Assignment?
+}
+
+enum LearningActivityStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+/// Content is metadata ONLY. Binaries live in object storage (MinIO/S3) and are
+/// addressed by `objectKey`; no byte array is ever stored in PostgreSQL.
+///
+/// Versions of the same material share a `versionGroupId`, and `version` is
+/// unique inside that group. Superseding published material appends a new row
+/// and marks the previous published row SUPERSEDED, so what a student was shown
+/// stays reconstructible instead of being overwritten.
+model LearningContent {
+  id             String                @id @default(uuid()) @db.Uuid
+  activityId     String                @map("activity_id") @db.Uuid
+  activity       LearningActivity      @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  versionGroupId String                @map("version_group_id") @db.Uuid
+  contentType    LearningContentType   @map("content_type")
+  title          String
+  objectKey      String?               @map("object_key")
+  externalUrl    String?               @map("external_url")
+  mimeType       String?               @map("mime_type")
+  sizeBytes      Int?                  @map("size_bytes")
+  version        Int                   @default(1)
+  status         LearningContentStatus @default(DRAFT)
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  @@unique([versionGroupId, version])
+  @@index([activityId])
+  @@index([versionGroupId])
+  @@index([status])
+  @@map("learning_contents")
+}
+
+enum LearningContentType {
+  FILE
+  LINK
+}
+
+enum LearningContentStatus {
+  DRAFT
+  PUBLISHED
+  SUPERSEDED
+  ARCHIVED
+}
+
+model EducationBatch {
+  id                 String              @id @default(uuid()) @db.Uuid
+  educationProgramId String              @map("education_program_id") @db.Uuid
+  educationProgram   EducationProgram    @relation(fields: [educationProgramId], references: [id], onDelete: Restrict)
+  curriculumId     String             @map("curriculum_id") @db.Uuid
+  curriculum       Curriculum         @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
+  code             String
+  name             String
+  startDate        DateTime           @map("start_date") @db.Date
+  endDate          DateTime           @map("end_date") @db.Date
+  status           EducationBatchStatus @default(ACTIVE)
+  capacity         Int?
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  @@unique([educationProgramId, code])
+  @@index([educationProgramId])
+  @@index([curriculumId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("education_batches")
+  classes          AcademicClass[]
+  enrollments      Enrollment[]
+}
+
+model AcademicClass {
+  id               String              @id @default(uuid()) @db.Uuid
+  educationBatchId String              @map("education_batch_id") @db.Uuid
+  educationBatch   EducationBatch      @relation(fields: [educationBatchId], references: [id], onDelete: Restrict)
+  code             String
+  name             String
+  capacity         Int?
+  status           AcademicClassStatus @default(ACTIVE)
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  @@unique([educationBatchId, code])
+  @@index([educationBatchId])
+  @@index([status])
+  @@map("academic_classes")
+  classSubjects    ClassSubject[]
+  enrollments      Enrollment[]
+  staffAssignments ClassStaffAssignment[]
+}
+
+enum AcademicClassStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum PersonStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UserAccountStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model Person {
+  id              String               @id @default(uuid()) @db.Uuid
+  personnelNumber String               @unique @map("personnel_number")
+  fullName        String               @map("full_name")
+  rank            String?
+  title           String?
+  email           String?
+  phone           String?
+  status          PersonStatus         @default(ACTIVE)
+  metadata        Json?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  userAccount     UserAccount?
+  placements      PersonOrganization[]
+  enrollments     Enrollment[]
+  educatorAssignments EducatorAssignment[]
+  staffAssignments ClassStaffAssignment[]
+  assignmentGrades AssignmentGrade[]
+
+  @@index([status])
+  @@index([fullName])
+  @@map("persons")
+}
+
+model UserAccount {
+  id             String               @id @default(uuid()) @db.Uuid
+  personId       String               @unique @map("person_id") @db.Uuid
+  person         Person               @relation(fields: [personId], references: [id], onDelete: Restrict)
+  externalAuthId String?              @unique @map("external_auth_id")
+  username       String?
+  email          String?
+  status         UserAccountStatus    @default(ACTIVE)
+  lastLoginAt    DateTime?            @map("last_login_at")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  roleAssignments UserRoleAssignment[]
+  storedFiles     StoredFile[]
+  recordedAttendanceRecords AttendanceRecord[]
+  requestedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionRequester")
+  approvedAttendanceCorrections  AttendanceCorrection[] @relation("AttendanceCorrectionApprover")
+
+  @@index([status])
+  @@map("user_accounts")
+}
+
+/// Metadata for a binary stored in object storage (TASK-022).
+///
+/// There is deliberately no `data`/`bytes` column: binaries never enter
+/// PostgreSQL, and `objectKey` is the only pointer. The key is generated by the
+/// server from the namespace, owner, date and a generated id — a client filename
+/// is kept only as sanitized display metadata in `originalName`, never as a path
+/// segment.
+///
+/// The lifecycle is: PENDING (upload initiated, nothing confirmed yet) ->
+/// UPLOADED (completion confirmed against storage) -> ACTIVE (available for use)
+/// or ARCHIVED (retired logically, bytes retained for retention policy).
+model StoredFile {
+  id           String           @id @default(uuid()) @db.Uuid
+  objectKey    String           @unique @map("object_key")
+  namespace    String
+  originalName String           @map("original_name")
+  mimeType     String           @map("mime_type")
+  sizeBytes    Int              @map("size_bytes")
+  checksum     String?
+  ownerUserId  String?          @map("owner_user_id") @db.Uuid
+  owner        UserAccount?     @relation(fields: [ownerUserId], references: [id], onDelete: Restrict)
+  status       StoredFileStatus @default(PENDING)
+  uploadedAt   DateTime?        @map("uploaded_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@index([namespace])
+  @@index([ownerUserId])
+  @@index([status])
+  @@map("stored_files")
+
+  submissionFiles AssignmentSubmissionFile[]
+}
+
+enum StoredFileStatus {
+  PENDING
+  UPLOADED
+  ACTIVE
+  ARCHIVED
+}
+
+model PersonOrganization {
+  id             String       @id @default(uuid()) @db.Uuid
+  personId       String       @map("person_id") @db.Uuid
+  person         Person       @relation(fields: [personId], references: [id], onDelete: Restrict)
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  positionName   String?      @map("position_name")
+  startDate      DateTime     @map("start_date") @db.Date
+  endDate        DateTime?    @map("end_date") @db.Date
+  isPrimary      Boolean      @default(false) @map("is_primary")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([personId])
+  @@index([organizationId])
+  @@index([startDate])
+  @@index([personId, isPrimary])
+  @@map("person_organizations")
+}
+
+enum RoleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// Roles are data. Authorization is always evaluated against permissions and
+/// scopes, never against a role code string in business logic.
+model Role {
+  id              String               @id @default(uuid()) @db.Uuid
+  code            String               @unique
+  name            String
+  description     String?
+  isSystem        Boolean              @default(false) @map("is_system")
+  status          RoleStatus           @default(ACTIVE)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  permissions     RolePermission[]
+  roleAssignments UserRoleAssignment[]
+
+  @@index([status])
+  @@index([isSystem])
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        String           @unique
+  name        String
+  description String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+/// Idempotent role-permission link: the composite primary key makes granting
+/// the same permission twice a no-op instead of a duplicate row.
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String     @map("permission_id") @db.Uuid
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+enum UserRoleAssignmentStatus {
+  ACTIVE
+  INACTIVE
+  REVOKED
+}
+
+enum ScopeType {
+  ORGANIZATION
+  PROGRAM
+  BATCH
+  CLASS
+  CLASS_SUBJECT
+}
+
+model UserRoleAssignment {
+  id            String                   @id @default(uuid()) @db.Uuid
+  userAccountId String                   @map("user_account_id") @db.Uuid
+  userAccount   UserAccount              @relation(fields: [userAccountId], references: [id], onDelete: Restrict)
+  roleId        String                   @map("role_id") @db.Uuid
+  role          Role                     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  validFrom     DateTime                 @default(now()) @map("valid_from")
+  validUntil    DateTime?                @map("valid_until")
+  status        UserRoleAssignmentStatus @default(ACTIVE)
+  createdAt     DateTime                 @default(now()) @map("created_at")
+  updatedAt     DateTime                 @updatedAt @map("updated_at")
+  scopes        RoleAssignmentScope[]
+
+  @@index([userAccountId])
+  @@index([roleId])
+  @@index([status])
+  @@index([validFrom, validUntil])
+  @@map("user_role_assignments")
+}
+
+model RoleAssignmentScope {
+  id           String             @id @default(uuid()) @db.Uuid
+  assignmentId String             @map("assignment_id") @db.Uuid
+  assignment   UserRoleAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  scopeType    ScopeType          @map("scope_type")
+  scopeId      String             @map("scope_id") @db.Uuid
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  @@unique([assignmentId, scopeType, scopeId])
+  @@index([assignmentId])
+  @@index([scopeType, scopeId])
+  @@map("role_assignment_scopes")
+}
+
+/// Immutable audit trail for sensitive mutations (TASK-006).
+///
+/// Append-only by design: rows are written once and never updated or deleted,
+/// which the repository enforces by exposing no update/delete operation and the
+/// migration enforces with a database trigger.
+///
+/// `actorUserAccountId` and `organizationId` are intentionally plain UUID
+/// columns without a foreign key. Audit history must outlive the records it
+/// describes, and a cascading or nullifying constraint would rewrite history the
+/// first time an actor or organization is removed. They are documented as
+/// historical identifiers rather than live references.
+///
+/// `before`/`after` are mapped onto `before_state`/`after_state` columns. The
+/// API-facing field names stay spec-exact, while the physical column names are
+/// self-documenting and avoid quoting the `BEFORE` trigger keyword when the
+/// append-only guard in the migration references them.
+model AuditLog {
+  id                String   @id @default(uuid()) @db.Uuid
+  actorUserAccountId String? @map("actor_user_account_id") @db.Uuid
+  action            String
+  resourceType      String   @map("resource_type")
+  resourceId        String?  @map("resource_id")
+  organizationId    String?  @map("organization_id") @db.Uuid
+  before            Json?    @map("before_state") @db.JsonB
+  after             Json?    @map("after_state") @db.JsonB
+  metadata          Json?    @db.JsonB
+  ipAddress         String?  @map("ip_address")
+  userAgent         String?  @map("user_agent")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([actorUserAccountId, createdAt])
+  @@index([resourceType, resourceId, createdAt])
+  @@index([action, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// Attendance session for a class subject, optionally tied to a specific learning meeting.
+model AttendanceSession {
+  id             String                  @id @default(uuid()) @db.Uuid
+  classSubjectId String                  @map("class_subject_id") @db.Uuid
+  classSubject   ClassSubject            @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  meetingId      String?                 @map("meeting_id") @db.Uuid
+  meeting        LearningMeeting?        @relation(fields: [meetingId], references: [id], onDelete: Restrict)
+  title          String?
+  startAt        DateTime                @map("start_at")
+  endAt          DateTime                @map("end_at")
+  method         AttendanceMethod        @default(MANUAL)
+  status         AttendanceSessionStatus @default(OPEN)
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+
+  records AttendanceRecord[]
+
+  @@index([classSubjectId])
+  @@index([meetingId])
+  @@index([status])
+  @@index([startAt, endAt])
+  @@map("attendance_sessions")
+}
+
+enum AttendanceMethod {
+  MANUAL
+  QR_CODE
+  ONLINE
+  INTEGRATION
+}
+
+enum AttendanceSessionStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+/// Record of attendance for one participant in one session.
+///
+/// `status` here is the CURRENT value only. Every change after the initial
+/// recording goes through `AttendanceCorrection`, which keeps the previous
+/// status, the reason and who approved it — so "who changed this, when, and why"
+/// stays reconstructible instead of being overwritten.
+model AttendanceRecord {
+  id               String           @id @default(uuid()) @db.Uuid
+  sessionId        String           @map("session_id") @db.Uuid
+  session          AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  enrollmentId     String           @map("enrollment_id") @db.Uuid
+  enrollment       Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  status           AttendanceStatus @default(ABSENT)
+  checkInAt        DateTime?        @map("check_in_at")
+  note             String?
+  recordedByUserId String?          @map("recorded_by_user_id") @db.Uuid
+  recordedByUser   UserAccount?     @relation(fields: [recordedByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  corrections AttendanceCorrection[]
+
+  @@unique([sessionId, enrollmentId])
+  @@index([sessionId])
+  @@index([enrollmentId])
+  @@index([status])
+  @@map("attendance_records")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  EXCUSED
+  SICK
+  ABSENT
+}
+
+/// Append-only correction history for an attendance record.
+///
+/// A correction is never deleted and never edited: the previous value, the new
+/// value, the mandatory reason and the requester/approver are written once, and
+/// the record's `status` is updated in the same transaction. Keeping history in
+/// its own table (rather than a `previousStatus` column on the record) means the
+/// full chain of corrections survives, and the audit trail can point at one
+/// immutable row per correction.
+model AttendanceCorrection {
+  id                 String                    @id @default(uuid()) @db.Uuid
+  attendanceRecordId String                    @map("attendance_record_id") @db.Uuid
+  attendanceRecord   AttendanceRecord          @relation(fields: [attendanceRecordId], references: [id], onDelete: Restrict)
+  previousStatus     AttendanceStatus          @map("previous_status")
+  newStatus          AttendanceStatus          @map("new_status")
+  reason             String
+  requestedByUserId  String?                   @map("requested_by_user_id") @db.Uuid
+  requestedByUser    UserAccount?              @relation("AttendanceCorrectionRequester", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  approvedByUserId   String?                   @map("approved_by_user_id") @db.Uuid
+  approvedByUser     UserAccount?              @relation("AttendanceCorrectionApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  approvedAt         DateTime?                 @map("approved_at")
+  status             AttendanceCorrectionStatus @default(APPLIED)
+  createdAt          DateTime                  @default(now()) @map("created_at")
+
+  @@index([attendanceRecordId, createdAt])
+  @@index([requestedByUserId])
+  @@index([approvedByUserId])
+  @@index([status])
+  @@map("attendance_corrections")
+}
+
+/// Corrections are applied immediately in this task's minimal workflow, but the
+/// status is modelled explicitly so a future four-eyes approval flow can add
+/// PENDING/REJECTED without changing the history table.
+enum AttendanceCorrectionStatus {
+  PENDING
+  APPLIED
+  REJECTED
+}
+
+enum AttendanceSummaryScopeType {
+  ENROLLMENT
+  ENROLLMENT_SUBJECT
+  CLASS_SUBJECT
+  CLASS
+  BATCH
+  PROGRAM
+}
+
+/// Pre-aggregated attendance summary reporting table (TASK-033).
+///
+/// Stores precalculated attendance counts and percentages per scope
+/// (enrollment, class subject, class, batch, program) to provide fast O(1) reads
+/// for reporting and executive overview without performing full raw scans over
+/// attendance records.
+model AttendanceSummary {
+  id                   String                     @id @default(uuid()) @db.Uuid
+  scopeType            AttendanceSummaryScopeType @map("scope_type")
+  scopeId              String                     @map("scope_id") @db.Uuid
+  enrollmentId         String?                    @map("enrollment_id") @db.Uuid
+  classSubjectId       String?                    @map("class_subject_id") @db.Uuid
+  academicClassId      String?                    @map("academic_class_id") @db.Uuid
+  educationBatchId     String?                    @map("education_batch_id") @db.Uuid
+  academicProgramId    String?                    @map("academic_program_id") @db.Uuid
+  participants         Int                        @default(0)
+  totalSessions        Int                        @default(0) @map("total_sessions")
+  presentCount         Int                        @default(0) @map("present_count")
+  lateCount            Int                        @default(0) @map("late_count")
+  excusedCount         Int                        @default(0) @map("excused_count")
+  sickCount            Int                        @default(0) @map("sick_count")
+  absentCount          Int                        @default(0) @map("absent_count")
+  attendancePercentage Float                      @default(0) @map("attendance_percentage")
+  recalculatedAt       DateTime                   @default(now()) @map("recalculated_at")
+  createdAt            DateTime                   @default(now()) @map("created_at")
+  updatedAt            DateTime                   @updatedAt @map("updated_at")
+
+  @@unique([scopeType, scopeId])
+  @@index([scopeType, scopeId])
+  @@index([enrollmentId])
+  @@index([classSubjectId])
+  @@index([academicClassId])
+  @@index([educationBatchId])
+  @@index([academicProgramId])
+  @@map("attendance_summaries")
+}
+
+/// Assessment method catalogue (TASK-040).
+///
+/// Types are data-driven rows, not an enum in code: QUIZ, EXAM, ASSIGNMENT,
+/// PRACTICAL, OBSERVATION and COMPETENCY are seeded rows, and an institution
+/// can add its own method without a schema change or a code branch. Reusing
+/// `MasterStatus` keeps the retire-a-value semantics identical to the other
+/// controlled vocabularies (`educator_types`, `learning_activity_types`).
+model AssessmentType {
+  id          String       @id @default(uuid()) @db.Uuid
+  code        String       @unique
+  name        String
+  description String?
+  status      MasterStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  assessments Assessment[]
+
+  @@index([status])
+  @@map("assessment_types")
+}
+
+/// Umbrella assessment record (TASK-040).
+///
+/// An assessment is a graded activity attached to one class subject. It is
+/// deliberately method-agnostic: the `assessmentType` row decides whether the
+/// assessment is a quiz, a practical or a competency check, so later tasks
+/// (question bank, exam, grading) can hang off the same umbrella instead of
+/// each inventing its own container.
+///
+/// `maxScore` is the denominator and is required. `weight` is nullable and
+/// only meaningful once a grading scheme (TASK-050) aggregates several
+/// assessments into a final score; a NULL weight means "not yet weighted"
+/// rather than zero.
+///
+/// Rows are never deleted destructively once PUBLISHED: the lifecycle moves
+/// through CLOSED/ARCHIVED so anything already shown to participants stays
+/// reconstructible.
+model Assessment {
+  id               String             @id @default(uuid()) @db.Uuid
+  classSubjectId   String             @map("class_subject_id") @db.Uuid
+  classSubject     ClassSubject       @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  assessmentTypeId String             @map("assessment_type_id") @db.Uuid
+  assessmentType   AssessmentType     @relation(fields: [assessmentTypeId], references: [id], onDelete: Restrict)
+  title            String
+  description      String?
+  maxScore         Decimal            @db.Decimal(7, 2) @map("max_score")
+  weight           Decimal?           @db.Decimal(5, 2)
+  availableFrom    DateTime?          @map("available_from")
+  availableUntil    DateTime?         @map("available_until")
+  status           AssessmentStatus   @default(DRAFT)
+  metadata         Json?
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  assignments Assignment[]
+
+  @@index([classSubjectId])
+  @@index([assessmentTypeId])
+  @@index([status])
+  @@index([availableFrom])
+  @@map("assessments")
+}
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+/// A question bank is the reusable, class-independent pool of questions from
+/// which exams draw. It is scoped to a curriculum subject (TASK-011) rather
+/// than to a class subject: a bank outlives the classes that use it, and the
+/// same bank feeds every batch that later teaches the subject.
+///
+/// A bank is only ever retired by flipping `status` to INACTIVE; it is never
+/// deleted, because an attempt may still reference a version of a question
+/// underneath it. Authorship is not duplicated here — the audit trail (TASK-006)
+/// already records who changed what.
+model QuestionBank {
+  id                  String            @id @default(uuid()) @db.Uuid
+  curriculumSubjectId String            @map("curriculum_subject_id") @db.Uuid
+  curriculumSubject   CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Restrict)
+  code                String
+  name                String
+  description         String?
+  status              MasterStatus      @default(ACTIVE)
+  metadata            Json?
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  questions Question[]
+
+  @@unique([curriculumSubjectId, code])
+  @@index([curriculumSubjectId])
+  @@index([status])
+  @@map("question_banks")
+}
+
+/// Question types are a controlled vocabulary, exactly like `assessment_types`:
+/// the baseline rows are seeded by migration and an institution can add its own
+/// (essay, short answer, matching, ...) without a schema or code change.
+///
+/// `hasOptions` and `multiSelect` make option validation DATA-DRIVEN: the
+/// service reads the flags off the selected type instead of branching on a code,
+/// so a new option-based type behaves correctly the moment it is inserted.
+/// Nothing here ever reaches a student-facing payload.
+model QuestionType {
+  id          String       @id @default(uuid()) @db.Uuid
+  code        String       @unique
+  name        String
+  description String?
+  hasOptions  Boolean      @default(false) @map("has_options")
+  multiSelect Boolean      @default(false) @map("multi_select")
+  status      MasterStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  questions Question[]
+
+  @@index([status])
+  @@map("question_types")
+}
+
+/// A question is a stable identity. Its editable content does NOT live here —
+/// it lives in append-only `QuestionVersion` snapshots. `code` is an optional
+/// human reference unique within its bank.
+model Question {
+  id             String       @id @default(uuid()) @db.Uuid
+  questionBankId String       @map("question_bank_id") @db.Uuid
+  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Restrict)
+  questionTypeId String       @map("question_type_id") @db.Uuid
+  questionType   QuestionType @relation(fields: [questionTypeId], references: [id], onDelete: Restrict)
+  code           String?
+  /// `MasterStatus` mirrors the vocabulary tables: an INACTIVE question is
+  /// retired from new exam blueprints while its versions stay readable for
+  /// historical attempts.
+  status         MasterStatus @default(ACTIVE)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  versions QuestionVersion[]
+
+  @@unique([questionBankId, code])
+  @@index([questionBankId])
+  @@index([questionTypeId])
+  @@index([status])
+  @@map("questions")
+}
+
+/// An immutable snapshot of a question at a point in time.
+///
+/// Rows are append-only. `(questionId, version)` is unique, and the service
+/// refuses to mutate a row once it leaves DRAFT, so an attempt recorded against
+/// version 3 keeps rendering the exact stem and options that were shown — even
+/// after the author rewrites the question into version 4.
+///
+/// `stem` is the question text; `scoringRule` holds the machine-readable answer
+/// key (e.g. the correct option keys and the points awarded) so scoring never
+/// has to infer the answer. `explanation` is the post-grading rationale;
+/// `difficulty` and `topic` are the classification metadata an exam blueprint
+/// filters on (TASK-042). The correct answer lives BOTH in `scoringRule` and on
+/// the options, and neither is ever serialized into a student-facing DTO.
+model QuestionVersion {
+  id          String                @id @default(uuid()) @db.Uuid
+  questionId  String                @map("question_id") @db.Uuid
+  question    Question              @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  version     Int
+  stem        String
+  scoringRule Json?                 @map("scoring_rule")
+  explanation String?
+  difficulty  String?
+  topic       String?
+  maxScore    Decimal               @default(1) @db.Decimal(7, 2) @map("max_score")
+  status      QuestionVersionStatus @default(DRAFT)
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  options QuestionOption[]
+
+  @@unique([questionId, version])
+  @@index([questionId])
+  @@index([status])
+  @@map("question_versions")
+}
+
+enum QuestionVersionStatus {
+  DRAFT
+  PUBLISHED
+  SUPERSEDED
+}
+
+/// An answer choice belonging to one immutable version.
+///
+/// `isCorrect` and `value` are SERVER-ONLY: they exist to score an attempt and
+/// are stripped by the student-safe projection before a question ever reaches a
+/// participant. `versionId` (not `questionId`) is the owner precisely so a
+/// historical attempt resolves the option set that existed at the time.
+model QuestionOption {
+  id         String          @id @default(uuid()) @db.Uuid
+  versionId  String          @map("version_id") @db.Uuid
+  version    QuestionVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  /// Stable within a version; a scoring rule refers to this, not to the row id.
+  key        String
+  label      String
+  isCorrect  Boolean         @default(false) @map("is_correct")
+  value      Decimal?        @db.Decimal(7, 2)
+  sortOrder  Int             @default(0) @map("sort_order")
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  @@unique([versionId, key])
+  @@index([versionId])
+  @@map("question_options")
 }

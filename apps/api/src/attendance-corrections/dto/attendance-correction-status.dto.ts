@@ -1,0 +1,8 @@
+export const ATTENDANCE_CORRECTION_STATUSES = {
+  PENDING: 'PENDING',
+  APPLIED: 'APPLIED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type AttendanceCorrectionStatus =
+  (typeof ATTENDANCE_CORRECTION_STATUSES)[keyof typeof ATTENDANCE_CORRECTION_STATUSES];

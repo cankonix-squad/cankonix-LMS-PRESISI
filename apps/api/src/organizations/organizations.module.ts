@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { AuditModule } from '../audit/audit.module';
 import { OrganizationsController } from './organizations.controller';
 import {
   ORGANIZATIONS_REPOSITORY,
@@ -8,9 +8,9 @@ import {
 import { OrganizationsService } from './organizations.service';
 
 @Module({
+  imports: [AuditModule],
   controllers: [OrganizationsController],
   providers: [
-    PrismaService,
     OrganizationsService,
     {
       provide: ORGANIZATIONS_REPOSITORY,

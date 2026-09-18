@@ -13,6 +13,30 @@ const {
   OrganizationsService,
 } = require('../dist/organizations/organizations.service');
 
+class FakeAuditService {
+  constructor() {
+    this.records = [];
+  }
+
+  async record(input) {
+    this.records.push(input);
+    return {
+      id: `audit-${this.records.length}`,
+      actorUserAccountId: null,
+      action: input.action,
+      resourceType: input.resourceType,
+      resourceId: input.resourceId ?? null,
+      organizationId: input.organizationId ?? null,
+      before: input.before ?? null,
+      after: input.after ?? null,
+      metadata: input.metadata ?? null,
+      ipAddress: null,
+      userAgent: null,
+      createdAt: new Date().toISOString(),
+    };
+  }
+}
+
 class MemoryOrganizationsRepository {
   constructor() {
     this.records = [];
@@ -84,7 +108,12 @@ class MemoryOrganizationsRepository {
 
 function createService() {
   const repository = new MemoryOrganizationsRepository();
-  return { repository, service: new OrganizationsService(repository) };
+  const audit = new FakeAuditService();
+  return {
+    repository,
+    audit,
+    service: new OrganizationsService(repository, audit),
+  };
 }
 
 test('organization service creates normalized codes and paginated searchable list', async () => {
@@ -171,8 +200,25 @@ test('organization service returns children, tree, and descendant ids', async ()
   ]);
 });
 
+test('organization mutations record representative audit entries', async () => {
+  const { service, audit } = createService();
+  const created = await service.create({
+    code: 'AUDIT-ORG',
+    name: 'Audit Organization',
+    metadata: { source: 'test' },
+  });
+  await service.update(created.id, { name: 'Audit Organization Updated' });
+
+  assert.equal(audit.records.length, 2);
+  assert.equal(audit.records[0].action, 'organization.created');
+  assert.equal(audit.records[0].resourceType, 'organization');
+  assert.equal(audit.records[0].resourceId, created.id);
+  assert.equal(audit.records[1].action, 'organization.updated');
+  assert.deepEqual(audit.records[1].metadata.changedFields, ['name']);
+});
+
 test('organization endpoints are exposed in OpenAPI under api v1', async () => {
-  const app = await createApp();
+  const app = await createApp({ docsEnabled: true });
   try {
     await app.listen(0, '127.0.0.1');
     const base = await app.getUrl();

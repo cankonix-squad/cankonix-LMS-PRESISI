@@ -1,4 +1,10 @@
-import { PortalShell } from '@lms/ui';
+import { EducatorShell } from '@/components/educator-shell';
+import { EducatorDashboard } from '@/features/learning/dashboard';
+
 export default function Page() {
-  return <PortalShell title="Portal Educator" />;
+  return (
+    <EducatorShell>
+      <EducatorDashboard />
+    </EducatorShell>
+  );
 }

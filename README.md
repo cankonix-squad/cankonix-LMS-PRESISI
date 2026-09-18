@@ -42,11 +42,36 @@ Ports:
 
 ## API
 
-- Health: `GET /api/v1/health`
+- Health: `GET /api/v1/health` (public)
+- Current user: `GET /api/v1/me` (requires `Authorization: Bearer <token>`)
 - Swagger UI: `/api/v1/docs`
 - OpenAPI JSON: `/api/v1/docs-json`
 
-The health endpoint reports API process liveness. Infrastructure readiness and authentication integration are owned by later tasks.
+The health endpoint reports API process liveness. Infrastructure readiness is owned by a later task.
+
+## Authentication
+
+The API is an OIDC **resource server**. Keycloak issues access tokens; the API only validates them.
+
+- Access tokens must be RS256/RS384/RS512 signed by the configured issuer and carry the configured audience.
+- Signature, `iss`, `aud`, `exp` and `nbf` are validated against the issuer's JWKS.
+- The token subject is mapped to `UserAccount.externalAuthId`. Unmapped subjects are rejected with `401`; accounts or persons that are not `ACTIVE` are rejected with `403`.
+- Authorization (Permission + Scope) is enforced by the LMS, never delegated to Keycloak. The API stores no passwords, tokens or client secrets.
+
+Configuration (`apps/api/.env.example`):
+
+| Variable                           | Required | Purpose                                                             |
+| ---------------------------------- | -------- | ------------------------------------------------------------------- |
+| `KEYCLOAK_ISSUER`                  | yes      | Expected `iss` claim, e.g. `http://localhost:8080/realms/lemdiklat` |
+| `KEYCLOAK_AUDIENCE`                | yes      | Expected `aud` claim, e.g. `lemdiklat-api`                          |
+| `KEYCLOAK_JWKS_URI`                | no       | JWKS endpoint; derived from the issuer by default                   |
+| `AUTH_CLOCK_SKEW_SECONDS`          | no       | Clock skew tolerance (default `30`)                                 |
+| `AUTH_JWKS_CACHE_SECONDS`          | no       | JWKS cache lifetime (default `300`)                                 |
+| `AUTH_JWKS_TIMEOUT_MS`             | no       | JWKS request timeout (default `5000`)                               |
+| `AUTH_LAST_LOGIN_THROTTLE_SECONDS` | no       | Minimum interval between `lastLoginAt` writes (default `300`)       |
+| `DOCS_ENABLED`                     | no       | Swagger UI toggle; enabled outside production by default            |
+
+If authentication is unconfigured or misconfigured, protected routes fail **closed** with `401`; a production instance refuses to start.
 
 ## Verification
 
@@ -59,7 +84,7 @@ pnpm --filter @lms/api db:validate
 pnpm --filter @lms/api db:generate
 ```
 
-Prisma is initialized with PostgreSQL and no LMS business models. Database schema changes and migrations begin in later domain tasks.
+Prisma is initialized with PostgreSQL. Schema changes are introduced only through migrations owned by the task that needs them.
 
 ## Package Layout
 

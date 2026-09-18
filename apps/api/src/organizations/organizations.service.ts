@@ -5,6 +5,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { AUDIT_ACTIONS, AUDIT_RESOURCE_TYPES } from '../audit/audit-actions';
+import { AuditService } from '../audit/audit.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { ListOrganizationsQueryDto } from './dto/list-organizations-query.dto';
 import {
@@ -29,6 +31,7 @@ export class OrganizationsService {
   constructor(
     @Inject(ORGANIZATIONS_REPOSITORY)
     private readonly organizations: OrganizationsRepository,
+    private readonly audit: AuditService,
   ) {}
 
   async create(dto: CreateOrganizationDto): Promise<OrganizationResponseDto> {
@@ -43,6 +46,18 @@ export class OrganizationsService {
       status: dto.status ?? OrganizationStatusDto.ACTIVE,
       metadata: dto.metadata ?? null,
     });
+
+    // `organizationId` points at the record itself: hierarchy changes are
+    // audited against the unit they change, which is what a "what happened in
+    // this unit" review needs.
+    await this.audit.record({
+      action: AUDIT_ACTIONS.ORGANIZATION_CREATED,
+      resourceType: AUDIT_RESOURCE_TYPES.ORGANIZATION,
+      resourceId: created.id,
+      organizationId: created.id,
+      after: organizationSnapshot(created),
+    });
+
     return toResponse(created);
   }
 
@@ -74,7 +89,7 @@ export class OrganizationsService {
     id: string,
     dto: UpdateOrganizationDto,
   ): Promise<OrganizationResponseDto> {
-    await this.ensureExists(id);
+    const existing = await this.ensureExists(id);
     const data: OrganizationUpdateData = {};
     if (dto.code !== undefined) {
       const code = normalizeCode(dto.code);
@@ -91,7 +106,20 @@ export class OrganizationsService {
       await this.assertValidParentChange(id, dto.parentId);
       data.parentId = dto.parentId;
     }
-    return toResponse(await this.organizations.update(id, data));
+
+    const updated = await this.organizations.update(id, data);
+
+    await this.audit.record({
+      action: AUDIT_ACTIONS.ORGANIZATION_UPDATED,
+      resourceType: AUDIT_RESOURCE_TYPES.ORGANIZATION,
+      resourceId: updated.id,
+      organizationId: updated.id,
+      before: organizationSnapshot(existing),
+      after: organizationSnapshot(updated),
+      metadata: { changedFields: Object.keys(data).sort() },
+    });
+
+    return toResponse(updated);
   }
 
   async children(id: string): Promise<OrganizationResponseDto[]> {
@@ -183,6 +211,26 @@ function toResponse(organization: OrganizationRecord): OrganizationResponseDto {
     metadata: organization.metadata,
     createdAt: organization.createdAt.toISOString(),
     updatedAt: organization.updatedAt.toISOString(),
+  };
+}
+
+/**
+ * Audit snapshot of an organization.
+ *
+ * `metadata` is included so a review can reconstruct the flexible attributes
+ * that were set, and redaction applies to it like any other payload.
+ */
+function organizationSnapshot(
+  organization: OrganizationRecord,
+): Record<string, unknown> {
+  return {
+    id: organization.id,
+    code: organization.code,
+    name: organization.name,
+    parentId: organization.parentId,
+    organizationType: organization.organizationType,
+    status: organization.status,
+    metadata: organization.metadata,
   };
 }
 

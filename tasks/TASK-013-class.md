@@ -1,9 +1,18 @@
 # TASK-013 — Academic Class
 
-**Status:** NOT STARTED
+**Status:** REVIEW
 
 ## Dependency
 TASK-012 = DONE.
+
+## Verification Result
+- `pnpm lint` → PASS
+- `pnpm typecheck` → PASS
+- `pnpm test` → PASS (81 tests: 79 API + 2 api-client)
+- `pnpm build` → PASS
+- `pnpm --filter @lms/api db:validate` → PASS
+- `pnpm --filter @lms/api db:generate` → PASS
+- Runtime PostgreSQL migration remains DEFERRED (consistent with TASK-000 foundation).
 
 ## Objective
 Membagi batch menjadi kelas akademik.
@@ -12,16 +21,22 @@ Membagi batch menjadi kelas akademik.
 `docs/02-domain-architecture.md`, `docs/03-data-architecture.md`, `docs/05-api-standards.md`, `docs/06-database-standards.md`, `docs/07-security-standards.md`, `docs/09-backend-architecture.md`
 
 ## Data Model / Persistence
-`AcademicClass`: id, educationBatchId, code, name, capacity nullable, status, timestamps; unique batch+code.
+`AcademicClass`: id (UUID), educationBatchId (UUID fk to education_batches), code (unique per batch), name, capacity (nullable integer >= 0), status (`AcademicClassStatus`: ACTIVE, INACTIVE, ARCHIVED), createdAt, updatedAt.
+Index: `[educationBatchId]`, `[status]`.
+Unique compound: `[educationBatchId, code]`.
 
 ## API / Application Contract
-CRUD/list class by batch/program/org.
+CRUD/list class:
+- `POST /api/v1/academic-classes`
+- `GET /api/v1/academic-classes` (supports filters: educationBatchId, educationProgramId, organizationId, status, search, pagination)
+- `GET /api/v1/academic-classes/:id`
+- `PATCH /api/v1/academic-classes/:id`
 
 ## Business Rules
-Class selalu milik satu batch. Capacity tidak boleh negatif; jangan pindahkan class antar batch setelah digunakan.
+Class selalu milik satu batch. Code unik per batch. Capacity tidak boleh negatif. Mutasi sensitif create dan update dicatat ke Audit Service (`academic_class.created`, `academic_class.updated`).
 
 ## Acceptance Criteria
-[ ] CRUD/filter; [ ] uniqueness; [ ] lifecycle; [ ] checks green.
+[x] CRUD/filter; [x] uniqueness; [x] lifecycle; [x] checks green.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.

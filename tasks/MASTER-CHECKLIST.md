@@ -41,32 +41,32 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | --- | --- | --- | --- |
 | TASK-000 | `tasks/TASK-000-foundation.md` | DONE-WITH-DEFERRED | None |
 | TASK-001 | `tasks/TASK-001-organization.md` | DONE-WITH-DEFERRED | TASK-000 = DONE atau DONE-WITH-DEFERRED |
-| TASK-002 | `tasks/TASK-002-person-user.md` | NOT STARTED | TASK-001 = DONE |
-| TASK-003 | `tasks/TASK-003-auth-keycloak.md` | NOT STARTED | TASK-002 = DONE |
-| TASK-004 | `tasks/TASK-004-role-permission.md` | NOT STARTED | TASK-003 = DONE |
-| TASK-005 | `tasks/TASK-005-scope.md` | NOT STARTED | TASK-004 = DONE |
-| TASK-006 | `tasks/TASK-006-audit.md` | NOT STARTED | TASK-005 = DONE |
-| TASK-007 | `tasks/TASK-007-admin-foundation-ui.md` | NOT STARTED | TASK-001, TASK-002, TASK-004, TASK-005 = DONE |
-| TASK-010 | `tasks/TASK-010-academic-program.md` | NOT STARTED | TASK-005 = DONE |
-| TASK-011 | `tasks/TASK-011-curriculum-subject.md` | NOT STARTED | TASK-010 = DONE |
-| TASK-012 | `tasks/TASK-012-batch.md` | NOT STARTED | TASK-011 = DONE |
-| TASK-013 | `tasks/TASK-013-class.md` | NOT STARTED | TASK-012 = DONE |
-| TASK-014 | `tasks/TASK-014-class-subject.md` | NOT STARTED | TASK-013 = DONE |
-| TASK-015 | `tasks/TASK-015-enrollment.md` | NOT STARTED | TASK-013 = DONE |
-| TASK-016 | `tasks/TASK-016-educator-assignment.md` | NOT STARTED | TASK-014 = DONE |
-| TASK-017 | `tasks/TASK-017-academic-scheduling.md` | NOT STARTED | TASK-014 = DONE |
-| TASK-020 | `tasks/TASK-020-learning.md` | NOT STARTED | TASK-014 = DONE |
-| TASK-021 | `tasks/TASK-021-learning-activity-content.md` | NOT STARTED | TASK-020 = DONE |
-| TASK-022 | `tasks/TASK-022-file-management.md` | NOT STARTED | TASK-000 = DONE-WITH-DEFERRED atau DONE |
-| TASK-023 | `tasks/TASK-023-learning-progress.md` | NOT STARTED | TASK-021 = DONE dan TASK-015 = DONE |
-| TASK-024 | `tasks/TASK-024-assignment-submission.md` | NOT STARTED | TASK-021, TASK-022, TASK-015 = DONE |
-| TASK-025 | `tasks/TASK-025-educator-learning-ui.md` | NOT STARTED | TASK-020, TASK-021, TASK-024 = DONE |
-| TASK-026 | `tasks/TASK-026-student-learning-ui.md` | NOT STARTED | TASK-023, TASK-024 = DONE |
-| TASK-030 | `tasks/TASK-030-attendance.md` | NOT STARTED | TASK-017 dan TASK-015 = DONE |
-| TASK-031 | `tasks/TASK-031-attendance-correction-audit.md` | NOT STARTED | TASK-030 dan TASK-006 = DONE |
-| TASK-032 | `tasks/TASK-032-attendance-ui.md` | NOT STARTED | TASK-031 = DONE |
-| TASK-033 | `tasks/TASK-033-attendance-summary.md` | NOT STARTED | TASK-031 = DONE |
-| TASK-040 | `tasks/TASK-040-assessment.md` | NOT STARTED | TASK-014 = DONE |
+| TASK-002 | `tasks/TASK-002-person-user.md` | DONE | TASK-001 = DONE |
+| TASK-003 | `tasks/TASK-003-auth-keycloak.md` | DONE-WITH-DEFERRED | TASK-002 = DONE |
+| TASK-004 | `tasks/TASK-004-role-permission.md` | DONE-WITH-DEFERRED | TASK-003 = DONE |
+| TASK-005 | `tasks/TASK-005-scope.md` | DONE-WITH-DEFERRED | TASK-004 = DONE atau DONE-WITH-DEFERRED |
+| TASK-006 | `tasks/TASK-006-audit.md` | DONE-WITH-DEFERRED | TASK-005 = DONE-WITH-DEFERRED |
+| TASK-007 | `tasks/TASK-007-admin-foundation-ui.md` | REVIEW | TASK-001, TASK-002, TASK-004, TASK-005 = DONE |
+| TASK-010 | `tasks/TASK-010-academic-program.md` | REVIEW | TASK-005 = DONE |
+| TASK-011 | `tasks/TASK-011-curriculum-subject.md` | REVIEW | TASK-010 = DONE |
+| TASK-012 | `tasks/TASK-012-batch.md` | REVIEW | TASK-011 = DONE |
+| TASK-013 | `tasks/TASK-013-class.md` | REVIEW | TASK-012 = DONE |
+| TASK-014 | `tasks/TASK-014-class-subject.md` | REVIEW | TASK-013 = DONE |
+| TASK-015 | `tasks/TASK-015-enrollment.md` | REVIEW | TASK-013 = DONE |
+| TASK-016 | `tasks/TASK-016-educator-assignment.md` | REVIEW | TASK-014 = DONE |
+| TASK-017 | `tasks/TASK-017-academic-scheduling.md` | REVIEW | TASK-014 = DONE |
+| TASK-020 | `tasks/TASK-020-learning.md` | REVIEW | TASK-014 = DONE |
+| TASK-021 | `tasks/TASK-021-learning-activity-content.md` | REVIEW | TASK-020 = DONE |
+| TASK-022 | `tasks/TASK-022-file-management.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED atau DONE |
+| TASK-023 | `tasks/TASK-023-learning-progress.md` | REVIEW | TASK-021 = DONE dan TASK-015 = DONE |
+| TASK-024 | `tasks/TASK-024-assignment-submission.md` | REVIEW | TASK-021, TASK-022, TASK-015 = DONE |
+| TASK-025 | `tasks/TASK-025-educator-learning-ui.md` | REVIEW | TASK-020, TASK-021, TASK-024 = DONE |
+| TASK-026 | `tasks/TASK-026-student-learning-ui.md` | REVIEW | TASK-023, TASK-024 = DONE |
+| TASK-030 | `tasks/TASK-030-attendance.md` | REVIEW | TASK-017 dan TASK-015 = DONE |
+| TASK-031 | `tasks/TASK-031-attendance-correction-audit.md` | REVIEW | TASK-030 dan TASK-006 = DONE |
+| TASK-032 | `tasks/TASK-032-attendance-ui.md` | REVIEW | TASK-031 = DONE |
+| TASK-033 | `tasks/TASK-033-attendance-summary.md` | REVIEW | TASK-031 = DONE |
+| TASK-040 | `tasks/TASK-040-assessment.md` | REVIEW | TASK-014 = DONE |
 | TASK-041 | `tasks/TASK-041-question-bank.md` | NOT STARTED | TASK-040 = DONE |
 | TASK-042 | `tasks/TASK-042-exam.md` | NOT STARTED | TASK-041 = DONE |
 | TASK-043 | `tasks/TASK-043-exam-session.md` | NOT STARTED | TASK-042 dan TASK-015 = DONE |
@@ -89,6 +89,58 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | NOT STARTED | TASK-060 dan TASK-053 = DONE |
 | TASK-065 | `tasks/TASK-065-executive-ui.md` | NOT STARTED | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
 
+## Reviewer Decision — TASK-005 approved (2026-09-16)
+
+Human review confirmed that all three blocking findings from the 2026-09-16 code review are closed:
+
+- `PermissionGuard` is a global `APP_GUARD`, runs after `JwtAuthGuard`, and is fail closed.
+- Authorization/assignment endpoints declare explicit permission policies.
+- `users/:userAccountId/...` endpoints use `@RequireSelfOrPermission`, so self-read and cross-user read are distinguished.
+- Non-`ORGANIZATION` scopes are rejected with `400` until the owning domain validator is available.
+- New security tests cover 401/403, cross-user denial, fail-closed routes, and invalid scopes.
+
+Reviewer verification from the repo root: `pnpm lint`, `pnpm typecheck`, `pnpm test` (61 API + 2 api-client), `pnpm build`, `db:validate`, `db:generate` → PASS.
+
+**Final status: TASK-005 = `DONE-WITH-DEFERRED`.** Accepted deferrals: runtime PostgreSQL migration, runtime Keycloak realm/audience verification, and the non-blocking carry-forward items below. This satisfies the dependency for TASK-006, TASK-007, and TASK-010.
+
 ## Next Eligible Development Task
 
-TASK-002 is the next eligible development task because TASK-001 is recorded as `DONE-WITH-DEFERRED` after reviewer approval on 2026-09-16, and its deferred PostgreSQL runtime migration verification is documented as not technically blocking TASK-002.
+TASK-007 (`tasks/TASK-007-admin-foundation-ui.md`) is the next eligible development task after user/reviewer approval of TASK-006 as `DONE-WITH-DEFERRED` on 2026-09-16.
+
+Status note (2026-09-17, chained under standing user permission): TASK-020, TASK-021, TASK-022, TASK-023, and TASK-024 have been implemented, verified, and moved to `REVIEW`. TASK-022 (File Management) verification: `pnpm lint` (11), `pnpm typecheck` (14), `pnpm build` (11), `pnpm test` (132 API + 2 api-client = 134, 0 fail), `db:validate`, `db:generate` → PASS; migration `apps/api/prisma/migrations/20260926000000_task_022_stored_file/`. TASK-023 (Learning Progress) verification: `pnpm lint` (11), `pnpm typecheck` (14), `pnpm build` (11), `pnpm test` (**140 API + 2 api-client = 142**, 0 fail), `db:validate`, `db:generate` → PASS; migration `apps/api/prisma/migrations/20260927000000_task_023_learning_progress/`. TASK-024 (Assignment & Submission) verification: `pnpm lint` (11), `pnpm typecheck` (14), `pnpm build` (11), `pnpm test` (**159 API + 2 api-client = 161**, 0 fail; 19 new tests in `apps/api/test/assignments.test.cjs`), `db:validate`, `db:generate` → PASS; migration `apps/api/prisma/migrations/20260928000000_task_024_assignment_submission/` (4 model, 2 enum, 13 route di atas dua controller). Deferred for all three: runtime PostgreSQL migration (TASK-022 also defers the live MinIO/S3 runtime path).
+
+Next eligible development tasks after TASK-024: TASK-025 (`tasks/TASK-025-educator-learning-ui.md`, needs TASK-020/021/024), TASK-026 (`tasks/TASK-026-student-learning-ui.md`, needs TASK-023/024), and TASK-030 (`tasks/TASK-030-attendance.md`, needs TASK-017/015).
+
+Status note (2026-09-17, chained under standing user permission): TASK-025 (Educator Learning UI) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm test` (**159 API + 2 api-client = 161**, 0 fail), `pnpm --filter @lms/educator build` (`next build`, Next.js 16.3.5/Turbopack, compiled successfully in 7.1s; routes `/`, `/aktivitas`, `/kelas`, `/pemantauan`, `/pertemuan`, `/tugas`) → PASS. No schema change, no migration (task declares no new persistence). Two defects fixed in this session in `apps/educator/src/features/learning/actions.ts`: a dangling `export type { AssignmentSubmission };` re-export with no import (TS2304, zero references — removed) and a Prettier formatting failure. Deferred: educator runtime end-to-end against a live API + Keycloak (no Docker/container runtime available; not installed automatically) — not a blocker since the educator production build, typecheck, and API-contract consumption are all statically verified.
+
+Status note (2026-09-17, chained under standing user permission): TASK-026 (Student Learning UI) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm test` (**159 API + 2 api-client = 161**, 0 fail), `pnpm --filter @lms/student build` (`next build`, Next.js 16.3.5/Turbopack, compiled successfully; routes `/`, `/kemajuan`, `/materi`, `/tugas`), `pnpm build` (all 11 packages compiled successfully), `db:validate` & `db:generate` → PASS. No schema change, no migration (task declares no new persistence). Expanded `@lms/api-client` with typed contracts for enrollments, files, learningProgress mutations, and submissions. Deferred: student runtime end-to-end against a live API + Keycloak (no Docker/container runtime available; not installed automatically).
+
+Next eligible development task after TASK-026: TASK-030 (`tasks/TASK-030-attendance.md`, needs TASK-017/015).
+
+Status note (2026-09-17, chained under standing user permission): TASK-030 (Attendance Session & Record) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm build` (11/11 successful), `pnpm test` (**161 API + 2 api-client = 163**, 0 fail; 2 new tests in `apps/api/test/attendance.test.cjs`), `db:validate`, `db:generate` → PASS. Migration `apps/api/prisma/migrations/20260929000000_task_030_attendance/` (2 tables, 3 enums, 5 FK, unique `session_id+enrollment_id`; 9 routes at `/api/v1/attendance`). Deferred: runtime PostgreSQL migration execution (no container runtime available; not installed automatically). Next eligible development task after TASK-030: TASK-031 (`tasks/TASK-031-attendance-correction-audit.md`, needs TASK-030 and TASK-006).
+
+Status note (2026-09-17, chained under standing user permission): TASK-031 (Attendance Correction & Audit) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm build` (11/11 successful), `pnpm test` (**165 API + 2 api-client = 167**, 0 fail; 4 new tests in `apps/api/test/attendance-corrections.test.cjs`), `db:validate`, `db:generate` → PASS. Migration `apps/api/prisma/migrations/20260930000000_task_031_attendance_correction/` (1 table, 1 enum, 3 FK, 4 index, plus `BEFORE UPDATE`/`BEFORE DELETE` append-only triggers); 4 routes at `/api/v1/attendance-corrections`. Correction writes are atomic (log row + record status in one transaction) and denials are side-effect free. Deferred: runtime PostgreSQL migration execution and live trigger behaviour (no container runtime available; not installed automatically). Next eligible development task after TASK-031: TASK-032 (`tasks/TASK-032-attendance-ui.md`) or TASK-033 (`tasks/TASK-033-attendance-summary.md`), both needing TASK-031.
+
+Status note (2026-09-17, chained under standing user permission): TASK-032 (Attendance UI) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm build` (11/11 successful, `pnpm --filter @lms/educator build` compiled successfully in Next.js 16.3.5 Turbopack with routes `/`, `/aktivitas`, `/kehadiran`, `/kelas`, `/pemantauan`, `/pertemuan`, `/tugas`), `pnpm test` (**165 API + 2 api-client = 167**, 0 fail), `db:validate`, `db:generate` → PASS. Expanded `@lms/api-client` with typed contracts for attendance sessions, records, and corrections. Deferred: educator runtime end-to-end against a live API + Keycloak (no container runtime available; not installed automatically). Next eligible development task after TASK-032: TASK-033 (`tasks/TASK-033-attendance-summary.md`, needs TASK-031).
+
+Status note (2026-09-18, chained under standing user permission): TASK-033 (Attendance Summary) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm test` (**180 API + 2 api-client = 182**, 0 fail; 14 new tests in `apps/api/test/attendance-summary.test.cjs`), `pnpm build` (11/11 successful), `db:validate`, `db:generate` → PASS. Migration `apps/api/prisma/migrations/20261001000000_task_033_attendance_summary/` (1 table, 1 enum, 1 unique + 7 index, no FK deliberately: a summary is derived data and must not block or cascade a domain delete). New reporting read model `attendance_summaries` keyed by unique `(scopeType, scopeId)`, covering `ENROLLMENT`, `ENROLLMENT_SUBJECT`, `CLASS_SUBJECT`, `CLASS`, `BATCH`, `PROGRAM`. 7 routes at `/api/v1/attendance-summary` gated by `attendance.summary.read` / `attendance.summary.refresh`. Denominator rule: only `CLOSED` sessions are eligible; a closed session without a record counts as ABSENT; a group scope is the exact participant-weighted sum of the personal scopes inside it. Refresh is idempotent and bound to attendance writes, session CLOSE/CANCEL transitions, and corrections, so a report never shows a stale figure. The reporting read path is a single indexed lookup — a test asserts repeated reads do not re-run the raw calculation. Deferred: runtime end-to-end against a live PostgreSQL + Keycloak (no container runtime available; not installed automatically); not a technical blocker as the counting rules are covered by an in-memory Prisma double. Next eligible development task after TASK-033: TASK-040 (`tasks/TASK-040-assessment.md`, needs TASK-014).
+
+Status note (2026-09-18, chained under standing user permission): TASK-040 (Assessment Foundation) has been implemented, verified, and moved to `REVIEW`. Verification: `pnpm lint` (11/11 successful, Prettier clean), `pnpm typecheck` (14/14 successful), `pnpm test` (**193 API + 2 api-client = 195**, 0 fail; 13 new tests in `apps/api/test/assessments.test.cjs`), `pnpm build` (11/11 successful), `db:validate` ("schema is valid 🚀"), `db:generate` → PASS. Migration `apps/api/prisma/migrations/20261002000000_task_040_assessment/` (2 tables `assessment_types`/`assessments`, 1 enum `AssessmentStatus`, 3 FK, 7 index) and it **seeds the six baseline types** QUIZ/EXAM/ASSIGNMENT/PRACTICAL/OBSERVATION/COMPETENCY with `ON CONFLICT (code) DO NOTHING` — types are data-driven rows, never an enum in code, so a new method needs no schema or service change. `Assignment.assessmentId` was a bare UUID column with no relation; it is now a real optional FK (`ON DELETE SET NULL`, indexed), honest for TASK-024's assignment↔assessment link. 9 routes at `/api/v1/assessment-types` and `/api/v1/assessments` gated by `assessment.type.read` / `assessment.type.manage` / `assessment.read` / `assessment.manage` (Permission + Scope only, no role-name branching). Lifecycle `DRAFT -> PUBLISHED -> CLOSED -> ARCHIVED` with `PUBLISHED -> DRAFT` allowed as a correction and `CLOSED`/`ARCHIVED` one-way; illegal edges are 422 and a same-status request is an idempotent no-op with no audit write. A `PUBLISHED`/`CLOSED` assessment is **protected from destructive mutation**: `maxScore` and `weight` are frozen (422 naming the field) on both `PATCH /assessments/:id` and the status endpoint, and unpublishing is the documented way to unlock them. `maxScore` required `> 0`, `weight` nullable but `> 0` when set (`null` = not yet weighted, distinct from `0`), availability window must be ordered even when only one edge moves, and an `INACTIVE` type or a non-`ACTIVE` class subject blocks selection/publishing. Deferred: runtime end-to-end against a live PostgreSQL + Keycloak (no container runtime available; not installed automatically); not a technical blocker as every rule is covered by tests driving the real services. Next eligible development task after TASK-040: TASK-041 (`tasks/TASK-041-question-bank.md`, needs TASK-040).
+
+Closed TASK-005 fix summary (kept for history):
+
+- `PermissionGuard` is a global `APP_GUARD` and is fail closed: routes need `@RequirePermissions`, `@RequireScope`, `@RequireSelfOrPermission`, `@AllowAuthenticated`, or `@Public`; anything else is rejected with `403`.
+- Sensitive authorization endpoints declare explicit Permission + Scope policies; the RBAC catalogue is never authentication-only.
+- Subject-scoped reads are self-service from the token identity, and cross-user reads require `authorization.effective_permission.read`.
+- Scope types whose owning domain cannot validate existence (`PROGRAM`, `BATCH`, `CLASS`, `CLASS_SUBJECT`) are rejected instead of persisted as orphan rows.
+
+### Carried-forward risk (from TASK-005 review fix)
+
+- `OrganizationsController`, `PersonsController`, and `UserAccountsController` currently use the explicit `@AllowAuthenticated()` allow-list (equivalent to the reviewed TASK-001/TASK-002 authentication-only baseline). Their owning domain tasks must replace it with `@RequirePermissions(...)` before production readiness.
+- No seeded role yet holds the `authorization.*` permissions, so authorization endpoints correctly return `403` until an administrator role is created and assigned.
+
+### Outstanding deferred work (not a task substitute)
+
+- Runtime PostgreSQL migration, inherited from TASK-000, TASK-001, TASK-002, TASK-003, TASK-004, and TASK-005. This includes TASK-004 migration `apps/api/prisma/migrations/20260916000300_task_004_role_permission/` and TASK-005 migration `apps/api/prisma/migrations/20260916000400_task_005_role_assignment_scope/` and TASK-006 migration `apps/api/prisma/migrations/20260916000500_task_006_audit/`. Must be cleared before integration testing, UAT, or production readiness.
+- Runtime Keycloak against a real realm (TASK-003).
+- Audience mapper/client audience Keycloak verification (TASK-003).

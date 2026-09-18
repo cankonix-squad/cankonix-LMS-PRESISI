@@ -4,6 +4,13 @@ export default [
   {
     files: ['test/*.cjs'],
     rules: { '@typescript-eslint/no-require-imports': 'off' },
-    languageOptions: { globals: { fetch: 'readonly', require: 'readonly' } },
+    languageOptions: {
+      globals: {
+        Buffer: 'readonly',
+        fetch: 'readonly',
+        process: 'readonly',
+        require: 'readonly',
+      },
+    },
   },
 ];

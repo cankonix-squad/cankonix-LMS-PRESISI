@@ -1,9 +1,18 @@
 # TASK-015 — Enrollment
 
-**Status:** NOT STARTED
+**Status:** REVIEW
 
 ## Dependency
 TASK-013 = DONE.
+
+## Verification Result
+- `pnpm lint` → PASS
+- `pnpm typecheck` → PASS
+- `pnpm test` → PASS (90 tests: 88 API + 2 api-client; 6 new Enrollment tests incl. OpenAPI contract)
+- `pnpm build` → PASS
+- `pnpm --filter @lms/api db:validate` → PASS
+- `pnpm --filter @lms/api db:generate` → PASS
+- Runtime PostgreSQL migration remains DEFERRED (consistent with TASK-000 foundation).
 
 ## Objective
 Menyimpan keikutsertaan peserta dan histori pendidikan.
@@ -12,16 +21,24 @@ Menyimpan keikutsertaan peserta dan histori pendidikan.
 `docs/02-domain-architecture.md`, `docs/03-data-architecture.md`, `docs/05-api-standards.md`, `docs/06-database-standards.md`, `docs/07-security-standards.md`, `docs/09-backend-architecture.md`
 
 ## Data Model / Persistence
-`Enrollment`: id, personId, educationBatchId, academicClassId nullable, enrollmentNumber nullable, enrolledAt, status, completedAt nullable, metadata nullable; unique person+batch (baseline).
+`Enrollment`: id (UUID), personId (FK persons, Restrict), educationBatchId (FK education_batches, Restrict), academicClassId nullable (FK academic_classes, Restrict), enrollmentNumber nullable unique, enrolledAt (DATE), status (`EnrollmentStatus`: ACTIVE, WITHDRAWN, COMPLETED), completedAt nullable (DATE), metadata JSONB, timestamps.
+Unique compound: `[personId, educationBatchId]` (baseline, satu keikutsertaan per person per batch).
+Index: `[personId]`, `[educationBatchId]`, `[academicClassId]`, `[status]`.
+Migration: `apps/api/prisma/migrations/20260921000000_task_015_enrollment/`.
 
 ## API / Application Contract
-Enroll/withdraw/transfer class within same batch/list participants/person education history.
+- `POST /api/v1/enrollments` (enroll)
+- `GET /api/v1/enrollments` (filter personId, educationBatchId, academicClassId, educationProgramId, organizationId, status + pagination)
+- `GET /api/v1/enrollments/:id`
+- `GET /api/v1/enrollments/persons/:personId` (person education history; dideklarasikan sebelum `:id`)
+- `PATCH /api/v1/enrollments/:id/status` (withdraw/complete/reactivate, dengan `reason` opsional)
+- `PATCH /api/v1/enrollments/:id/class` (transfer kelas dalam batch yang sama)
 
 ## Business Rules
-Enrollment adalah business context, bukan permanent PESERTA role. Person harus aktif. Class jika ada harus milik batch. Withdrawal/completion tidak menghapus record.
+Enrollment adalah business context, bukan permanent PESERTA role. Person harus `ACTIVE` (`422` bila tidak), person atau kelas yang tidak dikenal ditolak `404`. Class, jika ada, wajib milik batch yang sama (`400`). Duplikat person+batch dan duplikat enrollmentNumber ditolak `409`. Withdrawal/completion hanya mengubah status — record tidak pernah dihapus sehingga histori pendidikan tetap utuh. Transisi status dibatasi (`ACTIVE ↔ WITHDRAWN/COMPLETED`; `422` untuk transisi ilegal, `400` untuk status yang sama). Transfer kelas hanya untuk enrollment `ACTIVE` dan mencatat before/after ke audit (`enrollment.class_transferred`).
 
 ## Acceptance Criteria
-[ ] duplicate enrollment ditolak; [ ] invalid class/batch ditolak; [ ] history preserved; [ ] checks green.
+[x] duplicate enrollment ditolak; [x] invalid class/batch ditolak; [x] history preserved; [x] checks green.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.
