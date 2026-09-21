@@ -13,6 +13,7 @@ jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: production
     steps:
       - name: Checkout deployed revision
@@ -46,7 +47,7 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
 
-          docker compose -f docker-compose.production.yml up -d --build
+          docker compose --parallel 1 -f docker-compose.production.yml up -d --build
           docker exec cankonix-lms-lemdiklat-api \
             /app/node_modules/.bin/prisma migrate deploy \
             --schema=/app/prisma/schema.prisma
