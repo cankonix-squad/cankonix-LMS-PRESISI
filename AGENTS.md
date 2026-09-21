@@ -34,6 +34,10 @@ That command means Codex must inspect current status, determine the next eligibl
 
 `DONE-WITH-DEFERRED` means the user/reviewer approved the implementation as complete for development sequencing, with named verification still outstanding. Deferred infrastructure verification must be completed before integration testing, UAT, or production readiness.
 
+## Current product priority
+The project is temporarily prioritizing Admin portal usability before continuing `TASK-064`.
+When continuing autonomously from this state, finish/review `TASK-008 — Admin Operational UI Refinement` first unless a user explicitly redirects the work.
+
 ## Locked architecture
 - Monorepo: pnpm + Turborepo.
 - Frontends: independent Next.js apps: admin, educator, student, executive.

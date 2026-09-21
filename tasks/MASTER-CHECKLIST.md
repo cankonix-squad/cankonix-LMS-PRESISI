@@ -47,6 +47,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-005 | `tasks/TASK-005-scope.md` | DONE-WITH-DEFERRED | TASK-004 = DONE atau DONE-WITH-DEFERRED |
 | TASK-006 | `tasks/TASK-006-audit.md` | DONE-WITH-DEFERRED | TASK-005 = DONE-WITH-DEFERRED |
 | TASK-007 | `tasks/TASK-007-admin-foundation-ui.md` | DONE-WITH-DEFERRED | TASK-001, TASK-002, TASK-004, TASK-005 = DONE |
+| TASK-008 | `tasks/TASK-008-admin-operational-ui.md` | REVIEW | TASK-007 = DONE-WITH-DEFERRED |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |

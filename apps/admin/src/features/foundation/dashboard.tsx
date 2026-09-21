@@ -8,9 +8,13 @@ import type {
 } from '@lms/api-client';
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
-import { createAdminApiClient, getOrEmpty } from '@/lib/api';
+import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import { CreateOrganizationForm } from './create-organization-form';
 
 export async function FoundationDashboard() {
+  const hasSession = await hasAdminSession();
+  if (!hasSession) return <LoginRequiredState />;
+
   const api = createAdminApiClient();
   const [organizations, persons, roles, permissions, assignments] =
     await Promise.all([
@@ -59,31 +63,28 @@ export async function FoundationDashboard() {
   );
 }
 
-function CreateOrganizationForm() {
+function LoginRequiredState() {
   return (
-    <form className="mb-5 grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/40 p-4 sm:grid-cols-2">
-      <label className="text-sm text-slate-300">
-        Kode organisasi
-        <input
-          name="code"
-          placeholder="LEMDIKLAT"
-          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
-        />
-      </label>
-      <label className="text-sm text-slate-300">
-        Nama organisasi
-        <input
-          name="name"
-          placeholder="Lemdiklat Polri"
-          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
-        />
-      </label>
-      <p className="text-xs leading-5 text-slate-500 sm:col-span-2">
-        Form ini disiapkan untuk wiring API create. Validasi client hanya
-        tambahan; normalisasi kode, parent validation, dan cycle prevention
-        tetap dilakukan backend.
-      </p>
-    </form>
+    <SectionCard
+      id="session"
+      title="Masuk Diperlukan"
+      description="Dashboard Admin membaca API protected dengan bearer token hasil login Keycloak."
+      className="mx-auto max-w-3xl"
+    >
+      <div className="rounded-lg border border-sky-500/20 bg-sky-500/10 p-4">
+        <p className="text-sm leading-6 text-sky-50">
+          Klik tombol masuk untuk autentikasi lewat Keycloak. Setelah callback
+          berhasil, token disimpan sebagai cookie HTTP-only dan dipakai
+          server-side untuk membaca API foundation.
+        </p>
+        <a
+          href="/api/auth/login"
+          className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-sky-500 px-4 text-sm font-medium text-slate-950 transition hover:bg-sky-400"
+        >
+          Masuk dengan Keycloak
+        </a>
+      </div>
+    </SectionCard>
   );
 }
 

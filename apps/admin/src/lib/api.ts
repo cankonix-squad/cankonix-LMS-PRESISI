@@ -13,6 +13,14 @@ export function getApiBaseUrl() {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 }
 
+export async function getAdminAccessToken() {
+  return (await cookies()).get('lms_access_token')?.value ?? null;
+}
+
+export async function hasAdminSession() {
+  return Boolean(await getAdminAccessToken());
+}
+
 export async function getOrEmpty<T>(loader: () => Promise<T>): Promise<{
   data: T | null;
   error: string | null;
