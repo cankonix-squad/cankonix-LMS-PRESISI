@@ -39,6 +39,7 @@ Perubahan:
 - Admin login page no longer performs local prototype username/password handling. It now routes users to `/api/auth/login`, which starts the configured Keycloak/OIDC authorization-code flow.
 - User-facing login copy now says SSO/Admin LMS PRESISI instead of exposing the technical Keycloak label, while the underlying OIDC route remains unchanged.
 - Admin dashboard now checks for the HTTP-only `lms_access_token` cookie before calling protected API endpoints. Anonymous users see a login-required state instead of repeated `Bearer access token is required` API errors.
+- Admin root `/` now redirects anonymous users to `/login`; authenticated users still land on the operational dashboard after the OIDC callback.
 - Organization creation is now wired through a server action using `packages/api-client` and `POST /api/v1/organizations`; the dashboard revalidates after a successful create.
 - `AGENTS.md` documents the temporary product priority: finish/review Admin usability before continuing `TASK-064`.
 
