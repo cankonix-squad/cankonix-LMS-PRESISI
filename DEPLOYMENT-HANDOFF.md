@@ -117,7 +117,18 @@ Perubahan lokal yang perlu dipertahankan:
 - API client portal membaca access token dari cookie HttpOnly.
 - Shell Admin, Educator, Student, dan Executive memiliki tombol Masuk/Keluar.
 
-Perubahan tersebut saat ini ada di workspace lokal dan sudah disinkronkan ke folder deployment VPS. Commit ke GitHub perlu dilakukan sebagai pekerjaan repository berikutnya.
+Perubahan tersebut sudah di-push ke GitHub dan commit terbaru sudah dijalankan di VPS.
+
+Workflow `.github/workflows/deploy-production.yml` sekarang menjalankan deploy otomatis setiap push ke branch `main`. Workflow mengambil commit terbaru di VPS, menjalankan build Docker, migration Prisma, lalu health check API dan lima frontend.
+
+GitHub Actions environment `production` perlu memiliki secrets berikut agar workflow dapat berjalan:
+
+- `VPS_HOST` — `187.77.127.202`
+- `VPS_USER` — `root`
+- `VPS_SSH_KEY` — private key yang public key-nya terpasang di `/root/.ssh/authorized_keys` VPS
+- `VPS_KNOWN_HOSTS` — opsional; output `ssh-keyscan -H 187.77.127.202`
+
+Jika `VPS_KNOWN_HOSTS` tidak diisi, workflow mengambil host key dengan `ssh-keyscan` saat job berjalan.
 
 ## Cara operasi umum di VPS
 

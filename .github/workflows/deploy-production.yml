@@ -1,0 +1,60 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout deployed revision
+        uses: actions/checkout@v4
+
+      - name: Install SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Trust deployment host
+        run: |
+          mkdir -p ~/.ssh
+          if [ -n "${{ secrets.VPS_KNOWN_HOSTS }}" ]; then
+            printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          else
+            ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          fi
+
+      - name: Deploy and verify
+        env:
+          DEPLOY_HOST: ${{ secrets.VPS_HOST }}
+          DEPLOY_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" 'bash -se' <<'REMOTE_SCRIPT'
+          set -eu
+          APP_DIR=/root/cankonix-node/apps/cankonix-lms-lemdiklat
+          cd "$APP_DIR"
+
+          git config --global --add safe.directory "$APP_DIR"
+          git fetch origin main
+          git reset --hard origin/main
+
+          docker compose -f docker-compose.production.yml up -d --build
+          docker exec cankonix-lms-lemdiklat-api \
+            /app/node_modules/.bin/prisma migrate deploy \
+            --schema=/app/prisma/schema.prisma
+
+          test "$(curl -fsS https://api.lms-presisi.digitallearningcenter.id/api/v1/health)" = '{"status":"ok"}'
+          curl -fsS https://lms-presisi.digitallearningcenter.id >/dev/null
+          curl -fsS https://admin.lms-presisi.digitallearningcenter.id >/dev/null
+          curl -fsS https://educator.lms-presisi.digitallearningcenter.id >/dev/null
+          curl -fsS https://student.lms-presisi.digitallearningcenter.id >/dev/null
+          curl -fsS https://executive.lms-presisi.digitallearningcenter.id >/dev/null
+          REMOTE_SCRIPT
