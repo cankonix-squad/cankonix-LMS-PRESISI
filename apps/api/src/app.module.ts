@@ -26,6 +26,14 @@ import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ExamsModule } from './exams/exams.module';
 import { ExamSessionsModule } from './exam-sessions/exam-sessions.module';
 import { FilesModule } from './files/files.module';
+import { FinalGradesModule } from './final-grades/final-grades.module';
+import { GraduationModule } from './graduation/graduation.module';
+import { GraduationDecisionModule } from './graduation-decisions/graduation-decision.module';
+import { CertificateModule } from './certificates/certificate.module';
+import {
+  ReportingModule,
+  ReportingModuleOptions,
+} from './reporting/reporting.module';
 import { HealthModule } from './health/health.module';
 import { GradingModule } from './grading/grading.module';
 import { LearningActivitiesModule } from './learning-activities/learning-activities.module';
@@ -38,7 +46,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QuestionBanksModule } from './question-banks/question-banks.module';
 import { UserAccountsModule } from './user-accounts/user-accounts.module';
 
-export type AppModuleOptions = AuthModuleOptions & AuthorizationModuleOptions;
+export type AppModuleOptions = AuthModuleOptions &
+  AuthorizationModuleOptions &
+  ReportingModuleOptions;
 
 /**
  * Root module.
@@ -83,6 +93,10 @@ export class AppModule {
         AttendanceSummaryModule,
         AttemptsModule,
         GradingModule,
+        FinalGradesModule,
+        GraduationModule,
+        GraduationDecisionModule,
+        CertificateModule,
         AssessmentTypesModule,
         AssessmentsModule,
         QuestionBanksModule,
@@ -93,6 +107,16 @@ export class AppModule {
         UserAccountsModule,
         AuthorizationModule.register({
           permissionEvaluator: options.permissionEvaluator,
+        }),
+        // Registered last for the same reason `AuthorizationModule` is: a module
+        // may only inject a provider from a module it imports, and the reporting
+        // scope resolver reads the caller's scopes from the authorization
+        // module's evaluator. TASK-061's `executiveScopeGrantResolver` option
+        // replaces the whole resolver, so a test can state a grant directly
+        // without reproducing the permission tables.
+        ReportingModule.register({
+          executivePermissionSource: options.permissionEvaluator,
+          executiveScopeGrantResolver: options.executiveScopeGrantResolver,
         }),
       ],
     };

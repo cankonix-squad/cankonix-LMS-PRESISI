@@ -75,14 +75,15 @@ model EducationProgram {
 }
 
 model Subject {
-  id                 String              @id @default(uuid()) @db.Uuid
-  code               String              @unique
-  name               String
-  description        String?
-  status             SubjectStatus       @default(ACTIVE)
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime            @updatedAt @map("updated_at")
-  curriculumSubjects CurriculumSubject[]
+  id                       String                    @id @default(uuid()) @db.Uuid
+  code                     String                    @unique
+  name                     String
+  description              String?
+  status                   SubjectStatus             @default(ACTIVE)
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
+  curriculumSubjects       CurriculumSubject[]
+  graduationRuleComponents GraduationRuleComponent[]
 
   @@index([status])
   @@map("subjects")
@@ -145,6 +146,8 @@ model ClassSubject {
   meetings            LearningMeeting[]
   attendanceSessions  AttendanceSession[]
   assessments         Assessment[]
+  gradingSchemes      GradingScheme[]
+  finalGrades         FinalGrade[]
 
   @@unique([academicClassId, curriculumSubjectId])
   @@index([academicClassId])
@@ -178,10 +181,12 @@ model Enrollment {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
-  progress          LearningProgress[]
-  submissions       AssignmentSubmission[]
-  attendanceRecords AttendanceRecord[]
-  examParticipants ExamParticipant[]
+  progress              LearningProgress[]
+  submissions           AssignmentSubmission[]
+  attendanceRecords     AttendanceRecord[]
+  examParticipants      ExamParticipant[]
+  finalGrades           FinalGrade[]
+  graduationEvaluations GraduationEvaluation[]
 
   @@unique([personId, educationBatchId])
   @@index([personId])
@@ -640,6 +645,7 @@ model EducationBatch {
   updatedAt          DateTime             @updatedAt @map("updated_at")
   classes            AcademicClass[]
   enrollments        Enrollment[]
+  graduationRules    GraduationRule[]
 
   @@unique([educationProgramId, code])
   @@index([educationProgramId])
@@ -712,21 +718,29 @@ model Person {
 }
 
 model UserAccount {
-  id                             String                 @id @default(uuid()) @db.Uuid
-  personId                       String                 @unique @map("person_id") @db.Uuid
-  person                         Person                 @relation(fields: [personId], references: [id], onDelete: Restrict)
-  externalAuthId                 String?                @unique @map("external_auth_id")
+  id                             String                  @id @default(uuid()) @db.Uuid
+  personId                       String                  @unique @map("person_id") @db.Uuid
+  person                         Person                  @relation(fields: [personId], references: [id], onDelete: Restrict)
+  externalAuthId                 String?                 @unique @map("external_auth_id")
   username                       String?
   email                          String?
-  status                         UserAccountStatus      @default(ACTIVE)
-  lastLoginAt                    DateTime?              @map("last_login_at")
-  createdAt                      DateTime               @default(now()) @map("created_at")
-  updatedAt                      DateTime               @updatedAt @map("updated_at")
+  status                         UserAccountStatus       @default(ACTIVE)
+  lastLoginAt                    DateTime?               @map("last_login_at")
+  createdAt                      DateTime                @default(now()) @map("created_at")
+  updatedAt                      DateTime                @updatedAt @map("updated_at")
   roleAssignments                UserRoleAssignment[]
   storedFiles                    StoredFile[]
   recordedAttendanceRecords      AttendanceRecord[]
-  requestedAttendanceCorrections AttendanceCorrection[] @relation("AttendanceCorrectionRequester")
-  approvedAttendanceCorrections  AttendanceCorrection[] @relation("AttendanceCorrectionApprover")
+  requestedAttendanceCorrections AttendanceCorrection[]  @relation("AttendanceCorrectionRequester")
+  approvedAttendanceCorrections  AttendanceCorrection[]  @relation("AttendanceCorrectionApprover")
+  approvedFinalGrades            FinalGrade[]            @relation("FinalGradeApprover")
+  publishedGraduationRules       GraduationRule[]        @relation("GraduationRulePublisher")
+  graduationEvaluations          GraduationEvaluation[]  @relation("GraduationEvaluator")
+  graduationDecisionsMade        GraduationDecision[]    @relation("GraduationDecisionMaker")
+  graduationDecisionsApproved    GraduationDecision[]    @relation("GraduationDecisionApprover")
+  graduationDecisionsRevoked     GraduationDecision[]    @relation("GraduationDecisionRevoker")
+  issuedCertificates             Certificate[]           @relation("CertificateIssuer")
+  certificateRevocations         CertificateRevocation[] @relation("CertificateRevoker")
 
   @@index([status])
   @@map("user_accounts")
@@ -759,6 +773,7 @@ model StoredFile {
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
   submissionFiles AssignmentSubmissionFile[]
+  certificates    Certificate[]
 
   @@index([namespace])
   @@index([ownerUserId])
@@ -1144,14 +1159,541 @@ model Assessment {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
-  assignments Assignment[]
-  exam        Exam?
+  assignments              Assignment[]
+  gradingComponents        GradingComponent[]
+  exam                     Exam?
+  graduationRuleComponents GraduationRuleComponent[]
 
   @@index([classSubjectId])
   @@index([assessmentTypeId])
   @@index([status])
   @@index([availableFrom])
   @@map("assessments")
+}
+
+enum GradingSchemeStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model GradingScheme {
+  id             String              @id @default(uuid()) @db.Uuid
+  classSubjectId String              @map("class_subject_id") @db.Uuid
+  classSubject   ClassSubject        @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  name           String
+  status         GradingSchemeStatus @default(DRAFT)
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  components  GradingComponent[]
+  finalGrades FinalGrade[]
+
+  @@index([classSubjectId])
+  @@index([status])
+  @@map("grading_schemes")
+}
+
+model GradingComponent {
+  id           String        @id @default(uuid()) @db.Uuid
+  schemeId     String        @map("scheme_id") @db.Uuid
+  scheme       GradingScheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  assessmentId String        @map("assessment_id") @db.Uuid
+  assessment   Assessment    @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  name         String
+  weight       Decimal       @db.Decimal(5, 2)
+  required     Boolean       @default(false)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@unique([schemeId, assessmentId])
+  @@index([schemeId])
+  @@index([assessmentId])
+  @@map("grading_components")
+}
+
+enum FinalGradeStatus {
+  CALCULATED
+  APPROVED
+  REOPENED
+}
+
+model FinalGrade {
+  id               String           @id @default(uuid()) @db.Uuid
+  enrollmentId     String           @map("enrollment_id") @db.Uuid
+  enrollment       Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  classSubjectId   String           @map("class_subject_id") @db.Uuid
+  classSubject     ClassSubject     @relation(fields: [classSubjectId], references: [id], onDelete: Restrict)
+  gradingSchemeId  String           @map("grading_scheme_id") @db.Uuid
+  gradingScheme    GradingScheme    @relation(fields: [gradingSchemeId], references: [id], onDelete: Restrict)
+  numericScore     Decimal          @map("numeric_score") @db.Decimal(5, 2)
+  gradeCode        String?          @map("grade_code")
+  status           FinalGradeStatus @default(CALCULATED)
+  calculatedAt     DateTime         @default(now()) @map("calculated_at")
+  approvedByUserId String?          @map("approved_by_user_id") @db.Uuid
+  approvedByUser   UserAccount?     @relation("FinalGradeApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  approvedAt       DateTime?        @map("approved_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  @@unique([enrollmentId, classSubjectId])
+  @@index([enrollmentId])
+  @@index([classSubjectId])
+  @@index([status])
+  @@index([approvedByUserId])
+  @@map("final_grades")
+}
+
+/// Graduation rule (TASK-052).
+///
+/// A rule is the *configurable, versioned* statement of what a participant must
+/// satisfy to graduate from a batch: attendance percentage, a minimum weighted
+/// final score, required subjects, and a final exam. It is scoped to a batch and
+/// carries a `version`, and components are immutable once the rule is published.
+///
+/// Publisering freezes the rule so an evaluation can point at an exact rule
+/// version and remain reproducible forever: a later threshold edit creates a new
+/// version instead of silently rewriting what an earlier evaluation meant
+/// (`docs/03-data-architecture.md` — history stays reconstructible).
+model GraduationRule {
+  id                String                    @id @default(uuid()) @db.Uuid
+  educationBatchId  String                    @map("education_batch_id") @db.Uuid
+  educationBatch    EducationBatch            @relation(fields: [educationBatchId], references: [id], onDelete: Restrict)
+  code              String
+  name              String
+  description       String?
+  version           Int                       @default(1)
+  status            GraduationRuleStatus      @default(DRAFT)
+  publishedAt       DateTime?                 @map("published_at")
+  publishedByUserId String?                   @map("published_by_user_id") @db.Uuid
+  publishedByUser   UserAccount?              @relation("GraduationRulePublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+  components        GraduationRuleComponent[]
+  evaluations       GraduationEvaluation[]
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
+
+  @@unique([educationBatchId, code, version])
+  @@index([educationBatchId])
+  @@index([status])
+  @@map("graduation_rules")
+}
+
+enum GraduationRuleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+/// One requirement inside a graduation rule.
+///
+/// Components are data-driven rows rather than an enum so the rule set can grow
+/// without a schema change. `componentType` selects the evaluator; the present
+/// threshold columns depend on that type:
+/// - `ATTENDANCE_PERCENTAGE` uses `thresholdValue`.
+/// - `FINAL_SCORE` uses `thresholdValue`.
+/// - `REQUIRED_SUBJECT` uses `subjectId` (and optionally `thresholdValue`).
+/// - `FINAL_EXAM` uses `assessmentId` (and optionally `thresholdValue`).
+model GraduationRuleComponent {
+  id               String                  @id @default(uuid()) @db.Uuid
+  graduationRuleId String                  @map("graduation_rule_id") @db.Uuid
+  graduationRule   GraduationRule          @relation(fields: [graduationRuleId], references: [id], onDelete: Cascade)
+  componentType    GraduationComponentType @map("component_type")
+  label            String
+  thresholdValue   Decimal?                @map("threshold_value") @db.Decimal(5, 2)
+  subjectId        String?                 @map("subject_id") @db.Uuid
+  subject          Subject?                @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  assessmentId     String?                 @map("assessment_id") @db.Uuid
+  assessment       Assessment?             @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  required         Boolean                 @default(true)
+  sortOrder        Int                     @default(0) @map("sort_order")
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+
+  @@unique([graduationRuleId, componentType, label])
+  @@index([graduationRuleId])
+  @@index([subjectId])
+  @@index([assessmentId])
+  @@map("graduation_rule_components")
+}
+
+enum GraduationComponentType {
+  ATTENDANCE_PERCENTAGE
+  FINAL_SCORE
+  REQUIRED_SUBJECT
+  FINAL_EXAM
+}
+
+/// Evaluation of one participant against one published rule.
+///
+/// This is deliberately *not* the graduation decision (that is TASK-053): an
+/// evaluation records what the rule system observed about a participant at a
+/// point in time. Keeping them separate means a formal decision can be
+/// reconsidered, corrected, or revoked without destroying the evidence it was
+/// based on.
+///
+/// `snapshot` carries the exact inputs and thresholds used, so the outcome can be
+/// recomputed and audited even after later data changes. An evaluation that has
+/// been superseded is replaced, never silently overwritten: re-running creates a
+/// new row and marks the previous one `SUPERSEDED`.
+model GraduationEvaluation {
+  id                String                       @id @default(uuid()) @db.Uuid
+  enrollmentId      String                       @map("enrollment_id") @db.Uuid
+  enrollment        Enrollment                   @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  graduationRuleId  String                       @map("graduation_rule_id") @db.Uuid
+  graduationRule    GraduationRule               @relation(fields: [graduationRuleId], references: [id], onDelete: Restrict)
+  outcome           GraduationEvaluationOutcome  @default(PENDING)
+  evaluatedAt       DateTime                     @default(now()) @map("evaluated_at")
+  evaluatedByUserId String?                      @map("evaluated_by_user_id") @db.Uuid
+  evaluatedByUser   UserAccount?                 @relation("GraduationEvaluator", fields: [evaluatedByUserId], references: [id], onDelete: Restrict)
+  snapshot          Json
+  details           GraduationEvaluationDetail[]
+  decision          GraduationDecision?
+  createdAt         DateTime                     @default(now()) @map("created_at")
+  updatedAt         DateTime                     @updatedAt @map("updated_at")
+
+  @@index([enrollmentId])
+  @@index([graduationRuleId])
+  @@index([outcome])
+  @@map("graduation_evaluations")
+}
+
+enum GraduationEvaluationOutcome {
+  PENDING
+  ELIGIBLE
+  NOT_ELIGIBLE
+  SUPERSEDED
+}
+
+/// The formal graduation decision (TASK-053).
+///
+/// This is deliberately a separate table from `GraduationEvaluation`: an
+/// evaluation is evidence produced by the rule engine, while a decision is a
+/// human act with an author, a date, and a reason. Keeping them apart is what
+/// lets a decision be corrected or revoked without destroying the evidence it
+/// rested on.
+///
+/// `graduationEvaluationId` is unique: one evaluation carries at most one
+/// decision row. A correction does not add a second row for the same
+/// evaluation — it moves the existing row forward in its lifecycle
+/// (`status`), and the audit trail (TASK-006) records every move. That is why
+/// there is no `supersedesDecisionId` here: superseding already happens one
+/// level up, where a re-evaluation supersedes its predecessor evaluation.
+///
+/// The record is never deleted, so "who decided, when, and why" stays
+/// answerable after a revocation.
+model GraduationDecision {
+  id                     String                    @id @default(uuid()) @db.Uuid
+  graduationEvaluationId String                    @unique @map("graduation_evaluation_id") @db.Uuid
+  graduationEvaluation   GraduationEvaluation      @relation(fields: [graduationEvaluationId], references: [id], onDelete: Restrict)
+  decision               GraduationDecisionOutcome
+  status                 GraduationDecisionStatus  @default(DRAFT)
+  decidedByUserId        String?                   @map("decided_by_user_id") @db.Uuid
+  decidedByUser          UserAccount?              @relation("GraduationDecisionMaker", fields: [decidedByUserId], references: [id], onDelete: Restrict)
+  decidedAt              DateTime?                 @map("decided_at")
+  approvedByUserId       String?                   @map("approved_by_user_id") @db.Uuid
+  approvedByUser         UserAccount?              @relation("GraduationDecisionApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  approvedAt             DateTime?                 @map("approved_at")
+  revokedByUserId        String?                   @map("revoked_by_user_id") @db.Uuid
+  revokedByUser          UserAccount?              @relation("GraduationDecisionRevoker", fields: [revokedByUserId], references: [id], onDelete: Restrict)
+  revokedAt              DateTime?                 @map("revoked_at")
+  revokedReason          String?                   @map("revoked_reason")
+  note                   String?
+  certificate            Certificate?
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([decision])
+  @@index([decidedByUserId])
+  @@index([approvedByUserId])
+  @@map("graduation_decisions")
+}
+
+/// The verdict a decision records.
+///
+/// `PASS` and `FAIL` are terminal verdicts. `REMEDIAL` is the institution's
+/// "not yet — do remedial work and be reconsidered" verdict; it exists so that
+/// a learner who misses a requirement by a small margin is not recorded as a
+/// permanent failure. `WITHDRAWN` covers formal withdrawal from the programme.
+enum GraduationDecisionOutcome {
+  PASS
+  FAIL
+  REMEDIAL
+  WITHDRAWN
+}
+
+/// Lifecycle of a decision row.
+///
+/// `DRAFT` is recorded but not yet in force; `APPROVED` is the in-force state
+/// and is what downstream features (certificates, TASK-054) consume; `REVOKED`
+/// is terminal — the row stays readable because an institution must be able to
+/// prove a decision was once made and later withdrawn.
+///
+/// There is no DELETE anywhere in this lifecycle: revocation is a status, not
+/// an erasure.
+enum GraduationDecisionStatus {
+  DRAFT
+  APPROVED
+  REVOKED
+}
+
+/// A reusable certificate design (TASK-054).
+///
+/// Templates are versioned on `(code, version)` rather than edited in place, so
+/// a certificate issued last year can still name the exact template version it
+/// was printed from. Editing an in-use template would silently rewrite history:
+/// the same certificate number would appear to have been issued under a design
+/// that did not exist at the time.
+///
+/// The design itself lives in object storage (`templateObjectKey`, TASK-022);
+/// only a pointer and non-binary presentation `config` are kept here, because
+/// uploaded binaries must never be stored in PostgreSQL.
+model CertificateTemplate {
+  id                String                    @id @default(uuid()) @db.Uuid
+  code              String
+  name              String
+  description       String?
+  version           Int                       @default(1)
+  status            CertificateTemplateStatus @default(DRAFT)
+  templateObjectKey String?                   @map("template_object_key")
+  config            Json?
+  certificates      Certificate[]
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
+
+  @@unique([code, version])
+  @@index([status])
+  @@map("certificate_templates")
+}
+
+enum CertificateTemplateStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+/// An issued certificate (TASK-054).
+///
+/// The certificate is derived from an *approved* graduation decision, and
+/// `decisionId` is unique: one decision yields at most one certificate. That is
+/// what makes "only an eligible PASS decision can be certified" a structural
+/// property rather than a rule someone has to remember — the decision is the
+/// only thing a certificate can point at, and the service refuses any decision
+/// that is not `APPROVED` with outcome `PASS`.
+///
+/// Two independent random values are stored:
+/// - `certificateNumber` is the human-facing identifier printed on the document.
+/// - `verificationCode` is the secret-ish lookup key used by the public
+///   verification endpoint. It is generated with a CSPRNG so it cannot be
+///   guessed by enumerating plausible numbers.
+///
+/// `fileId` points at the rendered PDF in object storage (TASK-022) and is
+/// nullable: a certificate can be recorded before its document is rendered.
+/// The binary never lives in PostgreSQL.
+///
+/// The row is never deleted. Revocation (TASK-055) moves `status`, so the
+/// institution can still prove a certificate was once issued and later
+/// withdrawn.
+model Certificate {
+  id                String                 @id @default(uuid()) @db.Uuid
+  decisionId        String                 @unique @map("decision_id") @db.Uuid
+  decision          GraduationDecision     @relation(fields: [decisionId], references: [id], onDelete: Restrict)
+  templateId        String                 @map("template_id") @db.Uuid
+  template          CertificateTemplate    @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  certificateNumber String                 @unique @map("certificate_number")
+  verificationCode  String                 @unique @map("verification_code")
+  status            CertificateStatus      @default(ISSUED)
+  issuedAt          DateTime               @map("issued_at")
+  issuedByUserId    String?                @map("issued_by_user_id") @db.Uuid
+  issuedByUser      UserAccount?           @relation("CertificateIssuer", fields: [issuedByUserId], references: [id], onDelete: Restrict)
+  fileId            String?                @map("file_id") @db.Uuid
+  file              StoredFile?            @relation(fields: [fileId], references: [id], onDelete: Restrict)
+  revocation        CertificateRevocation?
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+
+  @@index([templateId])
+  @@index([status])
+  @@index([issuedAt])
+  @@index([issuedByUserId])
+  @@map("certificates")
+}
+
+/// Revocation evidence for a certificate (TASK-055).
+///
+/// This is a separate table rather than extra columns on `certificates` for the
+/// same reason TASK-053 keeps decisions apart from evaluations: the certificate
+/// records what was issued, while this table records who withdrew it, when, and
+/// why. Keeping the reason in its own row means the act of revoking survives
+/// independently of how the certificate is read.
+///
+/// `certificateId` is unique: a certificate is revoked at most once. Re-revoking
+/// is refused rather than appended, so there is one authoritative reason instead
+/// of a history that has to be interpreted. Revocation is a withdrawal, not a
+/// deletion — the `Certificate` row and its number remain, which is what lets an
+/// institution still prove that a document was once legitimately issued.
+///
+/// There is no `delete` and no `update`: like the audit trail (TASK-006), the
+/// evidence is only meaningful while it is immutable.
+model CertificateRevocation {
+  id              String       @id @default(uuid()) @db.Uuid
+  certificateId   String       @unique @map("certificate_id") @db.Uuid
+  certificate     Certificate  @relation(fields: [certificateId], references: [id], onDelete: Restrict)
+  reason          String
+  revokedByUserId String?      @map("revoked_by_user_id") @db.Uuid
+  revokedByUser   UserAccount? @relation("CertificateRevoker", fields: [revokedByUserId], references: [id], onDelete: Restrict)
+  revokedAt       DateTime     @default(now()) @map("revoked_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  @@index([revokedByUserId])
+  @@index([revokedAt])
+  @@map("certificate_revocations")
+}
+
+/// Certificate lifecycle.
+///
+/// `REVOKED` is declared here rather than added later because revocation is a
+/// state of a certificate, not a separate kind of record. TASK-055 supplies the
+/// `certificate_revocations` evidence table and the workflow that moves the
+/// status; the vocabulary itself belongs with the model.
+///
+enum CertificateStatus {
+  ISSUED
+  REVOKED
+}
+
+/// One component result inside an evaluation snapshot.
+///
+/// The row is the evidence: it stores the observed value alongside the threshold
+/// that applied, so "why was this participant not eligible" is answerable from
+/// the evaluation alone, without re-querying live data that may since have
+/// changed.
+model GraduationEvaluationDetail {
+  id                     String                  @id @default(uuid()) @db.Uuid
+  graduationEvaluationId String                  @map("graduation_evaluation_id") @db.Uuid
+  graduationEvaluation   GraduationEvaluation    @relation(fields: [graduationEvaluationId], references: [id], onDelete: Cascade)
+  componentType          GraduationComponentType @map("component_type")
+  label                  String
+  observedValue          Decimal?                @map("observed_value") @db.Decimal(8, 2)
+  thresholdValue         Decimal?                @map("threshold_value") @db.Decimal(5, 2)
+  passed                 Boolean
+  note                   String?
+  createdAt              DateTime                @default(now()) @map("created_at")
+
+  @@index([graduationEvaluationId])
+  @@map("graduation_evaluation_details")
+}
+
+/// Pre-aggregated reporting metrics per scope (TASK-060).
+///
+/// This is the reporting boundary's read model. Reporting questions — "how many
+/// participants, how much progress, what attendance, what score" — would
+/// otherwise be answered by scanning `enrollments`, `class_subject_progress_aggregates`,
+/// `attendance_summaries` and `final_grades` and joining them on every request.
+/// Those tables keep growing, while an executive screen is opened far more often
+/// than the underlying data changes, so the cost of computing on read is paid
+/// repeatedly for the same answer.
+///
+/// One row per `(scopeType, scopeId)`. The parent id columns are denormalized so
+/// a drill-down can select a whole subtree — "every class in this batch" — with
+/// one indexed predicate instead of a recursive join through the hierarchy.
+///
+/// Two rules keep this honest:
+///
+/// - **The transactional tables remain the source of truth.** Every column here
+///   is derived and is recomputed from source in `refresh`; nothing in this table
+///   is ever written by a domain mutation directly, and the row can always be
+///   discarded and rebuilt.
+/// - **A refresh is idempotent.** `refresh` recomputes the metrics from source
+///   and upserts on `(scopeType, scopeId)`, so running it twice yields the same
+///   row rather than doubling a count. That is what makes it safe to call on a
+///   schedule, after a backfill, or by hand after an incident.
+///
+/// `scopeType` is the reporting vocabulary (`docs/03-data-architecture.md`),
+/// deliberately its own enum rather than a reuse of `ScopeType`: the
+/// authorization scopes and the reporting scopes are different sets that happen
+/// to overlap, and coupling them would make an authorization vocabulary change
+/// silently reshape stored reports.
+model ReportingMetric {
+  id                 String             @id @default(uuid()) @db.Uuid
+  scopeType          ReportingScopeType
+  scopeId            String             @map("scope_id") @db.Uuid
+  scopeName          String?            @map("scope_name")
+  organizationId     String?            @map("organization_id") @db.Uuid
+  educationProgramId String?            @map("education_program_id") @db.Uuid
+  educationBatchId   String?            @map("education_batch_id") @db.Uuid
+  academicClassId    String?            @map("academic_class_id") @db.Uuid
+  classSubjectId     String?            @map("class_subject_id") @db.Uuid
+
+  participants           Int   @default(0)
+  activeParticipants     Int   @default(0) @map("active_participants")
+  averageProgressPercent Float @default(0) @map("average_progress_percent")
+  attendancePercentage   Float @default(0) @map("attendance_percentage")
+  totalSessions          Int   @default(0) @map("total_sessions")
+  averageFinalScore      Float @default(0) @map("average_final_score")
+  gradedCount            Int   @default(0) @map("graded_count")
+  unapprovedGradeCount   Int   @default(0) @map("unapproved_grade_count")
+
+  /// Denominators and totals kept alongside the averages (TASK-061).
+  ///
+  /// An executive roll-up has to combine child scopes into a parent figure, and
+  /// averages cannot be averaged: a class of 10 and a class of 200 would carry
+  /// equal weight. Storing the totals and the counts they were divided by makes
+  /// the parent figure exactly reconstructible as `sum(total) / sum(count)`
+  /// instead of approximately re-derived from rounded means.
+  attendedCount        Int   @default(0) @map("attended_count")
+  progressPercentTotal Float @default(0) @map("progress_percent_total")
+  progressSampleCount  Int   @default(0) @map("progress_sample_count")
+  finalScoreTotal      Float @default(0) @map("final_score_total")
+
+  /// Graduation counters (TASK-061).
+  ///
+  /// Counted during refresh so the executive overview stays a read of this table.
+  /// The three are deliberately distinct: an evaluation is evidence the rule
+  /// engine produced, an approval is a human act in force, and a certificate is a
+  /// document issued. Reporting one number for "graduated" would hide which of
+  /// those three a reader is actually looking at.
+  graduationEvaluationCount Int @default(0) @map("graduation_evaluation_count")
+  graduationEligibleCount   Int @default(0) @map("graduation_eligible_count")
+  graduationApprovedCount   Int @default(0) @map("graduation_approved_count")
+  graduatedCount            Int @default(0) @map("graduated_count")
+
+  /// Batch period this scope belongs to (TASK-061).
+  ///
+  /// Denormalized from the batch so a period filter is an indexed predicate on
+  /// the read model. Joining back to `education_batches` at request time would
+  /// put a transactional table on the read path that this table exists to keep
+  /// clear.
+  periodStart DateTime? @map("period_start") @db.Date
+  periodEnd   DateTime? @map("period_end") @db.Date
+
+  recalculatedAt DateTime @default(now()) @map("recalculated_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([scopeType, scopeId])
+  @@index([scopeType, scopeId])
+  @@index([organizationId])
+  @@index([educationProgramId])
+  @@index([educationBatchId])
+  @@index([academicClassId])
+  @@index([classSubjectId])
+  @@index([recalculatedAt])
+  @@index([periodStart, periodEnd])
+  @@map("reporting_metrics")
+}
+
+/// Reporting scope vocabulary (TASK-060).
+///
+/// Hierarchical, in drill-down order: Organization → Program → Batch → Class →
+/// ClassSubject, with Enrollment for a single participant.
+enum ReportingScopeType {
+  ORGANIZATION
+  PROGRAM
+  BATCH
+  CLASS
+  CLASS_SUBJECT
+  ENROLLMENT
 }
 
 enum AssessmentStatus {
@@ -1211,7 +1753,7 @@ model QuestionType {
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
-  questions Question[]
+  questions      Question[]
   blueprintRules ExamBlueprintRule[]
 
   @@index([status])
@@ -1272,7 +1814,7 @@ model QuestionVersion {
   createdAt   DateTime              @default(now()) @map("created_at")
   updatedAt   DateTime              @updatedAt @map("updated_at")
 
-  options QuestionOption[]
+  options          QuestionOption[]
   attemptQuestions AttemptQuestion[]
 
   @@unique([questionId, version])
@@ -1336,28 +1878,28 @@ model QuestionOption {
 /// is what lets two participants in the same session sit different papers while
 /// still being measured against the same blueprint.
 model Exam {
-  id     String @id @default(uuid()) @db.Uuid
+  id                    String     @id @default(uuid()) @db.Uuid
   /// Unique: one assessment has at most one exam delivery configuration.
-  assessmentId String     @unique @map("assessment_id") @db.Uuid
-  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
-  title        String
-  instructions String?
-  durationMinutes Int     @map("duration_minutes")
+  assessmentId          String     @unique @map("assessment_id") @db.Uuid
+  assessment            Assessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  title                 String
+  instructions          String?
+  durationMinutes       Int        @map("duration_minutes")
   /// NULL means unlimited attempts. Bounded by the session window in TASK-043.
-  attemptsAllowed Int?    @map("attempts_allowed")
-  shuffleQuestions    Boolean @default(true) @map("shuffle_questions")
-  shuffleOptions      Boolean @default(true) @map("shuffle_options")
+  attemptsAllowed       Int?       @map("attempts_allowed")
+  shuffleQuestions      Boolean    @default(true) @map("shuffle_questions")
+  shuffleOptions        Boolean    @default(true) @map("shuffle_options")
   /// Whether the participant sees their score immediately after submitting.
   /// Defaults to false so a shared cohort result cannot leak between sessions.
-  showResultImmediately Boolean @default(false) @map("show_result_immediately")
+  showResultImmediately Boolean    @default(false) @map("show_result_immediately")
   /// IANA time-zone name used for display only. Instants stay UTC.
-  timeZone String? @map("time_zone")
-  status   ExamStatus @default(DRAFT)
+  timeZone              String?    @map("time_zone")
+  status                ExamStatus @default(DRAFT)
   /// Blueprint version this configuration reflects; started attempts pin it.
-  configVersion Int @default(1) @map("config_version")
-  metadata Json?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  configVersion         Int        @default(1) @map("config_version")
+  metadata              Json?
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
 
   blueprint ExamBlueprint?
   rules     ExamBlueprintRule[]
@@ -1397,20 +1939,20 @@ enum ExamStatus {
 /// The service recomputes them from the rules on every write; they are never
 /// accepted from the client.
 model ExamBlueprint {
-  id        String @id @default(uuid()) @db.Uuid
-  examId    String @unique @map("exam_id") @db.Uuid
-  exam      Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
-  title     String?
-  description String?
-  totalQuestions Int @map("total_questions")
-  totalPoints Decimal @map("total_points") @db.Decimal(9, 2)
+  id             String            @id @default(uuid()) @db.Uuid
+  examId         String            @unique @map("exam_id") @db.Uuid
+  exam           Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  title          String?
+  description    String?
+  totalQuestions Int               @map("total_questions")
+  totalPoints    Decimal           @map("total_points") @db.Decimal(9, 2)
   /// How the draw behaves when a rule's bank holds MORE qualifying questions
   /// than the rule asks for. Static configurations pick a fixed subset per
   /// participant set; `POOL` means each attempt draws its own subset.
-  selectionMode ExamSelectionMode @default(FIXED) @map("selection_mode")
-  metadata  Json?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  selectionMode  ExamSelectionMode @default(FIXED) @map("selection_mode")
+  metadata       Json?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
 
   rules ExamBlueprintRule[]
 
@@ -1485,29 +2027,29 @@ model AttemptQuestion {
 }
 
 model AttemptAnswer {
-  id               String         @id @default(uuid()) @db.Uuid
-  attemptQuestionId String        @unique @map("attempt_question_id") @db.Uuid
-  attemptQuestion  AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
-  grade            AnswerGrade?
-  answerPayload    Json           @map("answer_payload")
-  revision         Int            @default(1)
-  savedAt          DateTime       @default(now()) @map("saved_at")
+  id                String          @id @default(uuid()) @db.Uuid
+  attemptQuestionId String          @unique @map("attempt_question_id") @db.Uuid
+  attemptQuestion   AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+  grade             AnswerGrade?
+  answerPayload     Json            @map("answer_payload")
+  revision          Int             @default(1)
+  savedAt           DateTime        @default(now()) @map("saved_at")
 
   @@index([savedAt])
   @@map("attempt_answers")
 }
 
 model AnswerGrade {
-  id               String        @id @default(uuid()) @db.Uuid
-  attemptAnswerId  String        @unique @map("attempt_answer_id") @db.Uuid
-  attemptAnswer    AttemptAnswer @relation(fields: [attemptAnswerId], references: [id], onDelete: Cascade)
-  autoScore        Decimal?      @map("auto_score") @db.Decimal(9, 2)
-  manualScore      Decimal?      @map("manual_score") @db.Decimal(9, 2)
-  finalScore       Decimal       @map("final_score") @db.Decimal(9, 2)
-  graderPersonId   String?       @map("grader_person_id") @db.Uuid
-  grader           Person?       @relation(fields: [graderPersonId], references: [id], onDelete: Restrict)
-  feedback         String?
-  gradedAt         DateTime      @default(now()) @map("graded_at")
+  id              String        @id @default(uuid()) @db.Uuid
+  attemptAnswerId String        @unique @map("attempt_answer_id") @db.Uuid
+  attemptAnswer   AttemptAnswer @relation(fields: [attemptAnswerId], references: [id], onDelete: Cascade)
+  autoScore       Decimal?      @map("auto_score") @db.Decimal(9, 2)
+  manualScore     Decimal?      @map("manual_score") @db.Decimal(9, 2)
+  finalScore      Decimal       @map("final_score") @db.Decimal(9, 2)
+  graderPersonId  String?       @map("grader_person_id") @db.Uuid
+  grader          Person?       @relation(fields: [graderPersonId], references: [id], onDelete: Restrict)
+  feedback        String?
+  gradedAt        DateTime      @default(now()) @map("graded_at")
 
   @@index([graderPersonId, gradedAt])
   @@index([gradedAt])
@@ -1567,28 +2109,28 @@ model ExamParticipant {
 /// `count * pointsPerQuestion` over all rules, which the service checks against
 /// the assessment's `maxScore` — a mismatch would silently rescale every grade.
 model ExamBlueprintRule {
-  id          String        @id @default(uuid()) @db.Uuid
-  examId      String        @map("exam_id") @db.Uuid
-  exam        Exam          @relation(fields: [examId], references: [id], onDelete: Cascade)
-  blueprintId String        @map("blueprint_id") @db.Uuid
-  blueprint   ExamBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
+  id                String        @id @default(uuid()) @db.Uuid
+  examId            String        @map("exam_id") @db.Uuid
+  exam              Exam          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  blueprintId       String        @map("blueprint_id") @db.Uuid
+  blueprint         ExamBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
   /// Stable within a blueprint; audit entries and validation messages refer to
   /// this instead of to the row id, which changes when rules are reordered.
-  code        String
-  label       String?
-  sortOrder   Int           @default(0) @map("sort_order")
-  questionBankId String?    @map("question_bank_id") @db.Uuid
-  questionBank   QuestionBank? @relation(fields: [questionBankId], references: [id], onDelete: Restrict)
-  questionTypeId String?    @map("question_type_id") @db.Uuid
-  questionType   QuestionType? @relation(fields: [questionTypeId], references: [id], onDelete: Restrict)
+  code              String
+  label             String?
+  sortOrder         Int           @default(0) @map("sort_order")
+  questionBankId    String?       @map("question_bank_id") @db.Uuid
+  questionBank      QuestionBank? @relation(fields: [questionBankId], references: [id], onDelete: Restrict)
+  questionTypeId    String?       @map("question_type_id") @db.Uuid
+  questionType      QuestionType? @relation(fields: [questionTypeId], references: [id], onDelete: Restrict)
   /// Matches `QuestionVersion.topic` exactly; NULL means any topic.
-  topic       String?
+  topic             String?
   /// Matches `QuestionVersion.difficulty` exactly; NULL means any difficulty.
-  difficulty  String?
-  count       Int
-  pointsPerQuestion Decimal @map("points_per_question") @db.Decimal(7, 2)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  difficulty        String?
+  count             Int
+  pointsPerQuestion Decimal       @map("points_per_question") @db.Decimal(7, 2)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
   @@unique([blueprintId, code])
   @@index([blueprintId])

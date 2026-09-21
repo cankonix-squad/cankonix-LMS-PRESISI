@@ -90,6 +90,41 @@ export class PrismaGradingRepository implements GradingRepository {
     });
   }
 
+  async listSchemes() {
+    return this.prisma.gradingScheme.findMany();
+  }
+
+  async createScheme(data: Prisma.GradingSchemeCreateInput) {
+    return this.prisma.gradingScheme.create({ data });
+  }
+
+  async createComponent(data: Prisma.GradingComponentCreateInput) {
+    return this.prisma.gradingComponent.create({ data });
+  }
+
+  async getScheme(id: string) {
+    return this.prisma.gradingScheme.findUnique({ where: { id } });
+  }
+
+  async getAssessment(id: string) {
+    return this.prisma.assessment.findUnique({
+      where: { id },
+      select: { id: true, classSubjectId: true },
+    });
+  }
+
+  async findComponentByAssessment(schemeId: string, assessmentId: string) {
+    return this.prisma.gradingComponent.findUnique({
+      where: { schemeId_assessmentId: { schemeId, assessmentId } },
+    });
+  }
+
+  async getSchemeComponents(schemeId: string) {
+    return this.prisma.gradingComponent.findMany({
+      where: { schemeId },
+    });
+  }
+
   private async recompute(tx: Prisma.TransactionClient, attemptId: string) {
     const grades = await tx.answerGrade.findMany({
       where: { attemptAnswer: { attemptQuestion: { attemptId } } },

@@ -6,35 +6,36 @@ import {
 } from '@nestjs/common';
 import { ExamAttemptStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  ATTEMPT_SELECT,
+  StudentAttempt,
+  StudentAttemptAnswer,
+  toSavedAnswer,
+  toStudentAttempt,
+} from './attempt-response';
 import { SaveAttemptAnswerDto, StartAttemptDto } from './dto/attempt.dto';
 export const ATTEMPTS_REPOSITORY = Symbol('ATTEMPTS_REPOSITORY');
-type AttemptRecord = {
-  id: string;
-  participantId: string;
-  startedAt: Date;
-  expiresAt: Date;
-  status: string;
-  questions: Array<{
-    sequence: number;
-    points: unknown;
-    questionVersion: {
-      id: string;
-      question: { id: string };
-      stem: string;
-      options: Array<{ key: string; label: string }>;
-    };
-  }>;
-};
+
+/**
+ * Every method returns the participant-safe projection, never a database row.
+ *
+ * That is deliberate: the answer key is not fetched (see `ATTEMPT_SELECT`) and
+ * the return type carries no field for it, so neither a careless caller nor a
+ * future serializer can widen what a participant receives.
+ */
 export interface AttemptsRepository {
-  start(participantId: string, now: Date): Promise<AttemptRecord>;
-  find(id: string): Promise<AttemptRecord | null>;
-  submit(id: string, now: Date): Promise<AttemptRecord>;
+  start(participantId: string, now: Date): Promise<StudentAttempt | null>;
+  find(id: string): Promise<StudentAttempt | null>;
+  submit(id: string, now: Date): Promise<StudentAttempt | null>;
   saveAnswer(
     attemptId: string,
     attemptQuestionId: string,
     dto: SaveAttemptAnswerDto,
     now: Date,
-  ): Promise<unknown>;
+  ): Promise<StudentAttemptAnswer>;
+  /** Frozen deadline, read separately so expiry is decided on server time. */
+  expiresAt(id: string): Promise<Date | null>;
+  statusOf(id: string): Promise<string | null>;
 }
 @Injectable()
 export class PrismaAttemptsRepository implements AttemptsRepository {
@@ -56,24 +57,9 @@ export class PrismaAttemptsRepository implements AttemptsRepository {
         throw new UnprocessableEntityException('Participant is not eligible');
       const existing = await tx.examAttempt.findFirst({
         where: { participantId, status: ExamAttemptStatus.IN_PROGRESS },
-        include: {
-          questions: {
-            include: {
-              questionVersion: {
-                include: {
-                  question: true,
-                  options: {
-                    select: { key: true, label: true },
-                    orderBy: { sortOrder: 'asc' },
-                  },
-                },
-              },
-            },
-            orderBy: { sequence: 'asc' },
-          },
-        },
+        select: ATTEMPT_SELECT,
       });
-      if (existing) return existing as unknown as AttemptRecord;
+      if (existing) return toStudentAttempt(existing);
       const attemptNo =
         (await tx.examAttempt.count({ where: { participantId } })) + 1;
       const duration = p.session.exam.durationMinutes;
@@ -112,7 +98,7 @@ export class PrismaAttemptsRepository implements AttemptsRepository {
           })),
         );
       }
-      return tx.examAttempt.create({
+      const created = await tx.examAttempt.create({
         data: {
           participantId,
           attemptNo,
@@ -121,76 +107,52 @@ export class PrismaAttemptsRepository implements AttemptsRepository {
           status: ExamAttemptStatus.IN_PROGRESS,
           questions: { create: versions },
         },
-        include: {
-          questions: {
-            include: {
-              questionVersion: {
-                include: {
-                  question: true,
-                  options: {
-                    select: { key: true, label: true },
-                    orderBy: { sortOrder: 'asc' },
-                  },
-                },
-              },
-            },
-            orderBy: { sequence: 'asc' },
-          },
-        },
-      }) as unknown as AttemptRecord;
+        select: ATTEMPT_SELECT,
+      });
+      return toStudentAttempt(created);
     });
   }
-  find(id: string) {
-    return this.prisma.examAttempt.findUnique({
+  async find(id: string) {
+    const record = await this.prisma.examAttempt.findUnique({
       where: { id },
-      include: {
-        questions: {
-          include: {
-            questionVersion: {
-              include: {
-                question: true,
-                options: {
-                  select: { key: true, label: true },
-                  orderBy: { sortOrder: 'asc' },
-                },
-              },
-            },
-          },
-          orderBy: { sequence: 'asc' },
-        },
-      },
-    }) as unknown as Promise<AttemptRecord | null>;
+      select: ATTEMPT_SELECT,
+    });
+    return toStudentAttempt(record);
+  }
+  async expiresAt(id: string) {
+    const record = await this.prisma.examAttempt.findUnique({
+      where: { id },
+      select: { expiresAt: true },
+    });
+    return record?.expiresAt ?? null;
+  }
+  async statusOf(id: string) {
+    const record = await this.prisma.examAttempt.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    return record?.status ?? null;
   }
   async submit(id: string, now: Date) {
-    const a = await this.find(id);
-    if (!a) throw new NotFoundException('Attempt not found');
-    if (a.status !== 'IN_PROGRESS') return a;
-    return this.prisma.examAttempt.update({
+    const deadline = await this.expiresAt(id);
+    if (!deadline) throw new NotFoundException('Attempt not found');
+    const current = await this.statusOf(id);
+    // Re-submitting a finalized attempt is an idempotent no-op, so a retry after
+    // a dropped response cannot move a closed attempt back into play.
+    if (current && current !== ExamAttemptStatus.IN_PROGRESS)
+      return this.find(id);
+    const updated = await this.prisma.examAttempt.update({
       where: { id },
       data: {
         status:
-          now >= a.expiresAt
+          now >= deadline
             ? ExamAttemptStatus.EXPIRED
             : ExamAttemptStatus.SUBMITTED,
         submittedAt: now,
       },
-      include: {
-        questions: {
-          include: {
-            questionVersion: {
-              include: {
-                question: true,
-                options: {
-                  select: { key: true, label: true },
-                  orderBy: { sortOrder: 'asc' },
-                },
-              },
-            },
-          },
-          orderBy: { sequence: 'asc' },
-        },
-      },
-    }) as unknown as Promise<AttemptRecord>;
+      select: ATTEMPT_SELECT,
+    });
+    return toStudentAttempt(updated);
   }
   async saveAnswer(
     attemptId: string,
@@ -201,7 +163,10 @@ export class PrismaAttemptsRepository implements AttemptsRepository {
     return this.prisma.$transaction(async (tx) => {
       const question = await tx.attemptQuestion.findFirst({
         where: { id: attemptQuestionId, attemptId },
-        include: { attempt: true },
+        select: {
+          id: true,
+          attempt: { select: { status: true, expiresAt: true } },
+        },
       });
       if (!question) throw new NotFoundException('Attempt question not found');
       if (
@@ -211,18 +176,28 @@ export class PrismaAttemptsRepository implements AttemptsRepository {
         throw new UnprocessableEntityException('Attempt is no longer active');
       const current = await tx.attemptAnswer.findUnique({
         where: { attemptQuestionId },
+        select: { answerPayload: true, revision: true, savedAt: true },
       });
+      // Idempotency is decided by the *payload*, not by the revision.
+      //
+      // The client always sends the revision the server last acknowledged, so
+      // an edit and a retry of that same edit both arrive with the same
+      // revision. Comparing revisions alone therefore cannot tell them apart:
+      // an edit would be rejected as a conflict, and a retry would be rejected
+      // as stale (TASK-045 requires "repeated PUT idempotent"). Comparing the
+      // payload can: an identical payload is a replay and is a no-op, a
+      // different payload is a new answer.
+      if (
+        current !== null &&
+        JSON.stringify(current.answerPayload) ===
+          JSON.stringify(dto.answerPayload)
+      )
+        return toSavedAnswer(current);
+      // A different payload built on an older revision than the stored one
+      // would silently overwrite a newer answer, so it is refused.
       if (current && dto.revision < current.revision)
         throw new UnprocessableEntityException('Stale answer revision');
-      if (current && dto.revision === current.revision) {
-        if (
-          JSON.stringify(current.answerPayload) ===
-          JSON.stringify(dto.answerPayload)
-        )
-          return current;
-        throw new UnprocessableEntityException('Answer revision conflict');
-      }
-      return tx.attemptAnswer.upsert({
+      const saved = await tx.attemptAnswer.upsert({
         where: { attemptQuestionId },
         create: {
           attemptQuestionId,
@@ -235,7 +210,9 @@ export class PrismaAttemptsRepository implements AttemptsRepository {
           revision: dto.revision + 1,
           savedAt: now,
         },
+        select: { answerPayload: true, revision: true, savedAt: true },
       });
+      return toSavedAnswer(saved);
     });
   }
 }
@@ -247,11 +224,15 @@ export class AttemptsService {
   start(dto: StartAttemptDto) {
     return this.repo.start(dto.participantId, new Date());
   }
-  get(id: string) {
-    return this.repo.find(id);
+  async get(id: string) {
+    const attempt = await this.repo.find(id);
+    if (!attempt) throw new NotFoundException('Attempt not found');
+    return attempt;
   }
-  submit(id: string) {
-    return this.repo.submit(id, new Date());
+  async submit(id: string) {
+    const attempt = await this.repo.submit(id, new Date());
+    if (!attempt) throw new NotFoundException('Attempt not found');
+    return attempt;
   }
   saveAnswer(
     attemptId: string,

@@ -645,6 +645,186 @@ export type ChangeAssessmentStatusInput = {
   reason?: string;
 };
 
+// ---------------------------------------------------------------------------
+// Question bank domain (TASK-041 / TASK-047)
+//
+// The educator contract includes the answer key (`isCorrect`, `scoringRule`,
+// `explanation`) because an author needs it. It is never the student contract:
+// the API exposes a separate, allow-listed student projection behind its own
+// `question.participate` permission, so nothing here may be reused for a
+// participant-facing screen.
+// ---------------------------------------------------------------------------
+
+/** ACTIVE/INACTIVE pair shared by every controlled vocabulary in the project. */
+export type QuestionBankStatus = 'ACTIVE' | 'INACTIVE';
+export type QuestionStatus = 'ACTIVE' | 'INACTIVE';
+
+/**
+ * A version is frozen once published: a correction is a NEW version, never an
+ * edit, which is why `SUPERSEDED` exists as a first-class state.
+ */
+export type QuestionVersionStatus = 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
+
+export type QuestionBank = {
+  id: string;
+  curriculumSubjectId: string;
+  code: string;
+  name: string;
+  description: string | null;
+  status: QuestionBankStatus;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type QuestionBankList = {
+  data: QuestionBank[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type ListQuestionBanksQuery = {
+  curriculumSubjectId?: string;
+  curriculumId?: string;
+  subjectId?: string;
+  status?: QuestionBankStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type CreateQuestionBankInput = {
+  curriculumSubjectId: string;
+  code: string;
+  name: string;
+  description?: string;
+  status?: QuestionBankStatus;
+  metadata?: Record<string, unknown>;
+};
+
+export type UpdateQuestionBankInput = {
+  name?: string;
+  description?: string | null;
+  status?: QuestionBankStatus;
+  metadata?: Record<string, unknown>;
+};
+
+/**
+ * A data-driven question type. `hasOptions`/`multiSelect` drive the authoring
+ * form instead of any code comparing a type against a known string, so a new
+ * type works without a UI change.
+ */
+export type QuestionType = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  hasOptions: boolean;
+  multiSelect: boolean;
+  status: QuestionBankStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type QuestionTypeList = {
+  data: QuestionType[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type QuestionOption = {
+  id: string;
+  key: string;
+  label: string;
+  isCorrect: boolean;
+  value: number | null;
+  sortOrder: number;
+};
+
+export type QuestionVersion = {
+  id: string;
+  questionId: string;
+  version: number;
+  stem: string;
+  scoringRule: Record<string, unknown> | null;
+  explanation: string | null;
+  difficulty: string | null;
+  topic: string | null;
+  maxScore: number;
+  status: QuestionVersionStatus;
+  options: QuestionOption[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Question = {
+  id: string;
+  questionBankId: string;
+  questionTypeId: string;
+  code: string | null;
+  status: QuestionStatus;
+  versionCount: number;
+  latestVersion: QuestionVersion | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type QuestionList = {
+  data: Question[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type ListQuestionsQuery = {
+  questionTypeId?: string;
+  status?: QuestionStatus;
+  versionStatus?: QuestionVersionStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type QuestionOptionInput = {
+  key: string;
+  label: string;
+  isCorrect?: boolean;
+  value?: number;
+  sortOrder?: number;
+};
+
+export type CreateQuestionInput = {
+  questionTypeId: string;
+  code?: string;
+  stem: string;
+  scoringRule?: Record<string, unknown>;
+  explanation?: string;
+  difficulty?: string;
+  topic?: string;
+  maxScore: number;
+  options?: QuestionOptionInput[];
+};
+
+export type UpdateQuestionInput = {
+  questionTypeId?: string;
+  code?: string | null;
+  status?: QuestionStatus;
+};
+
+export type CreateQuestionVersionInput = {
+  stem: string;
+  scoringRule?: Record<string, unknown>;
+  explanation?: string;
+  difficulty?: string;
+  topic?: string;
+  maxScore: number;
+  options?: QuestionOptionInput[];
+};
+
+export type UpdateQuestionVersionInput = Partial<CreateQuestionVersionInput>;
+
 export type Exam = {
   id: string;
   assessmentId: string;
@@ -669,31 +849,67 @@ export type ExamBlueprintRule = {
   topic: string | null;
   difficulty: string | null;
 };
+/**
+ * The rule shape accepted by the save endpoint.
+ *
+ * Separate from `ExamBlueprintRule` on purpose: the server always returns every
+ * field (null when unset), but a caller only has to send the ones it means to
+ * constrain, so a rule is not forced to fabricate values it never chose.
+ */
+export type ExamBlueprintRuleInput = {
+  code: string;
+  label?: string;
+  count: number;
+  pointsPerQuestion: number;
+  questionBankId?: string;
+  questionTypeId?: string;
+  topic?: string;
+  difficulty?: string;
+};
 export type ExamBlueprint = {
   id: string;
   title: string | null;
   selectionMode?: string;
   rules: ExamBlueprintRule[];
 };
+export type SessionStatus =
+  'DRAFT' | 'SCHEDULED' | 'OPEN' | 'CLOSED' | 'CANCELLED';
+
+/**
+ * Participant lifecycle. The API only accepts `INVITED`/`ELIGIBLE` additions
+ * while the session is still `DRAFT` or `SCHEDULED`.
+ */
+export type ParticipantStatus =
+  'INVITED' | 'ELIGIBLE' | 'DISQUALIFIED' | 'COMPLETED';
+
+/**
+ * Exam lifecycle. Only `PATCH /exams/:id/status` moves an exam between these,
+ * and each transition is permission-guarded and audited server-side instead of
+ * being inferred from a partial update.
+ */
+export type ExamStatus =
+  'DRAFT' | 'VALIDATED' | 'SCHEDULED' | 'CLOSED' | 'ARCHIVED';
+
 export type ExamSession = {
   id: string;
   examId: string;
   startAt: string;
   endAt: string;
-  status: 'DRAFT' | 'SCHEDULED' | 'OPEN' | 'CLOSED' | 'CANCELLED';
+  status: SessionStatus;
   participants?: ExamParticipant[];
 };
 export type ExamParticipant = {
   id: string;
   sessionId: string;
   enrollmentId: string;
-  status: string;
+  status: ParticipantStatus;
 };
 export type CreateExamInput = Omit<Partial<Exam>, 'id' | 'status'> & {
   assessmentId: string;
   title: string;
   durationMinutes: number;
 };
+export type UpdateExamInput = Partial<Omit<CreateExamInput, 'assessmentId'>>;
 export type CreateExamSessionInput = {
   examId: string;
   startAt: string;
@@ -702,13 +918,81 @@ export type CreateExamSessionInput = {
 };
 export type AddExamParticipantInput = {
   enrollmentId: string;
-  status?: string;
+  status?: ParticipantStatus;
   accommodations?: Record<string, unknown>;
 };
 export type ManualExamGradeInput = {
   score: number;
   feedback?: string | null;
   graderPersonId: string;
+};
+
+// ---------------------------------------------------------------------------
+// Attempt runtime (TASK-044 / TASK-045)
+//
+// Participant-facing contract. The API guarantees these payloads contain no
+// answer key, so nothing here may be extended with server-only fields.
+// ---------------------------------------------------------------------------
+
+export type AttemptStatus =
+  'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED' | 'CANCELLED';
+
+export type AttemptAnswer = {
+  answerPayload: Record<string, unknown>;
+  revision: number;
+  savedAt: string;
+};
+
+export type AttemptOption = {
+  key: string;
+  label: string;
+  sortOrder: number;
+};
+
+export type AttemptQuestion = {
+  id: string;
+  sequence: number;
+  points: number;
+  optionOrder: unknown;
+  questionVersionId: string;
+  stem: string;
+  topic: string | null;
+  difficulty: string | null;
+  /**
+   * Data-driven answering modality. Render radios, checkboxes or a textarea from
+   * these flags instead of comparing `code` against a known string, so a newly
+   * seeded type needs no UI change.
+   */
+  questionType: {
+    code: string;
+    name: string;
+    hasOptions: boolean;
+    multiSelect: boolean;
+  };
+  options: AttemptOption[];
+  answer: AttemptAnswer | null;
+};
+
+export type Attempt = {
+  id: string;
+  participantId: string;
+  attemptNo: number;
+  startedAt: string;
+  expiresAt: string;
+  submittedAt: string | null;
+  status: AttemptStatus;
+  score: number | null;
+  questions: AttemptQuestion[];
+};
+
+export type StartAttemptInput = {
+  participantId: string;
+};
+
+export type SaveAttemptAnswerInput = {
+  answerPayload: Record<string, unknown>;
+  /** The revision the client last observed; the server rejects a stale write. */
+  revision: number;
 };
 
 function isHealthResponse(body: unknown): body is HealthResponse {
@@ -1352,6 +1636,103 @@ export function createApiClient(
         });
       },
     },
+    /**
+     * Question banks and their questions (TASK-041).
+     *
+     * Authoring contract only: responses include the answer key, so this must
+     * never be called with a participant's token.
+     */
+    questionBanks: {
+      list(params: ListQuestionBanksQuery = {}) {
+        return request<QuestionBankList>(
+          `/question-banks${buildQuery({ page: 1, limit: 50, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<QuestionBank>(`/question-banks/${id}`);
+      },
+      create(input: CreateQuestionBankInput) {
+        return mutate<QuestionBank>('/question-banks', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateQuestionBankInput) {
+        return mutate<QuestionBank>(`/question-banks/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+      listQuestions(bankId: string, params: ListQuestionsQuery = {}) {
+        return request<QuestionList>(
+          `/question-banks/${bankId}/questions${buildQuery({
+            page: 1,
+            limit: 50,
+            ...params,
+          })}`,
+        );
+      },
+      createQuestion(bankId: string, input: CreateQuestionInput) {
+        return mutate<Question>(`/question-banks/${bankId}/questions`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+
+    /** Read-only, data-driven question type vocabulary (TASK-041). */
+    questionTypes: {
+      list(
+        params: {
+          status?: QuestionStatus;
+          search?: string;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<QuestionTypeList>(
+          `/question-types${buildQuery({ page: 1, limit: 50, ...params })}`,
+        );
+      },
+    },
+
+    questions: {
+      get(id: string) {
+        return request<Question>(`/questions/${id}`);
+      },
+      update(id: string, input: UpdateQuestionInput) {
+        return mutate<Question>(`/questions/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+      createVersion(id: string, input: CreateQuestionVersionInput) {
+        return mutate<QuestionVersion>(`/questions/${id}/versions`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      updateVersion(
+        id: string,
+        versionId: string,
+        input: UpdateQuestionVersionInput,
+      ) {
+        return mutate<QuestionVersion>(
+          `/questions/${id}/versions/${versionId}`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify(input),
+          },
+        );
+      },
+      publishVersion(id: string, versionId: string) {
+        return mutate<QuestionVersion>(
+          `/questions/${id}/versions/${versionId}/publish`,
+          { method: 'POST' },
+        );
+      },
+    },
+
     exams: {
       get(id: string) {
         return request<Exam>(`/exams/${id}`);
@@ -1373,7 +1754,7 @@ export function createApiClient(
         input: {
           title?: string;
           description?: string;
-          rules: ExamBlueprintRule[];
+          rules: ExamBlueprintRuleInput[];
         },
       ) {
         return mutate<ExamBlueprint>(`/exams/${id}/blueprint`, {
@@ -1411,6 +1792,41 @@ export function createApiClient(
         });
       },
     },
+    /**
+     * Exam attempt runtime (TASK-044 / TASK-045).
+     *
+     * `start` is idempotent: calling it while an attempt is in progress returns
+     * that same attempt, which is what makes refresh/resume safe. The deadline
+     * is the server's `expiresAt`; the client clock is never trusted.
+     */
+    attempts: {
+      start(input: StartAttemptInput) {
+        return mutate<Attempt>('/attempts', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      get(id: string) {
+        return request<Attempt>(`/attempts/${id}`);
+      },
+      submit(id: string) {
+        return mutate<Attempt>(`/attempts/${id}/submit`, { method: 'POST' });
+      },
+      saveAnswer(
+        attemptId: string,
+        attemptQuestionId: string,
+        input: SaveAttemptAnswerInput,
+      ) {
+        return mutate<AttemptAnswer>(
+          `/attempts/${attemptId}/questions/${attemptQuestionId}/answer`,
+          {
+            method: 'PUT',
+            body: JSON.stringify(input),
+          },
+        );
+      },
+    },
+
     examGrading: {
       autoGrade(attemptId: string) {
         return mutate<unknown>(`/exam-grading/${attemptId}/auto`, {

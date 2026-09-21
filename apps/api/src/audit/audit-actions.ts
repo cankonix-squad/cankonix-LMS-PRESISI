@@ -87,6 +87,36 @@ export const AUDIT_ACTIONS = {
   EXAM_AUTO_GRADED: 'exam.auto_graded',
   EXAM_MANUAL_GRADED: 'exam.manual_graded',
 
+  GRADING_SCHEME_CREATED: 'grading_scheme.created',
+  GRADING_SCHEME_STATUS_CHANGED: 'grading_scheme.status_changed',
+  GRADING_COMPONENT_CREATED: 'grading_component.created',
+
+  FINAL_GRADE_CALCULATED: 'final_grade.calculated',
+  FINAL_GRADE_APPROVED: 'final_grade.approved',
+  FINAL_GRADE_REOPENED: 'final_grade.reopened',
+
+  GRADUATION_RULE_CREATED: 'graduation_rule.created',
+  GRADUATION_RULE_UPDATED: 'graduation_rule.updated',
+  GRADUATION_RULE_PUBLISHED: 'graduation_rule.published',
+  GRADUATION_RULE_ARCHIVED: 'graduation_rule.archived',
+  GRADUATION_RULE_COMPONENT_CREATED: 'graduation_rule_component.created',
+
+  GRADUATION_EVALUATION_RUN: 'graduation_evaluation.run',
+
+  GRADUATION_DECISION_CREATED: 'graduation_decision.created',
+  GRADUATION_DECISION_APPROVED: 'graduation_decision.approved',
+  GRADUATION_DECISION_CORRECTED: 'graduation_decision.corrected',
+  GRADUATION_DECISION_REVOKED: 'graduation_decision.revoked',
+
+  CERTIFICATE_TEMPLATE_CREATED: 'certificate_template.created',
+  CERTIFICATE_TEMPLATE_UPDATED: 'certificate_template.updated',
+  CERTIFICATE_TEMPLATE_STATUS_CHANGED: 'certificate_template.status_changed',
+  CERTIFICATE_ISSUED: 'certificate.issued',
+  CERTIFICATE_FILE_ATTACHED: 'certificate.file_attached',
+  CERTIFICATE_REVOKED: 'certificate.revoked',
+
+  REPORTING_REFRESHED: 'reporting.refreshed',
+
   ASSIGNMENT_CREATED: 'assignment.created',
   ASSIGNMENT_UPDATED: 'assignment.updated',
   ASSIGNMENT_STATUS_CHANGED: 'assignment.status_changed',
@@ -175,6 +205,16 @@ export const AUDIT_RESOURCE_TYPES = {
   QUESTION_VERSION: 'question_version',
   EXAM: 'exam',
   ANSWER_GRADE: 'answer_grade',
+  GRADING_SCHEME: 'grading_scheme',
+  GRADING_COMPONENT: 'grading_component',
+  FINAL_GRADE: 'final_grade',
+  GRADUATION_RULE: 'graduation_rule',
+  GRADUATION_RULE_COMPONENT: 'graduation_rule_component',
+  GRADUATION_EVALUATION: 'graduation_evaluation',
+  GRADUATION_DECISION: 'graduation_decision',
+  CERTIFICATE_TEMPLATE: 'certificate_template',
+  CERTIFICATE: 'certificate',
+  REPORTING_METRIC: 'reporting_metric',
   ASSIGNMENT: 'assignment',
   ASSIGNMENT_SUBMISSION: 'assignment_submission',
   ASSIGNMENT_GRADE: 'assignment_grade',

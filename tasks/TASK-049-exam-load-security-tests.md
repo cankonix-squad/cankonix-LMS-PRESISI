@@ -1,6 +1,6 @@
 # TASK-049 — Exam Load & Security Tests
 
-**Status:** NOT STARTED
+**Status:** DONE
 
 ## Dependency
 TASK-044, TASK-045, TASK-046 = DONE.

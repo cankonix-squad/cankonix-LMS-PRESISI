@@ -11,6 +11,7 @@ import {
 import type { AuthIdentityResolver } from './auth/auth-identity.resolver';
 import type { JwksProvider } from './auth/jwks.provider';
 import type { PermissionEvaluator } from './authorization/permission-evaluator';
+import type { ExecutiveScopeGrantResolver } from './reporting/executive-scope.resolver';
 
 export type CreateAppOptions = {
   /** Defaults to configuration derived from the environment. */
@@ -25,6 +26,13 @@ export type CreateAppOptions = {
    * it can only answer permission questions, never disable enforcement.
    */
   permissionEvaluator?: PermissionEvaluator;
+  /**
+   * Defaults to `RoleAssignmentsService`, which resolves the executive reporting
+   * reach from persisted role assignments. Tests may inject a deterministic
+   * resolver; like the evaluator, it can only report a scope set, never widen
+   * enforcement.
+   */
+  executiveScopeGrantResolver?: ExecutiveScopeGrantResolver;
   /** Defaults to enabled outside production. */
   docsEnabled?: boolean;
 };
@@ -43,6 +51,7 @@ export async function createApp(options: CreateAppOptions = {}) {
       jwksProvider: options.jwksProvider,
       identityResolver: options.identityResolver,
       permissionEvaluator: options.permissionEvaluator,
+      executiveScopeGrantResolver: options.executiveScopeGrantResolver,
     }),
   );
   app.setGlobalPrefix('api/v1');

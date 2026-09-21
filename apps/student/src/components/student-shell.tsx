@@ -5,6 +5,7 @@ const navigation = [
   { href: '/', label: 'Dashboard & Kelas' },
   { href: '/materi', label: 'Materi & Pertemuan' },
   { href: '/tugas', label: 'Tugas Saya' },
+  { href: '/ujian', label: 'Ujian' },
   { href: '/kemajuan', label: 'Kemajuan Belajar' },
 ];
 

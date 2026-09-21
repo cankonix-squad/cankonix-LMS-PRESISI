@@ -1,9 +1,32 @@
 # TASK-047 — Educator Exam UI
 
-**Status:** REVIEW
+**Status:** DONE
 
 ## Dependency
 TASK-042, TASK-043, TASK-046 = DONE.
+
+## Implementation Report (2026-09-18)
+
+### Files created / modified
+- `apps/educator/src/app/exam/page.tsx` — Next.js 16.3.5 server component page (`/exam`, query params `?exam=`, `?session=`, `?bank=`)
+- `apps/educator/src/features/exam/question-bank-panel.tsx` — question bank creation, question versioning, draft authoring and publishing
+- `apps/educator/src/features/exam/blueprint-editor.tsx` — blueprint rule management (count, points, bank, topic, difficulty)
+- `apps/educator/src/features/exam/session-panel.tsx` — session lifecycle state transitions and participant roster management
+- `apps/educator/src/features/exam/grading-panel.tsx` — objective auto-grading and manual essay scoring actions
+- `apps/educator/src/features/exam/exam-authoring-panel.tsx` — exam creation, configuration, and status transitions
+- `apps/educator/src/features/exam/exam-tabs.tsx` — tab shell for modular panel switching
+- `apps/educator/src/features/exam-actions.ts` — server actions for exam, session, question bank, version publishing, auto-grade, and manual-grade
+- `packages/api-client/src/index.ts` — expanded API client with question bank, question types, questions, blueprint rule input, and grading types
+- `packages/api-client/test/client.test.cjs` — tests for question bank API client contracts and blueprint payloads
+
+### Verification (PASS)
+- `pnpm lint` — 11/11 packages, Prettier clean
+- `pnpm typecheck` — 14/14 packages
+- `pnpm build` — 11/11 packages (including `@lms/educator` routes `/`, `/aktivitas`, `/exam`, `/kehadiran`, `/kelas`, `/pemantauan`, `/pertemuan`, `/tugas`)
+- `pnpm test` — **217 API + 5 api-client = 222, 0 fail**
+
+### Deferred
+- Educator runtime browser interaction against a live Keycloak + API (no Docker/container runtime available).
 
 ## Objective
 Educator UI exam authoring/session/grading.

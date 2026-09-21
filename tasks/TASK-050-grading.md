@@ -1,6 +1,8 @@
 # TASK-050 — Grading Scheme & Components
 
-**Status:** NOT STARTED
+**Status:** DONE
+
+> **Remediation note (2026-09-19).** This task had been marked `DONE` without the Prisma migration and HTTP surface that its own "Data Model / Persistence" and "API / Application Contract" sections require: `GradingScheme` and `GradingComponent` existed only in `schema.prisma`, and the scheme/component service methods had no controller route. The tests passed because they drive a fake in-memory repository, so the gap was invisible to the suite. Closed under reviewer approval while starting TASK-052 — migration `apps/api/prisma/migrations/20261009000000_task_050_grading/`, routes on a new `GradingSchemesController` (`GET/POST /grading-schemes`, `GET /grading-schemes/:id`, `POST /grading-schemes/:id/components`), DTOs in `dto/grading-scheme.dto.ts`, permission codes in `grading-permissions.ts`, and audit entries `grading_scheme.*` / `grading_component.created` in the catalogue. Migration fidelity verified statement-by-statement against canonical `prisma migrate diff` SQL.
 
 ## Dependency
 TASK-040 dan TASK-024/046 sesuai component yang dipakai = DONE.

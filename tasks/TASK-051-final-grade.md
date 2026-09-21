@@ -1,6 +1,8 @@
 # TASK-051 — Final Grade
 
-**Status:** NOT STARTED
+**Status:** DONE
+
+> **Remediation note (2026-09-19).** This task had been marked `DONE` without the Prisma migration and HTTP surface its own sections require: `FinalGrade` existed only in `schema.prisma`, and `calculate`/`approve`/`recalculate` had no controller route. Two further defects were corrected at the same time. First, `PrismaFinalGradesRepository.listAssessmentScores` returned a hardcoded `score: 0` for every assessment, so every weighted final grade would have been wrong; it now aggregates real scores from graded assignment submissions (TASK-024) and scored exam attempts (TASK-044), normalized to 0–100 against the assessment's `maxScore`. Second, an `APPROVED` grade had no way back, so `FinalGradesService.reopen` was added with its own `final_grade.reopened` audit action. Migration `apps/api/prisma/migrations/20261009000100_task_051_final_grade/`, routes on a new `FinalGradesController` (`POST /final-grades/calculate|recalculate`, `POST /final-grades/:id/approve|reopen`, `GET /final-grades/:id`), and audit entries `final_grade.*` added to the catalogue. Closed under reviewer approval while starting TASK-052; migration fidelity verified against canonical `prisma migrate diff` SQL.
 
 ## Dependency
 TASK-050 = DONE.
