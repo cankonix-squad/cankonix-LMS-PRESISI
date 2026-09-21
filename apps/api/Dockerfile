@@ -3,8 +3,10 @@ WORKDIR /repo
 RUN npm install --global pnpm@10.34.5
 COPY . .
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @lms/api db:generate
 RUN pnpm --filter @lms/api build
-RUN pnpm --filter @lms/api deploy --legacy --prod /out
+RUN pnpm --filter @lms/api deploy --legacy /out
+RUN cd /out && pnpm exec prisma generate --schema=prisma/schema.prisma
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production PORT=4000

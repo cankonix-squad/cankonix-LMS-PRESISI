@@ -1,10 +1,11 @@
 import { createApiClient } from '@lms/api-client';
+import { cookies } from 'next/headers';
 
 export type AdminApiClient = ReturnType<typeof createAdminApiClient>;
 
 export function createAdminApiClient() {
   return createApiClient(getApiBaseUrl(), {
-    getAccessToken: () => process.env.ADMIN_API_TOKEN,
+    getAccessToken: async () => (await cookies()).get('lms_access_token')?.value,
   });
 }
 

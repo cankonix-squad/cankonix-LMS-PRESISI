@@ -26,6 +26,8 @@ export function StudentShell({ children }: { children: ReactNode }) {
               <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
                 ● Peserta Aktif
               </span>
+              <a href="/api/auth/login" className="rounded-full bg-sky-500 px-3 py-1 text-xs font-medium text-slate-950">Masuk</a>
+              <a href="/api/auth/logout" className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200">Keluar</a>
             </div>
           </div>
 

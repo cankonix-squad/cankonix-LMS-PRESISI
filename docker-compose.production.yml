@@ -1,0 +1,205 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lemdiklat
+      POSTGRES_USER: lemdiklat
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'no', '--save', '']
+    networks:
+      - internal
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: ['server', '/data', '--console-address', ':9001']
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+    volumes:
+      - minio-data:/data
+    networks:
+      - internal
+
+  keycloak-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is required}
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    restart: unless-stopped
+    command: ['start-dev']
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is required}
+      KC_HTTP_ENABLED: 'true'
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME: auth.lms-presisi.digitallearningcenter.id
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:?KEYCLOAK_ADMIN is required}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+    depends_on:
+      - keycloak-db
+    networks:
+      - internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=cankonix-proxy"
+      - "traefik.http.routers.lms-lemdiklat-auth.rule=Host(`auth.lms-presisi.digitallearningcenter.id`)"
+      - "traefik.http.routers.lms-lemdiklat-auth.entrypoints=websecure"
+      - "traefik.http.routers.lms-lemdiklat-auth.tls=true"
+      - "traefik.http.routers.lms-lemdiklat-auth.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-lemdiklat-auth.loadbalancer.server.port=8080"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: cankonix-lms-lemdiklat-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      DATABASE_URL: postgresql://lemdiklat:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/lemdiklat?schema=public
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: lemdiklat-lms
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      KEYCLOAK_ISSUER: https://auth.lms-presisi.digitallearningcenter.id/realms/lemdiklat
+      KEYCLOAK_AUDIENCE: lemdiklat-api
+      DOCS_ENABLED: 'false'
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - keycloak
+    networks:
+      - internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=cankonix-proxy"
+      - "traefik.http.routers.lms-lemdiklat-api.rule=Host(`api.lms-presisi.digitallearningcenter.id`)"
+      - "traefik.http.routers.lms-lemdiklat-api.entrypoints=websecure"
+      - "traefik.http.routers.lms-lemdiklat-api.tls=true"
+      - "traefik.http.routers.lms-lemdiklat-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-lemdiklat-api.loadbalancer.server.port=4000"
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: cankonix-lms-lemdiklat
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: https://api.lms-presisi.digitallearningcenter.id
+      LMS_OIDC_ISSUER: https://auth.lms-presisi.digitallearningcenter.id/realms/lemdiklat
+      LMS_OIDC_CLIENT_ID: lms-admin
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=cankonix-proxy"
+      - "traefik.http.routers.lms-lemdiklat.rule=Host(`lms-presisi.digitallearningcenter.id`) || Host(`admin.lms-presisi.digitallearningcenter.id`)"
+      - "traefik.http.routers.lms-lemdiklat.entrypoints=websecure"
+      - "traefik.http.routers.lms-lemdiklat.tls=true"
+      - "traefik.http.routers.lms-lemdiklat.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-lemdiklat.loadbalancer.server.port=3000"
+
+  educator:
+    build:
+      context: .
+      dockerfile: apps/educator/Dockerfile
+    container_name: cankonix-lms-lemdiklat-educator
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: https://api.lms-presisi.digitallearningcenter.id
+      LMS_OIDC_ISSUER: https://auth.lms-presisi.digitallearningcenter.id/realms/lemdiklat
+      LMS_OIDC_CLIENT_ID: lms-educator
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=cankonix-proxy"
+      - "traefik.http.routers.lms-lemdiklat-educator.rule=Host(`educator.lms-presisi.digitallearningcenter.id`)"
+      - "traefik.http.routers.lms-lemdiklat-educator.entrypoints=websecure"
+      - "traefik.http.routers.lms-lemdiklat-educator.tls=true"
+      - "traefik.http.routers.lms-lemdiklat-educator.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-lemdiklat-educator.loadbalancer.server.port=3001"
+
+  student:
+    build:
+      context: .
+      dockerfile: apps/student/Dockerfile
+    container_name: cankonix-lms-lemdiklat-student
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: https://api.lms-presisi.digitallearningcenter.id
+      LMS_OIDC_ISSUER: https://auth.lms-presisi.digitallearningcenter.id/realms/lemdiklat
+      LMS_OIDC_CLIENT_ID: lms-student
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=cankonix-proxy"
+      - "traefik.http.routers.lms-lemdiklat-student.rule=Host(`student.lms-presisi.digitallearningcenter.id`)"
+      - "traefik.http.routers.lms-lemdiklat-student.entrypoints=websecure"
+      - "traefik.http.routers.lms-lemdiklat-student.tls=true"
+      - "traefik.http.routers.lms-lemdiklat-student.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-lemdiklat-student.loadbalancer.server.port=3002"
+
+  executive:
+    build:
+      context: .
+      dockerfile: apps/executive/Dockerfile
+    container_name: cankonix-lms-lemdiklat-executive
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: https://api.lms-presisi.digitallearningcenter.id
+      LMS_OIDC_ISSUER: https://auth.lms-presisi.digitallearningcenter.id/realms/lemdiklat
+      LMS_OIDC_CLIENT_ID: lms-executive
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=cankonix-proxy"
+      - "traefik.http.routers.lms-lemdiklat-executive.rule=Host(`executive.lms-presisi.digitallearningcenter.id`)"
+      - "traefik.http.routers.lms-lemdiklat-executive.entrypoints=websecure"
+      - "traefik.http.routers.lms-lemdiklat-executive.tls=true"
+      - "traefik.http.routers.lms-lemdiklat-executive.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-lemdiklat-executive.loadbalancer.server.port=3003"
+
+networks:
+  internal:
+    name: cankonix-lms-lemdiklat-internal
+  
+  proxy:
+    name: cankonix-proxy
+    external: true
+
+volumes:
+  postgres-data:
+  keycloak-db-data:
+  minio-data:

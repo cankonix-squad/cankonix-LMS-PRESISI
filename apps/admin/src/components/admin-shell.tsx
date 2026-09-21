@@ -27,8 +27,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 memakai API foundation; otorisasi tetap ditegakkan oleh backend.
               </p>
             </div>
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-              Permission + Scope enforced by API
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                Permission + Scope enforced by API
+              </div>
+              <a href="/api/auth/login" className="rounded-full bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950">Masuk</a>
+              <a href="/api/auth/logout" className="rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200">Keluar</a>
             </div>
           </div>
           <nav

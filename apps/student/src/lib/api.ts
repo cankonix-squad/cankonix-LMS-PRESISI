@@ -1,4 +1,5 @@
 import { createApiClient } from '@lms/api-client';
+import { cookies } from 'next/headers';
 
 export type StudentApiClient = ReturnType<typeof createStudentApiClient>;
 
@@ -10,7 +11,7 @@ export type StudentApiClient = ReturnType<typeof createStudentApiClient>;
  */
 export function createStudentApiClient() {
   return createApiClient(getApiBaseUrl(), {
-    getAccessToken: () => process.env.STUDENT_API_TOKEN,
+    getAccessToken: async () => (await cookies()).get('lms_access_token')?.value,
   });
 }
 
