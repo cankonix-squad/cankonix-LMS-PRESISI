@@ -46,16 +46,16 @@ export function LoginForm() {
       </div>
 
       <p className="mb-6 text-xs leading-5 text-[#667085]">
-        Autentikasi admin produksi memakai Keycloak. Username, password, dan
-        kebijakan akun diverifikasi di identity provider; portal Admin hanya
-        menerima token bearer untuk mengakses API.
+        Autentikasi admin produksi memakai SSO LMS PRESISI. Username, password,
+        dan kebijakan akun diverifikasi di pusat identitas; portal Admin hanya
+        menerima token aman untuk mengakses API.
       </p>
 
       <a
         href="/api/auth/login"
         className="flex min-h-12 w-full items-center justify-between rounded-xl bg-[linear-gradient(100deg,#0a254a,#123a70)] px-4 text-xs font-bold text-white shadow-[0_8px_20px_rgba(18,58,112,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_11px_24px_rgba(18,58,112,0.25)]"
       >
-        <span>Masuk dengan Keycloak</span>
+        <span>Masuk ke Admin LMS PRESISI</span>
         <span aria-hidden="true" className="text-xl font-normal">
           →
         </span>
@@ -68,7 +68,7 @@ export function LoginForm() {
           <span className="text-[9px] leading-4">
             Gunakan akun bootstrap atau akun Admin yang sudah terhubung ke
             Person dan UserAccount. Setelah login pertama, segera ubah password
-            bootstrap dari Keycloak.
+            bootstrap dari menu pengelolaan akun.
           </span>
         </div>
       </div>

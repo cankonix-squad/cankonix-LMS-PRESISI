@@ -68,20 +68,20 @@ function LoginRequiredState() {
     <SectionCard
       id="session"
       title="Masuk Diperlukan"
-      description="Dashboard Admin membaca API protected dengan bearer token hasil login Keycloak."
+      description="Dashboard Admin membaca API protected dengan token aman hasil login SSO."
       className="mx-auto max-w-3xl"
     >
       <div className="rounded-lg border border-sky-500/20 bg-sky-500/10 p-4">
         <p className="text-sm leading-6 text-sky-50">
-          Klik tombol masuk untuk autentikasi lewat Keycloak. Setelah callback
-          berhasil, token disimpan sebagai cookie HTTP-only dan dipakai
+          Klik tombol masuk untuk autentikasi lewat SSO LMS PRESISI. Setelah
+          callback berhasil, token disimpan sebagai cookie HTTP-only dan dipakai
           server-side untuk membaca API foundation.
         </p>
         <a
           href="/api/auth/login"
           className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-sky-500 px-4 text-sm font-medium text-slate-950 transition hover:bg-sky-400"
         >
-          Masuk dengan Keycloak
+          Masuk ke Admin LMS PRESISI
         </a>
       </div>
     </SectionCard>
