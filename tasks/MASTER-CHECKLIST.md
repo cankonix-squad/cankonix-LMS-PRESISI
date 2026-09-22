@@ -54,6 +54,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009C | `tasks/TASK-009C-admin-enterprise-shell-dashboard.md` | REVIEW | TASK-009B = REVIEW |
 | TASK-009D | `tasks/TASK-009D-admin-enterprise-design-system-foundation-polish.md` | REVIEW | TASK-009C = REVIEW |
 | TASK-009E | `tasks/TASK-009E-admin-organization-management-table-ux.md` | REVIEW | TASK-009D = REVIEW |
+| TASK-009F | `tasks/TASK-009F-admin-organization-scalable-operator-ux.md` | REVIEW | TASK-009E = REVIEW |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |

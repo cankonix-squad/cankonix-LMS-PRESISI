@@ -10,18 +10,15 @@ import type {
 import Link from 'next/link';
 import {
   DataTable,
-  FormPanel,
   PageHeader,
   StatCard,
-  Toolbar,
 } from '@/components/admin-design-system';
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
 import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
 import { AssignmentManagement } from './assignment-management';
-import { CreateOrganizationForm } from './create-organization-form';
 import { CreatePersonAccountForm } from './create-person-account-form';
-import { OrganizationRowActions } from './organization-management';
+import { OrganizationWorkspace } from './organization-management';
 
 export async function FoundationDashboard() {
   const hasSession = await hasAdminSession();
@@ -333,88 +330,42 @@ export async function OrganizationPanel({
   filters?: {
     search?: string;
     status?: Organization['status'];
+    page?: number;
+    limit?: number;
   };
 }) {
   const api = createAdminApiClient();
-  const organizations = await getOrEmpty(() =>
-    api.organizations.list({
-      limit: 25,
-      search: filters.search,
-      status: filters.status,
-    }),
-  );
+  const page = filters.page ?? 1;
+  const limit = filters.limit ?? 25;
+  const [organizations, parentOptions] = await Promise.all([
+    getOrEmpty(() =>
+      api.organizations.list({
+        page,
+        limit,
+        search: filters.search,
+        status: filters.status,
+      }),
+    ),
+    getOrEmpty(() => api.organizations.list({ limit: 100 })),
+  ]);
 
   return (
     <SectionCard
       id="organizations"
       title="Organisasi"
-      description="Master data unit organisasi dengan pencarian, filter status, edit data, dan arsip operasional."
+      description="Kelola daftar organisasi, status aktif, dan hubungan induk organisasi dari satu layar."
     >
-      <Toolbar
-        title="Registry organisasi"
-        description={`${totalOf(organizations)} data terbaca dari API foundation.`}
-      >
-        <OrganizationFilters search={filters.search} status={filters.status} />
-      </Toolbar>
-      <div className="mt-5 grid gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
-        <OrganizationList result={organizations} />
-        <div id="create-organization">
-          <FormPanel
-            title="Buat Organisasi"
-            description="Gunakan untuk menambah unit baru. Validasi final tetap dilakukan API."
-          >
-            <CreateOrganizationForm />
-          </FormPanel>
-        </div>
-      </div>
-    </SectionCard>
-  );
-}
-
-function OrganizationFilters({
-  search,
-  status,
-}: {
-  search?: string;
-  status?: Organization['status'];
-}) {
-  return (
-    <form action="/organisasi" className="flex flex-wrap items-center gap-2">
-      <input
-        type="search"
-        name="search"
-        defaultValue={search}
-        placeholder="Cari kode atau nama"
-        className="min-h-10 w-56 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+      <OrganizationWorkspace
+        result={organizations}
+        filters={{
+          search: filters.search,
+          status: filters.status,
+          page,
+          limit,
+        }}
+        parentOptions={parentOptions.data?.data ?? []}
       />
-      <select
-        name="status"
-        defaultValue={status ?? ''}
-        className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-      >
-        <option value="">Semua status</option>
-        <option value="ACTIVE">Aktif</option>
-        <option value="INACTIVE">Nonaktif</option>
-      </select>
-      <button
-        type="submit"
-        className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-700"
-      >
-        Filter
-      </button>
-      <Link
-        href="/organisasi"
-        className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
-      >
-        Reset
-      </Link>
-      <Link
-        href="#create-organization"
-        className="inline-flex min-h-10 items-center rounded-md border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
-      >
-        Buat Baru
-      </Link>
-    </form>
+    </SectionCard>
   );
 }
 
@@ -508,48 +459,6 @@ function LoginRequiredState() {
         </a>
       </div>
     </SectionCard>
-  );
-}
-
-function OrganizationList({
-  result,
-}: {
-  result: DataResult<ApiListResponse<Organization>>;
-}) {
-  if (result.error) return <ErrorState message={result.error} />;
-  const items = result.data?.data ?? [];
-  if (items.length === 0)
-    return <EmptyState>Belum ada data organisasi.</EmptyState>;
-  return (
-    <DataTable
-      columns={['Organisasi', 'Tipe', 'Parent', 'Status', 'Diperbarui', 'Aksi']}
-    >
-      {items.map((org) => (
-        <tr key={org.id}>
-          <td className="px-4 py-4">
-            <div>
-              <p className="font-medium text-slate-950">{org.name}</p>
-              <p className="mt-1 text-xs text-slate-500">{org.code}</p>
-            </div>
-          </td>
-          <td className="px-4 py-4 text-slate-600">
-            {org.organizationType ?? '-'}
-          </td>
-          <td className="px-4 py-4 text-slate-600">{org.parentId ?? 'Root'}</td>
-          <td className="px-4 py-4">
-            <Pill tone={org.status === 'ACTIVE' ? 'green' : 'red'}>
-              {org.status}
-            </Pill>
-          </td>
-          <td className="px-4 py-4 text-slate-600">
-            {formatDateTime(org.updatedAt)}
-          </td>
-          <td className="px-4 py-4 text-right align-top">
-            <OrganizationRowActions organization={org} />
-          </td>
-        </tr>
-      ))}
-    </DataTable>
   );
 }
 
@@ -741,14 +650,6 @@ function totalOf<T>(result: DataResult<ApiListResponse<T>>) {
 
 function activeCount<T extends { status?: string }>(items: T[] | undefined) {
   return (items ?? []).filter((item) => item.status === 'ACTIVE').length;
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Jakarta',
-  }).format(new Date(value));
 }
 
 async function loadPersonAccounts(
