@@ -39,18 +39,140 @@ jobs:
           DEPLOY_USER: ${{ secrets.VPS_USER }}
         run: |
           ssh "$DEPLOY_USER@$DEPLOY_HOST" 'bash -se' <<'REMOTE_SCRIPT'
-          set -eu
+          set -Eeuo pipefail
           APP_DIR=/root/cankonix-node/apps/cankonix-lms-lemdiklat
           cd "$APP_DIR"
 
           git config --global --add safe.directory "$APP_DIR"
+          PREVIOUS_SHA=$(git rev-parse HEAD)
           git fetch origin main
-          git reset --hard origin/main
+          TARGET_SHA=$(git rev-parse origin/main)
 
-          docker compose --parallel 1 -f docker-compose.production.yml up -d --build
-          docker exec cankonix-lms-lemdiklat-api \
-            /app/node_modules/.bin/prisma migrate deploy \
-            --schema=/app/prisma/schema.prisma
+          if [ "$PREVIOUS_SHA" = "$TARGET_SHA" ]; then
+            echo "Production is already at $TARGET_SHA"
+            exit 0
+          fi
+
+          CHANGED_FILES=$(git diff --name-only "$PREVIOUS_SHA" "$TARGET_SHA")
+          SERVICES=()
+          INFRA_CHANGED=false
+
+          add_service() {
+            local service="$1"
+            case " ${SERVICES[*]} " in
+              *" $service "*) ;;
+              *) SERVICES+=("$service") ;;
+            esac
+          }
+
+          if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^docker-compose\.production\.yml$'; then
+            INFRA_CHANGED=true
+            add_service admin
+            add_service educator
+            add_service student
+            add_service executive
+            add_service api
+          elif printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|turbo\.json|packages/ui/|packages/api-client/|packages/types/|packages/tsconfig/|packages/eslint-config/)'; then
+            add_service admin
+            add_service educator
+            add_service student
+            add_service executive
+            add_service api
+          else
+            printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/admin/' && add_service admin || true
+            printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/educator/' && add_service educator || true
+            printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/student/' && add_service student || true
+            printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/executive/' && add_service executive || true
+            printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/api/' && add_service api || true
+          fi
+
+          if [ "${#SERVICES[@]}" -eq 0 ]; then
+            echo "No deployable application service changed. Updating revision only."
+            git reset --hard "$TARGET_SHA"
+            exit 0
+          fi
+
+          git reset --hard "$TARGET_SHA"
+
+          rollback() {
+            local exit_code=$?
+            if [ "$exit_code" -ne 0 ]; then
+              echo "Deployment failed; restoring previous application images"
+              for service in "${SERVICES[@]}"; do
+                image="cankonix-lms-lemdiklat-$service"
+                rollback_image="$image:rollback-$PREVIOUS_SHA"
+                if docker image inspect "$rollback_image" >/dev/null 2>&1; then
+                  docker tag "$rollback_image" "$image:latest"
+                fi
+              done
+              docker compose -f docker-compose.production.yml up -d --no-build "${SERVICES[@]}" || true
+            fi
+            exit "$exit_code"
+          }
+          trap rollback EXIT
+
+          for service in "${SERVICES[@]}"; do
+            image="cankonix-lms-lemdiklat-$service"
+            if docker image inspect "$image:latest" >/dev/null 2>&1; then
+              docker tag "$image:latest" "$image:rollback-$PREVIOUS_SHA"
+            fi
+          done
+
+          if [ "$INFRA_CHANGED" = true ]; then
+            docker compose -f docker-compose.production.yml up -d --no-build \
+              postgres redis minio keycloak-db keycloak
+          fi
+
+          docker compose --parallel 1 -f docker-compose.production.yml build "${SERVICES[@]}"
+          docker compose -f docker-compose.production.yml up -d --no-build "${SERVICES[@]}"
+
+          wait_for_healthy() {
+            local container="$1"
+            local attempt
+            for attempt in $(seq 1 36); do
+              status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' "$container" 2>/dev/null || true)
+              if [ "$status" = healthy ]; then
+                return 0
+              fi
+              if [ "$status" = unhealthy ]; then
+                echo "$container reported unhealthy"
+                docker logs --tail 80 "$container" || true
+                return 1
+              fi
+              sleep 5
+            done
+            echo "Timed out waiting for $container to become healthy"
+            docker logs --tail 80 "$container" || true
+            return 1
+          }
+
+          if [ "$INFRA_CHANGED" = true ]; then
+            for container in \
+              cankonix-lms-lemdiklat-postgres-1 \
+              cankonix-lms-lemdiklat-redis-1 \
+              cankonix-lms-lemdiklat-minio-1 \
+              cankonix-lms-lemdiklat-keycloak-db-1 \
+              cankonix-lms-lemdiklat-keycloak-1; do
+              wait_for_healthy "$container"
+            done
+          fi
+
+          for service in "${SERVICES[@]}"; do
+            case "$service" in
+              admin) container=cankonix-lms-lemdiklat ;;
+              educator) container=cankonix-lms-lemdiklat-educator ;;
+              student) container=cankonix-lms-lemdiklat-student ;;
+              executive) container=cankonix-lms-lemdiklat-executive ;;
+              api) container=cankonix-lms-lemdiklat-api ;;
+            esac
+            wait_for_healthy "$container"
+          done
+
+          if printf '%s\n' "${SERVICES[@]}" | grep -qx api; then
+            docker exec cankonix-lms-lemdiklat-api \
+              /app/node_modules/.bin/prisma migrate deploy \
+              --schema=/app/prisma/schema.prisma
+          fi
 
           test "$(curl -fsS https://api.lms-presisi.digitallearningcenter.id/api/v1/health)" = '{"status":"ok"}'
           curl -fsS https://lms-presisi.digitallearningcenter.id >/dev/null
@@ -58,4 +180,5 @@ jobs:
           curl -fsS https://educator.lms-presisi.digitallearningcenter.id >/dev/null
           curl -fsS https://student.lms-presisi.digitallearningcenter.id >/dev/null
           curl -fsS https://executive.lms-presisi.digitallearningcenter.id >/dev/null
+          trap - EXIT
           REMOTE_SCRIPT
