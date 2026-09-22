@@ -7,6 +7,7 @@ import type {
   RoleAssignment,
   UserAccount,
 } from '@lms/api-client';
+import Link from 'next/link';
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
 import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
@@ -18,13 +19,316 @@ export async function FoundationDashboard() {
   const hasSession = await hasAdminSession();
   if (!hasSession) return <LoginRequiredState />;
 
+  const api = createAdminApiClient();
+  const [organizations, persons, roles, permissions, assignments] =
+    await Promise.all([
+      getOrEmpty(() => api.organizations.list({ limit: 8 })),
+      getOrEmpty(() => api.persons.list({ limit: 8 })),
+      getOrEmpty(() => api.authorization.roles({ limit: 8 })),
+      getOrEmpty(() => api.authorization.permissions({ limit: 8 })),
+      getOrEmpty(() => api.authorization.assignments({ limit: 8 })),
+    ]);
+
   return (
-    <div className="grid gap-6 xl:grid-cols-2">
-      <OrganizationPanel />
-      <PersonAccountPanel />
-      <RolePermissionPanel />
-      <AssignmentScopePanel />
+    <div className="space-y-6">
+      <DashboardHero />
+      <KpiGrid
+        organizations={organizations}
+        persons={persons}
+        roles={roles}
+        permissions={permissions}
+        assignments={assignments}
+      />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <RecentFoundationTable
+          organizations={organizations}
+          persons={persons}
+          roles={roles}
+          assignments={assignments}
+        />
+        <QuickActions assignments={assignments} permissions={permissions} />
+      </div>
     </div>
+  );
+}
+
+function DashboardHero() {
+  return (
+    <section className="rounded-lg border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-[#0d2538] p-6 shadow-xl shadow-slate-950/20">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300">
+            Dashboard Admin Pusat
+          </p>
+          <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white">
+            Administrasi Platform Nasional
+          </h1>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+            Kelola organisasi, personel, akun, permission, assignment, dan scope
+            dalam satu workspace operasional. Validasi akses tetap dilakukan
+            backend dengan permission dan scope.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/organisasi"
+            className="inline-flex min-h-10 items-center rounded-md bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+          >
+            Kelola Organisasi
+          </Link>
+          <Link
+            href="/assignments"
+            className="inline-flex min-h-10 items-center rounded-md border border-slate-700 px-4 text-sm font-medium text-slate-100 transition hover:border-sky-400 hover:bg-slate-900"
+          >
+            Atur Hak Akses
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function KpiGrid({
+  organizations,
+  persons,
+  roles,
+  permissions,
+  assignments,
+}: {
+  organizations: DataResult<ApiListResponse<Organization>>;
+  persons: DataResult<ApiListResponse<Person>>;
+  roles: DataResult<ApiListResponse<Role>>;
+  permissions: DataResult<ApiListResponse<Permission>>;
+  assignments: DataResult<ApiListResponse<RoleAssignment>>;
+}) {
+  const kpis = [
+    {
+      label: 'Organisasi',
+      value: totalOf(organizations),
+      note: `${activeCount(organizations.data?.data)} aktif pada halaman awal`,
+    },
+    {
+      label: 'Personel',
+      value: totalOf(persons),
+      note: `${activeCount(persons.data?.data)} personel aktif terbaca`,
+    },
+    {
+      label: 'Role & Permission',
+      value: totalOf(roles),
+      note: `${totalOf(permissions)} permission tersedia`,
+    },
+    {
+      label: 'Assignment Aktif',
+      value: totalOf(assignments),
+      note: `${activeCount(assignments.data?.data)} assignment aktif terbaca`,
+    },
+  ];
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {kpis.map((kpi) => (
+        <article
+          key={kpi.label}
+          className="rounded-lg border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-slate-950/10"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            {kpi.label}
+          </p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
+            {kpi.value}
+          </p>
+          <p className="mt-2 text-sm text-slate-400">{kpi.note}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function RecentFoundationTable({
+  organizations,
+  persons,
+  roles,
+  assignments,
+}: {
+  organizations: DataResult<ApiListResponse<Organization>>;
+  persons: DataResult<ApiListResponse<Person>>;
+  roles: DataResult<ApiListResponse<Role>>;
+  assignments: DataResult<ApiListResponse<RoleAssignment>>;
+}) {
+  const hasError =
+    organizations.error ?? persons.error ?? roles.error ?? assignments.error;
+  if (hasError) {
+    return (
+      <SectionCard
+        id="foundation-overview"
+        title="Ringkasan Foundation"
+        description="Status data operasional dari API foundation."
+      >
+        <ErrorState message={hasError} />
+      </SectionCard>
+    );
+  }
+
+  const rows = [
+    ...(organizations.data?.data ?? []).slice(0, 3).map((item) => ({
+      key: `org-${item.id}`,
+      name: item.name,
+      code: item.code,
+      domain: 'Organisasi',
+      status: item.status,
+      href: '/organisasi',
+    })),
+    ...(persons.data?.data ?? []).slice(0, 3).map((item) => ({
+      key: `person-${item.id}`,
+      name: item.fullName,
+      code: item.personnelNumber,
+      domain: 'Personel',
+      status: item.status,
+      href: '/personel',
+    })),
+    ...(roles.data?.data ?? []).slice(0, 2).map((item) => ({
+      key: `role-${item.id}`,
+      name: item.name,
+      code: item.code,
+      domain: 'Role',
+      status: item.status,
+      href: '/roles',
+    })),
+    ...(assignments.data?.data ?? []).slice(0, 2).map((item) => ({
+      key: `assignment-${item.id}`,
+      name: item.role?.name ?? item.roleId,
+      code: item.userAccountId,
+      domain: 'Assignment',
+      status: item.status,
+      href: '/assignments',
+    })),
+  ];
+
+  return (
+    <SectionCard
+      id="foundation-overview"
+      title="Foundation Terbaru"
+      description="Snapshot data utama untuk memantau kesiapan operasional Admin."
+    >
+      {rows.length === 0 ? (
+        <EmptyState>
+          Belum ada data foundation yang dapat ditampilkan.
+        </EmptyState>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-slate-800">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-950/70 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Nama</th>
+                <th className="px-4 py-3">Domain</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {rows.map((row) => (
+                <tr key={row.key}>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-slate-100">{row.name}</p>
+                    <p className="mt-1 max-w-md truncate text-xs text-slate-500">
+                      {row.code}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3 text-slate-400">{row.domain}</td>
+                  <td className="px-4 py-3">
+                    <Pill tone={row.status === 'ACTIVE' ? 'green' : 'red'}>
+                      {row.status}
+                    </Pill>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={row.href}
+                      className="text-xs font-semibold text-sky-300 hover:text-sky-200"
+                    >
+                      Kelola
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function QuickActions({
+  assignments,
+  permissions,
+}: {
+  assignments: DataResult<ApiListResponse<RoleAssignment>>;
+  permissions: DataResult<ApiListResponse<Permission>>;
+}) {
+  const actionItems = [
+    {
+      label: 'Tambah Organisasi',
+      href: '/organisasi',
+      note: 'Unit, kode, dan hierarchy',
+    },
+    {
+      label: 'Tambah Person & Akun',
+      href: '/personel',
+      note: 'Identitas personel dan UserAccount',
+    },
+    {
+      label: 'Review Role',
+      href: '/roles',
+      note: `${totalOf(permissions)} permission terbaca`,
+    },
+    {
+      label: 'Atur Assignment',
+      href: '/assignments',
+      note: `${activeCount(assignments.data?.data)} assignment aktif`,
+    },
+  ];
+
+  return (
+    <aside className="rounded-lg border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-slate-950/10">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Operasional
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-white">
+            Tindakan Cepat
+          </h2>
+        </div>
+      </div>
+      <div className="mt-5 space-y-2">
+        {actionItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="flex items-center justify-between gap-4 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-3 transition hover:border-sky-400/70 hover:bg-slate-900"
+          >
+            <span>
+              <span className="block text-sm font-medium text-slate-100">
+                {item.label}
+              </span>
+              <span className="mt-1 block text-xs text-slate-500">
+                {item.note}
+              </span>
+            </span>
+            <span
+              className="text-sm font-semibold text-sky-300"
+              aria-hidden="true"
+            >
+              &gt;
+            </span>
+          </Link>
+        ))}
+      </div>
+      <div className="mt-5 rounded-md border border-sky-500/20 bg-sky-500/10 p-4 text-sm leading-6 text-sky-50">
+        Semua perubahan akses tetap diproses melalui endpoint protected. Bila
+        operator belum punya permission, UI akan menampilkan arahan operasional.
+      </div>
+    </aside>
   );
 }
 
@@ -103,7 +407,9 @@ export async function AssignmentScopePanel() {
       description="Role assignment dan scope efektif. Backend tetap security boundary."
     >
       <AssignmentManagement
-        roles={(roles.data?.data ?? []).filter((role) => role.status === 'ACTIVE')}
+        roles={(roles.data?.data ?? []).filter(
+          (role) => role.status === 'ACTIVE',
+        )}
         accounts={accounts}
         assignments={assignments.data?.data ?? []}
       />
@@ -151,7 +457,7 @@ function OrganizationList({
       {items.map((org) => (
         <article
           key={org.id}
-          className="rounded-2xl border border-slate-800 p-4"
+          className="rounded-lg border border-slate-800 p-4"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -184,7 +490,7 @@ function PersonList({
   if (items.length === 0)
     return <EmptyState>Belum ada data personel.</EmptyState>;
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-800">
+    <div className="overflow-hidden rounded-lg border border-slate-800">
       <table className="w-full text-left text-sm">
         <thead className="bg-slate-950/60 text-xs uppercase tracking-wide text-slate-500">
           <tr>
@@ -271,7 +577,7 @@ function RoleList({ roles }: { roles: Role[] }) {
   return (
     <div className="space-y-2">
       {roles.map((role) => (
-        <div key={role.id} className="rounded-xl border border-slate-800 p-3">
+        <div key={role.id} className="rounded-lg border border-slate-800 p-3">
           <div className="flex justify-between gap-3">
             <p className="font-medium">{role.name}</p>
             {role.isSystem ? <Pill tone="blue">SYSTEM</Pill> : null}
@@ -309,7 +615,7 @@ function AssignmentList({
       {items.map((assignment) => (
         <article
           key={assignment.id}
-          className="rounded-2xl border border-slate-800 p-4"
+          className="rounded-lg border border-slate-800 p-4"
         >
           <div className="flex justify-between gap-3">
             <div>
@@ -345,6 +651,15 @@ type DataResult<T> = {
   data: T | null;
   error: string | null;
 };
+
+function totalOf<T>(result: DataResult<ApiListResponse<T>>) {
+  if (result.error) return '-';
+  return String(result.data?.total ?? result.data?.data.length ?? 0);
+}
+
+function activeCount<T extends { status?: string }>(items: T[] | undefined) {
+  return (items ?? []).filter((item) => item.status === 'ACTIVE').length;
+}
 
 async function loadPersonAccounts(
   api: ReturnType<typeof createAdminApiClient>,
