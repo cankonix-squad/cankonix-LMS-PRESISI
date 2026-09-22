@@ -23,12 +23,16 @@ Admin frontend tetap memakai `packages/api-client` dan endpoint foundation/autho
 - Ubah `/organisasi` menjadi table-first, bukan card list.
 - Pindahkan form "Buat organisasi" ke panel operasional yang lebih rapi.
 - Tambahkan active sidebar state.
+- Tambahkan sidebar hide/unhide.
+- Gunakan full-width layout untuk menghilangkan margin kosong kiri/kanan.
 - Konsistenkan spacing, typography, radius, border, dan color token.
 - Pertahankan API dan permission model.
 
 ## Acceptance Criteria
 [x] Admin shell memakai hybrid enterprise surface.
 [x] Sidebar menampilkan active state sesuai route.
+[x] Sidebar dapat di-hide/unhide.
+[x] Layout memakai full viewport width tanpa gutter kosong di sisi kiri/kanan.
 [x] Design system components tersedia dan dipakai di dashboard/foundation.
 [x] `/organisasi` table-first dengan status badge dan action area yang rapi.
 [x] Form "Buat organisasi" berada di panel operasional, bukan blok utama di atas list.
@@ -73,3 +77,22 @@ Verification note:
 
 Deferred:
 - Live production browser check after CI/CD deployment.
+
+## Review Revision — Full-width shell and collapsible sidebar
+
+Reviewer feedback:
+- Left/right layout should use the full available viewport width.
+- Sidebar should support hide/unhide.
+
+Changes:
+- Removed the centered `max-width` shell wrapper so the Admin app spans the full viewport.
+- Added a sidebar toggle button in the Admin shell.
+- Added collapsed sidebar rendering for desktop: icon-only navigation, hidden brand/actions/status text, and narrower grid column.
+- Kept mobile navigation behaviour unchanged.
+
+Verification PASS:
+- `eslint . --max-warnings=0` from `apps/admin`
+- `next typegen` from `apps/admin`
+- `tsc --noEmit` from `apps/admin`
+- `prettier --check` on changed files
+- `next build --webpack` from `apps/admin`

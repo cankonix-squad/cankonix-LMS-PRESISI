@@ -1,5 +1,8 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { AdminSidebarNav } from './admin-sidebar-nav';
 
@@ -65,12 +68,31 @@ const navigationGroups = [
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  function toggleSidebar() {
+    setSidebarCollapsed((current) => !current);
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
-      <div className="mx-auto grid min-h-screen max-w-[1540px] lg:grid-cols-[304px_minmax(0,1fr)]">
-        <aside className="border-b border-slate-800/80 bg-[#071120] px-4 py-4 text-slate-100 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-5 lg:py-6">
+      <div
+        className={cn(
+          'grid min-h-screen w-full transition-[grid-template-columns] duration-200 lg:grid-cols-[304px_minmax(0,1fr)]',
+          sidebarCollapsed && 'lg:grid-cols-[76px_minmax(0,1fr)]',
+        )}
+      >
+        <aside
+          className={cn(
+            'border-b border-slate-800/80 bg-[#071120] px-4 py-4 text-slate-100 transition-all duration-200 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r lg:py-6',
+            sidebarCollapsed ? 'lg:px-3' : 'lg:px-5',
+          )}
+        >
           <div className="flex items-center justify-between gap-4 lg:block">
-            <Link href="/" className="block">
+            <Link
+              href="/"
+              className={cn('block', sidebarCollapsed && 'lg:hidden')}
+            >
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-300">
                 LMS PRESISI
               </p>
@@ -81,7 +103,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 Operasional platform nasional
               </p>
             </Link>
-            <div className="flex items-center gap-2 lg:mt-6">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label={
+                sidebarCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar'
+              }
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-700 bg-slate-950/40 text-sm font-semibold text-slate-200 transition hover:border-sky-400 hover:text-white lg:mt-0"
+            >
+              {sidebarCollapsed ? '>' : '<'}
+            </button>
+            <div
+              className={cn(
+                'flex items-center gap-2 lg:mt-6',
+                sidebarCollapsed && 'lg:hidden',
+              )}
+            >
               <a
                 href="/login"
                 className="rounded-md bg-sky-500 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-sky-400"
@@ -100,8 +137,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <AdminSidebarNav
             primaryNavigation={primaryNavigation}
             navigationGroups={navigationGroups}
+            collapsed={sidebarCollapsed}
           />
-          <div className="mt-6 hidden rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-xs leading-5 text-emerald-100 lg:block">
+          <div
+            className={cn(
+              'mt-6 hidden rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-xs leading-5 text-emerald-100 lg:block',
+              sidebarCollapsed && 'lg:hidden',
+            )}
+          >
             Permission + Scope aktif di backend.
           </div>
         </aside>

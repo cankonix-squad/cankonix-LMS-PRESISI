@@ -18,9 +18,11 @@ export type NavGroup = {
 export function AdminSidebarNav({
   primaryNavigation,
   navigationGroups,
+  collapsed,
 }: {
   primaryNavigation: Required<NavItem>[];
   navigationGroups: NavGroup[];
+  collapsed: boolean;
 }) {
   const pathname = usePathname();
 
@@ -30,11 +32,21 @@ export function AdminSidebarNav({
       aria-label="Navigasi Admin"
     >
       {primaryNavigation.map((item) => (
-        <NavLink key={item.href} item={item} active={pathname === item.href} />
+        <NavLink
+          key={item.href}
+          item={item}
+          active={pathname === item.href}
+          collapsed={collapsed}
+        />
       ))}
       {navigationGroups.map((group) => (
         <div key={group.label} className="contents lg:block">
-          <p className="hidden px-2 pt-5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:block">
+          <p
+            className={cn(
+              'hidden px-2 pt-5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:block',
+              collapsed && 'lg:hidden',
+            )}
+          >
             {group.label}
           </p>
           <div className="contents lg:mt-2 lg:flex lg:flex-col lg:gap-1">
@@ -44,16 +56,22 @@ export function AdminSidebarNav({
                   key={item.label}
                   item={item as Required<NavItem>}
                   active={pathname === item.href}
+                  collapsed={collapsed}
                 />
               ) : (
                 <span
                   key={item.label}
-                  className="hidden items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-500 lg:flex"
+                  className={cn(
+                    'hidden items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-500 lg:flex',
+                    collapsed && 'lg:justify-center lg:px-0',
+                  )}
                 >
                   <span className="grid h-7 w-7 place-items-center rounded-md bg-white/5 text-[0.65rem] font-semibold text-slate-500">
                     {item.marker}
                   </span>
-                  {item.label}
+                  <span className={cn(collapsed && 'lg:hidden')}>
+                    {item.label}
+                  </span>
                 </span>
               ),
             )}
@@ -67,9 +85,11 @@ export function AdminSidebarNav({
 function NavLink({
   item,
   active,
+  collapsed,
 }: {
   item: Required<NavItem>;
   active: boolean;
+  collapsed: boolean;
 }) {
   return (
     <Link
@@ -80,6 +100,7 @@ function NavLink({
         active
           ? 'border-sky-400 bg-sky-500/15 font-semibold text-white shadow-sm shadow-sky-950/20'
           : 'border-slate-800/80 bg-slate-950/30 text-slate-300 hover:border-sky-400/70 hover:bg-white/5 hover:text-white lg:bg-transparent',
+        collapsed && 'lg:justify-center lg:px-0',
       )}
     >
       <span
@@ -90,7 +111,7 @@ function NavLink({
       >
         {item.marker}
       </span>
-      {item.label}
+      <span className={cn(collapsed && 'lg:hidden')}>{item.label}</span>
     </Link>
   );
 }
