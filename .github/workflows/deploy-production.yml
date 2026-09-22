@@ -174,11 +174,37 @@ jobs:
               --schema=/app/prisma/schema.prisma
           fi
 
-          test "$(curl -fsS https://api.lms-presisi.digitallearningcenter.id/api/v1/health)" = '{"status":"ok"}'
-          curl -fsS https://lms-presisi.digitallearningcenter.id >/dev/null
-          curl -fsS https://admin.lms-presisi.digitallearningcenter.id >/dev/null
-          curl -fsS https://educator.lms-presisi.digitallearningcenter.id >/dev/null
-          curl -fsS https://student.lms-presisi.digitallearningcenter.id >/dev/null
-          curl -fsS https://executive.lms-presisi.digitallearningcenter.id >/dev/null
+          wait_for_url() {
+            local url="$1"
+            local attempt
+            for attempt in $(seq 1 12); do
+              if curl --fail --silent --show-error --retry 1 --retry-all-errors \
+                --connect-timeout 10 --max-time 20 "$url" >/dev/null; then
+                return 0
+              fi
+              echo "Waiting for public route: $url"
+              sleep 5
+            done
+            echo "Public route did not become ready: $url"
+            return 1
+          }
+
+          api_health=''
+          for attempt in $(seq 1 12); do
+            api_health=$(curl --silent --show-error --retry 1 --retry-all-errors \
+              --connect-timeout 10 --max-time 20 \
+              https://api.lms-presisi.digitallearningcenter.id/api/v1/health || true)
+            if [ "$api_health" = '{"status":"ok"}' ]; then
+              break
+            fi
+            echo "Waiting for public API readiness (attempt $attempt/12)"
+            sleep 5
+          done
+          test "$api_health" = '{"status":"ok"}'
+          wait_for_url https://lms-presisi.digitallearningcenter.id
+          wait_for_url https://admin.lms-presisi.digitallearningcenter.id
+          wait_for_url https://educator.lms-presisi.digitallearningcenter.id
+          wait_for_url https://student.lms-presisi.digitallearningcenter.id
+          wait_for_url https://executive.lms-presisi.digitallearningcenter.id
           trap - EXIT
           REMOTE_SCRIPT
