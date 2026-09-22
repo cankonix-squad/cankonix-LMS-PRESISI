@@ -2,7 +2,7 @@
 
 ## Status
 
-`REVIEW`
+`IN PROGRESS`
 
 ## Dependency
 
@@ -16,6 +16,7 @@ Memverifikasi alur Educator dari login SSO sampai konsumsi data yang dikelola me
 
 - Verifikasi route Educator production dan status responsnya.
 - Verifikasi redirect login/logout SSO Educator.
+- Verifikasi tampilan sesi setelah logout dan state tombol autentikasi.
 - Verifikasi dashboard dan halaman kelas pengajaran.
 - Verifikasi pertemuan, aktivitas, tugas, kehadiran, exam, dan pemantauan.
 - Verifikasi API client Educator memakai endpoint `/api/v1` yang sama dengan backend production.
@@ -35,12 +36,12 @@ Memverifikasi alur Educator dari login SSO sampai konsumsi data yang dikelola me
 ## Acceptance checklist
 
 - [x] Educator production URL merespons tanpa error gateway.
-- [x] Route login mengarah ke Keycloak dan route logout tersedia.
+- [ ] Route login mengarah ke Keycloak dan route logout tersedia.
 - [x] Semua route Educator utama dapat dirender atau mengarah ke alur autentikasi yang benar.
 - [x] API health production merespons `{"status":"ok"}`.
 - [x] Tidak ada perubahan kontrak atau data production selama verifikasi.
-- [x] Temuan UAT dicatat dengan bukti dan task perbaikan dipisahkan bila diperlukan.
-- [x] Setelah verifikasi selesai, task dipindahkan ke `REVIEW`; Codex tidak menandai `DONE`.
+- [ ] Temuan UAT dicatat dengan bukti dan task perbaikan dipisahkan bila diperlukan.
+- [ ] Setelah verifikasi selesai, task dipindahkan ke `REVIEW`; Codex tidak menandai `DONE`.
 
 ## Verification plan
 
@@ -58,3 +59,7 @@ Memverifikasi alur Educator dari login SSO sampai konsumsi data yang dikelola me
 - Deployment commit `03f25f1`, workflow run `35731713819` — SUCCESS.
 - Local verification untuk perubahan logout: `git diff --check`, Prettier, ESLint route, Next route type generation, dan TypeScript Educator — PASS.
 - Tidak ada data production yang dibuat atau diubah selama verifikasi.
+
+## Follow-up UAT
+
+Production memperlihatkan bahwa logout sudah menghapus cookie dan mengarahkan ke host Educator, tetapi shell selalu merender tombol `Masuk` dan `Keluar`. Hal ini membuat pengguna melihat state yang ambigu dan halaman tetap merender error token setelah logout. Perbaikan state sesi pada shell diperlukan sebelum task dapat kembali ke `REVIEW`.
