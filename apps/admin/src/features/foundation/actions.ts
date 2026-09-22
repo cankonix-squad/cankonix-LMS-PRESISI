@@ -1,9 +1,13 @@
 'use server';
 
 import type {
+  AddRoleAssignmentScopesInput,
   CreateOrganizationInput,
   CreatePersonInput,
+  CreateRoleAssignmentInput,
   CreateUserAccountInput,
+  RoleAssignmentStatus,
+  ScopeInput,
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
 import { createAdminApiClient } from '@/lib/api';
@@ -134,6 +138,159 @@ export async function createPersonWithAccountAction(
   };
 }
 
+export async function createRoleAssignmentAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const userAccountId = getText(formData, 'userAccountId');
+  const roleId = getText(formData, 'roleId');
+  const validFrom = getText(formData, 'validFrom');
+  const validUntil = getText(formData, 'validUntil');
+  const scope = getScopeInput(formData);
+
+  if (!userAccountId || !roleId) {
+    return {
+      ok: false,
+      message: 'UserAccount dan role wajib dipilih.',
+    };
+  }
+
+  const input: CreateRoleAssignmentInput = { userAccountId, roleId };
+  if (validFrom) input.validFrom = new Date(validFrom).toISOString();
+  if (validUntil) input.validUntil = new Date(validUntil).toISOString();
+  if (scope) input.scopes = [scope];
+
+  const result = await createAdminApiClient().authorization.createAssignment(
+    input,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Role assignment gagal dibuat.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/assignments');
+  return {
+    ok: true,
+    message: `Assignment ${result.data.role?.name ?? result.data.roleId} berhasil dibuat.`,
+  };
+}
+
+export async function addAssignmentScopeAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const assignmentId = getText(formData, 'assignmentId');
+  const scope = getScopeInput(formData);
+
+  if (!assignmentId || !scope) {
+    return {
+      ok: false,
+      message: 'Assignment, scope type, dan scope ID wajib diisi.',
+    };
+  }
+
+  const input: AddRoleAssignmentScopesInput = { scopes: [scope] };
+  const result = await createAdminApiClient().authorization.addAssignmentScopes(
+    assignmentId,
+    input,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Scope gagal ditambahkan.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/assignments');
+  return { ok: true, message: 'Scope assignment berhasil ditambahkan.' };
+}
+
+export async function updateAssignmentStatusAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const assignmentId = getText(formData, 'assignmentId');
+  const status = getText(formData, 'status') as RoleAssignmentStatus;
+
+  if (!assignmentId || !isRoleAssignmentStatus(status)) {
+    return {
+      ok: false,
+      message: 'Assignment dan status wajib dipilih.',
+    };
+  }
+
+  const result =
+    await createAdminApiClient().authorization.updateAssignmentStatus(
+      assignmentId,
+      status,
+    );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Status assignment gagal diubah.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/assignments');
+  return { ok: true, message: `Status assignment diubah menjadi ${status}.` };
+}
+
+export async function removeAssignmentScopeAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const assignmentId = getText(formData, 'assignmentId');
+  const scopeId = getText(formData, 'scopeRecordId');
+
+  if (!assignmentId || !scopeId) {
+    return {
+      ok: false,
+      message: 'Assignment dan scope wajib dipilih.',
+    };
+  }
+
+  const result =
+    await createAdminApiClient().authorization.removeAssignmentScope(
+      assignmentId,
+      scopeId,
+    );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Scope gagal dihapus.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/assignments');
+  return { ok: true, message: 'Scope assignment berhasil dihapus.' };
+}
+
 function getText(formData: FormData, key: string) {
   return String(formData.get(key) ?? '').trim();
+}
+
+function getScopeInput(formData: FormData): ScopeInput | null {
+  const scopeType = getText(formData, 'scopeType') as ScopeInput['scopeType'];
+  const scopeId = getText(formData, 'scopeId');
+  if (!scopeType || !scopeId) return null;
+  if (!isScopeType(scopeType)) return null;
+  return { scopeType, scopeId };
+}
+
+function isScopeType(value: string): value is ScopeInput['scopeType'] {
+  return ['ORGANIZATION', 'PROGRAM', 'BATCH', 'CLASS', 'CLASS_SUBJECT'].includes(
+    value,
+  );
+}
+
+function isRoleAssignmentStatus(
+  value: string,
+): value is RoleAssignmentStatus {
+  return ['ACTIVE', 'INACTIVE', 'REVOKED'].includes(value);
 }

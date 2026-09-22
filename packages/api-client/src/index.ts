@@ -133,6 +133,22 @@ export type RoleAssignmentScope = {
   createdAt: string;
 };
 
+export type ScopeInput = Pick<RoleAssignmentScope, 'scopeType' | 'scopeId'>;
+
+export type CreateRoleAssignmentInput = {
+  userAccountId: string;
+  roleId: string;
+  validFrom?: string;
+  validUntil?: string;
+  scopes?: ScopeInput[];
+};
+
+export type AddRoleAssignmentScopesInput = {
+  scopes: ScopeInput[];
+};
+
+export type RoleAssignmentStatus = RoleAssignment['status'];
+
 // ---------------------------------------------------------------------------
 // Learning domain (TASK-020 .. TASK-024)
 //
@@ -1218,6 +1234,45 @@ export function createApiClient(
         return request<ApiListResponse<RoleAssignment>>(
           `/authorization/assignments${buildQuery({ page: 1, limit: 20, ...params })}`,
         );
+      },
+      createAssignment(input: CreateRoleAssignmentInput) {
+        return mutate<RoleAssignment>('/authorization/assignments', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      addAssignmentScopes(id: string, input: AddRoleAssignmentScopesInput) {
+        return mutate<RoleAssignment>(`/authorization/assignments/${id}/scopes`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      updateAssignmentStatus(id: string, status: RoleAssignmentStatus) {
+        return mutate<RoleAssignment>(
+          `/authorization/assignments/${id}/status`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+          },
+        );
+      },
+      async removeAssignmentScope(id: string, scopeId: string) {
+        try {
+          return {
+            ok: true as const,
+            data: await request<RoleAssignment>(
+              `/authorization/assignments/${id}/scopes/${scopeId}`,
+              { method: 'DELETE' },
+            ),
+          };
+        } catch (error) {
+          return {
+            ok: false as const,
+            status: 0,
+            message:
+              error instanceof Error ? error.message : 'Unknown API error',
+          };
+        }
       },
     },
 

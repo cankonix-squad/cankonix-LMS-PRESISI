@@ -198,6 +198,65 @@ test('person and account client targets foundation endpoints', async () => {
   }
 });
 
+test('role assignment client targets scope management endpoints', async () => {
+  const seen = [];
+  const { server, url } = await listen(async (request, response) => {
+    let body = '';
+    for await (const chunk of request) body += chunk;
+    seen.push({
+      method: request.method,
+      url: request.url,
+      body: body ? JSON.parse(body) : null,
+    });
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ id: 'assignment-1', scopes: [] }));
+  });
+
+  const client = createApiClient(url);
+
+  try {
+    await client.authorization.createAssignment({
+      userAccountId: 'user-1',
+      roleId: 'role-1',
+      scopes: [{ scopeType: 'ORGANIZATION', scopeId: 'org-1' }],
+    });
+    assert.equal(seen[0].method, 'POST');
+    assert.equal(seen[0].url, '/api/v1/authorization/assignments');
+    assert.deepEqual(seen[0].body.scopes, [
+      { scopeType: 'ORGANIZATION', scopeId: 'org-1' },
+    ]);
+
+    await client.authorization.addAssignmentScopes('assignment-1', {
+      scopes: [{ scopeType: 'CLASS', scopeId: 'class-1' }],
+    });
+    assert.equal(seen[1].method, 'POST');
+    assert.equal(
+      seen[1].url,
+      '/api/v1/authorization/assignments/assignment-1/scopes',
+    );
+
+    await client.authorization.updateAssignmentStatus(
+      'assignment-1',
+      'INACTIVE',
+    );
+    assert.equal(seen[2].method, 'PATCH');
+    assert.equal(
+      seen[2].url,
+      '/api/v1/authorization/assignments/assignment-1/status',
+    );
+    assert.deepEqual(seen[2].body, { status: 'INACTIVE' });
+
+    await client.authorization.removeAssignmentScope('assignment-1', 'scope-1');
+    assert.equal(seen[3].method, 'DELETE');
+    assert.equal(
+      seen[3].url,
+      '/api/v1/authorization/assignments/assignment-1/scopes/scope-1',
+    );
+  } finally {
+    server.close();
+  }
+});
+
 test('attempt client targets the participant runtime endpoints', async () => {
   const seen = [];
   const { server, url } = await listen(async (request, response) => {

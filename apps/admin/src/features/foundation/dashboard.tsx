@@ -10,6 +10,7 @@ import type {
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
 import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import { AssignmentManagement } from './assignment-management';
 import { CreateOrganizationForm } from './create-organization-form';
 import { CreatePersonAccountForm } from './create-person-account-form';
 
@@ -85,9 +86,15 @@ export async function RolePermissionPanel() {
 
 export async function AssignmentScopePanel() {
   const api = createAdminApiClient();
-  const assignments = await getOrEmpty(() =>
-    api.authorization.assignments({ limit: 8 }),
-  );
+  const [assignments, roles, persons] = await Promise.all([
+    getOrEmpty(() => api.authorization.assignments({ limit: 8 })),
+    getOrEmpty(() => api.authorization.roles({ limit: 50 })),
+    getOrEmpty(() => api.persons.list({ limit: 50 })),
+  ]);
+  const accounts =
+    persons.data?.data.length && !persons.error
+      ? await loadUserAccounts(api, persons.data.data)
+      : [];
 
   return (
     <SectionCard
@@ -95,6 +102,11 @@ export async function AssignmentScopePanel() {
       title="Assignment & Scope"
       description="Role assignment dan scope efektif. Backend tetap security boundary."
     >
+      <AssignmentManagement
+        roles={(roles.data?.data ?? []).filter((role) => role.status === 'ACTIVE')}
+        accounts={accounts}
+        assignments={assignments.data?.data ?? []}
+      />
       <AssignmentList result={assignments} />
     </SectionCard>
   );
@@ -345,4 +357,17 @@ async function loadPersonAccounts(
     }),
   );
   return new Map(entries);
+}
+
+async function loadUserAccounts(
+  api: ReturnType<typeof createAdminApiClient>,
+  persons: Person[],
+) {
+  const accounts = await Promise.all(
+    persons.map(async (person) => {
+      const account = await getOrEmpty(() => api.persons.getAccount(person.id));
+      return account.data;
+    }),
+  );
+  return accounts.filter((account): account is UserAccount => Boolean(account));
 }
