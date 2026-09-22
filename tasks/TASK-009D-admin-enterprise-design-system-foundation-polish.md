@@ -26,6 +26,7 @@ Admin frontend tetap memakai `packages/api-client` dan endpoint foundation/autho
 - Tambahkan sidebar hide/unhide.
 - Gunakan full-width layout untuk menghilangkan margin kosong kiri/kanan.
 - Konsistenkan spacing, typography, radius, border, dan color token.
+- Polish warna sidebar agar lebih enterprise dan berkelas.
 - Pertahankan API dan permission model.
 
 ## Acceptance Criteria
@@ -33,6 +34,7 @@ Admin frontend tetap memakai `packages/api-client` dan endpoint foundation/autho
 [x] Sidebar menampilkan active state sesuai route.
 [x] Sidebar dapat di-hide/unhide.
 [x] Layout memakai full viewport width tanpa gutter kosong di sisi kiri/kanan.
+[x] Sidebar memakai kombinasi warna enterprise yang lebih refined.
 [x] Design system components tersedia dan dipakai di dashboard/foundation.
 [x] `/organisasi` table-first dengan status badge dan action area yang rapi.
 [x] Form "Buat organisasi" berada di panel operasional, bukan blok utama di atas list.
@@ -89,6 +91,24 @@ Changes:
 - Added a sidebar toggle button in the Admin shell.
 - Added collapsed sidebar rendering for desktop: icon-only navigation, hidden brand/actions/status text, and narrower grid column.
 - Kept mobile navigation behaviour unchanged.
+
+Verification PASS:
+- `eslint . --max-warnings=0` from `apps/admin`
+- `next typegen` from `apps/admin`
+- `tsc --noEmit` from `apps/admin`
+- `prettier --check` on changed files
+- `next build --webpack` from `apps/admin`
+
+## Review Revision — Sidebar color refinement
+
+Reviewer feedback:
+- Sidebar color combination should look more enterprise and premium.
+
+Changes:
+- Sidebar base changed from flat navy to deep ink/charcoal.
+- Active navigation uses restrained gold accent and steel-blue surface.
+- Login/toggle/disabled navigation colors were toned down to avoid neon cyan.
+- Sidebar status panel now uses a darker enterprise green surface.
 
 Verification PASS:
 - `eslint . --max-warnings=0` from `apps/admin`

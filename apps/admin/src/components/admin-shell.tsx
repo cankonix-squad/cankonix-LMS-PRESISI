@@ -84,7 +84,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       >
         <aside
           className={cn(
-            'border-b border-slate-800/80 bg-[#071120] px-4 py-4 text-slate-100 transition-all duration-200 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r lg:py-6',
+            'border-b border-[#1f2a3a] bg-[#0d1420] px-4 py-4 text-slate-100 shadow-[inset_-1px_0_0_rgba(148,163,184,0.14)] transition-all duration-200 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r lg:py-6',
             sidebarCollapsed ? 'lg:px-3' : 'lg:px-5',
           )}
         >
@@ -93,13 +93,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
               href="/"
               className={cn('block', sidebarCollapsed && 'lg:hidden')}
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8eb8d8]">
                 LMS PRESISI
               </p>
-              <h1 className="mt-2 text-xl font-semibold tracking-tight text-white">
+              <h1 className="mt-2 text-xl font-semibold tracking-tight text-slate-50">
                 Admin Pusat
               </h1>
-              <p className="mt-1 hidden text-xs text-slate-500 lg:block">
+              <p className="mt-1 hidden text-xs text-slate-400 lg:block">
                 Operasional platform nasional
               </p>
             </Link>
@@ -109,7 +109,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               aria-label={
                 sidebarCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar'
               }
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-700 bg-slate-950/40 text-sm font-semibold text-slate-200 transition hover:border-sky-400 hover:text-white lg:mt-0"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#2c394b] bg-[#121d2b] text-sm font-semibold text-slate-300 transition hover:border-[#c8a45d] hover:bg-[#182538] hover:text-white lg:mt-0"
             >
               {sidebarCollapsed ? '>' : '<'}
             </button>
@@ -121,13 +121,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
             >
               <a
                 href="/login"
-                className="rounded-md bg-sky-500 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-sky-400"
+                className="rounded-md bg-[#d6b46a] px-3 py-2 text-xs font-semibold text-[#172033] transition hover:bg-[#e5c77f]"
               >
                 Masuk
               </a>
               <a
                 href="/api/auth/logout"
-                className="rounded-md border border-slate-700 px-3 py-2 text-xs text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
+                className="rounded-md border border-[#2c394b] px-3 py-2 text-xs text-slate-300 transition hover:border-[#c8a45d]/70 hover:bg-[#121d2b] hover:text-white"
               >
                 Keluar
               </a>
@@ -141,7 +141,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           />
           <div
             className={cn(
-              'mt-6 hidden rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-xs leading-5 text-emerald-100 lg:block',
+              'mt-6 hidden rounded-lg border border-[#2c6b57]/40 bg-[#0f2d2a] px-3 py-3 text-xs leading-5 text-emerald-100 lg:block',
               sidebarCollapsed && 'lg:hidden',
             )}
           >

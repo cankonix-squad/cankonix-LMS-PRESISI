@@ -43,7 +43,7 @@ export function AdminSidebarNav({
         <div key={group.label} className="contents lg:block">
           <p
             className={cn(
-              'hidden px-2 pt-5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:block',
+              'hidden px-2 pt-5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#8a96aa] lg:block',
               collapsed && 'lg:hidden',
             )}
           >
@@ -62,11 +62,11 @@ export function AdminSidebarNav({
                 <span
                   key={item.label}
                   className={cn(
-                    'hidden items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-500 lg:flex',
+                    'hidden items-center gap-3 rounded-md px-3 py-2 text-sm text-[#667386] lg:flex',
                     collapsed && 'lg:justify-center lg:px-0',
                   )}
                 >
-                  <span className="grid h-7 w-7 place-items-center rounded-md bg-white/5 text-[0.65rem] font-semibold text-slate-500">
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-[#162235] text-[0.65rem] font-semibold text-[#7c8799]">
                     {item.marker}
                   </span>
                   <span className={cn(collapsed && 'lg:hidden')}>
@@ -98,15 +98,17 @@ function NavLink({
       className={cn(
         'flex shrink-0 items-center gap-3 rounded-md border px-3 py-2 text-sm transition lg:border-transparent',
         active
-          ? 'border-sky-400 bg-sky-500/15 font-semibold text-white shadow-sm shadow-sky-950/20'
-          : 'border-slate-800/80 bg-slate-950/30 text-slate-300 hover:border-sky-400/70 hover:bg-white/5 hover:text-white lg:bg-transparent',
+          ? 'border-[#c8a45d]/70 bg-[#172538] font-semibold text-white shadow-sm shadow-black/20'
+          : 'border-[#253246] bg-[#111b2a] text-[#c7d0df] hover:border-[#c8a45d]/60 hover:bg-[#162235] hover:text-white lg:bg-transparent',
         collapsed && 'lg:justify-center lg:px-0',
       )}
     >
       <span
         className={cn(
           'grid h-7 w-7 place-items-center rounded-md text-[0.65rem] font-semibold',
-          active ? 'bg-sky-500 text-white' : 'bg-white/5 text-sky-200',
+          active
+            ? 'bg-[#d6b46a] text-[#172033]'
+            : 'bg-[#162235] text-[#9fb3c8]',
         )}
       >
         {item.marker}
