@@ -88,10 +88,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
             sidebarCollapsed ? 'lg:px-3' : 'lg:px-5',
           )}
         >
-          <div className="flex items-center justify-between gap-4 lg:block">
+          <div className="flex items-start justify-between gap-3">
             <Link
               href="/"
-              className={cn('block', sidebarCollapsed && 'lg:hidden')}
+              className={cn('min-w-0 flex-1', sidebarCollapsed && 'lg:hidden')}
             >
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8eb8d8]">
                 LMS PRESISI
@@ -109,29 +109,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
               aria-label={
                 sidebarCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar'
               }
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#2c394b] bg-[#121d2b] text-sm font-semibold text-slate-300 transition hover:border-[#c8a45d] hover:bg-[#182538] hover:text-white lg:mt-0"
-            >
-              {sidebarCollapsed ? '>' : '<'}
-            </button>
-            <div
               className={cn(
-                'flex items-center gap-2 lg:mt-6',
-                sidebarCollapsed && 'lg:hidden',
+                'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#2c394b] bg-transparent text-xs font-semibold text-slate-400 transition hover:border-[#c8a45d]/70 hover:bg-[#141f2e] hover:text-[#e4c679]',
+                sidebarCollapsed && 'lg:mx-auto',
               )}
             >
-              <a
-                href="/login"
-                className="rounded-md bg-[#d6b46a] px-3 py-2 text-xs font-semibold text-[#172033] transition hover:bg-[#e5c77f]"
-              >
-                Masuk
-              </a>
-              <a
-                href="/api/auth/logout"
-                className="rounded-md border border-[#2c394b] px-3 py-2 text-xs text-slate-300 transition hover:border-[#c8a45d]/70 hover:bg-[#121d2b] hover:text-white"
-              >
-                Keluar
-              </a>
-            </div>
+              {sidebarCollapsed ? '»' : '«'}
+            </button>
           </div>
 
           <AdminSidebarNav
