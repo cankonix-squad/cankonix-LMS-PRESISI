@@ -2,7 +2,7 @@
 
 ## Status
 
-`REVIEW`
+`DONE`
 
 ## Goal
 
@@ -47,7 +47,7 @@ Menyelaraskan shell dan bahasa visual Educator Portal dengan Admin Portal agar s
 - [x] Tidak ada perubahan pada API contract atau business logic.
 - [ ] `pnpm --filter @lms/educator build` berhasil.
 - [x] `pnpm lint` dan `pnpm typecheck` berhasil.
-- [x] Hasil siap dipindahkan ke `REVIEW`; task tidak ditandai `DONE` oleh Codex.
+- [x] Hasil direview dan disetujui; task ditandai `DONE` atas persetujuan user.
 
 ## Verification
 
@@ -56,7 +56,7 @@ Menyelaraskan shell dan bahasa visual Educator Portal dengan Admin Portal agar s
 - `pnpm --filter @lms/educator... build` — package `@lms/ui`, `@lms/types`, dan `@lms/api-client` berhasil dibuild; Next.js Educator gagal di sandbox lokal dengan Turbopack `Operation not permitted` saat membuat child process/port untuk PostCSS. Ini dicatat sebagai verifikasi build DEFERRED dan bukan error TypeScript dari perubahan shell.
 - `git diff --check` — PASS.
 
-Task menunggu review visual dan persetujuan developer sebelum dipindahkan ke `DONE`.
+Task disetujui user setelah review production URL dan dipindahkan ke `DONE`.
 
 ## Planned files
 
