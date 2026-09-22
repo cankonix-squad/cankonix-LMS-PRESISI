@@ -30,7 +30,7 @@ export async function AssignedClassSubjects() {
   return (
     <SectionCard
       id="kelas"
-      title="Kelas Diampu"
+      title="Kelas Pengajaran"
       description="Daftar class subject yang menjadi tanggung jawab Anda. Cakupan data ditentukan API, bukan filter di browser."
     >
       <DataBlock

@@ -17,7 +17,7 @@ const navigationGroups: { label: string; items: NavigationItem[] }[] = [
     label: 'Pengajaran',
     items: [
       { href: '/', label: 'Dashboard', marker: 'D' },
-      { href: '/kelas', label: 'Kelas Diampu', marker: 'K' },
+      { href: '/kelas', label: 'Kelas Pengajaran', marker: 'K' },
       { href: '/pertemuan', label: 'Pertemuan', marker: 'P' },
       { href: '/aktivitas', label: 'Aktivitas', marker: 'A' },
       { href: '/tugas', label: 'Tugas & Penilaian', marker: 'T' },
