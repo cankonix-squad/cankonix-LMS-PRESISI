@@ -10,6 +10,12 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U lemdiklat -d lemdiklat']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -17,6 +23,12 @@ services:
     command: ['redis-server', '--appendonly', 'no', '--save', '']
     networks:
       - internal
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
 
   minio:
     image: minio/minio:latest
@@ -29,6 +41,12 @@ services:
       - minio-data:/data
     networks:
       - internal
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
 
   keycloak-db:
     image: postgres:16-alpine
@@ -41,6 +59,12 @@ services:
       - keycloak-db-data:/var/lib/postgresql/data
     networks:
       - internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U keycloak -d keycloak']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
@@ -54,22 +78,35 @@ services:
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is required}
       KC_HTTP_ENABLED: 'true'
       KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: 'true'
       KC_HOSTNAME: auth.lms-presisi.digitallearningcenter.id
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:?KEYCLOAK_ADMIN is required}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
     depends_on:
-      - keycloak-db
+      keycloak-db:
+        condition: service_healthy
     networks:
       - internal
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=cankonix-proxy"
-      - "traefik.http.routers.lms-lemdiklat-auth.rule=Host(`auth.lms-presisi.digitallearningcenter.id`)"
-      - "traefik.http.routers.lms-lemdiklat-auth.entrypoints=websecure"
-      - "traefik.http.routers.lms-lemdiklat-auth.tls=true"
-      - "traefik.http.routers.lms-lemdiklat-auth.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lms-lemdiklat-auth.loadbalancer.server.port=8080"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=cankonix-proxy'
+      - 'traefik.http.routers.lms-lemdiklat-auth.rule=Host(`auth.lms-presisi.digitallearningcenter.id`)'
+      - 'traefik.http.routers.lms-lemdiklat-auth.entrypoints=websecure'
+      - 'traefik.http.routers.lms-lemdiklat-auth.tls=true'
+      - 'traefik.http.routers.lms-lemdiklat-auth.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.lms-lemdiklat-auth.loadbalancer.server.port=8080'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          /usr/bin/bash -c 'exec 3<>/dev/tcp/127.0.0.1/9000; printf
+          "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection:
+          close\r\n\r\n" >&3; grep -q " 200 " <&3'
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
 
   api:
     build:
@@ -91,21 +128,37 @@ services:
       KEYCLOAK_AUDIENCE: lemdiklat-api
       DOCS_ENABLED: 'false'
     depends_on:
-      - postgres
-      - redis
-      - minio
-      - keycloak
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - internal
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=cankonix-proxy"
-      - "traefik.http.routers.lms-lemdiklat-api.rule=Host(`api.lms-presisi.digitallearningcenter.id`)"
-      - "traefik.http.routers.lms-lemdiklat-api.entrypoints=websecure"
-      - "traefik.http.routers.lms-lemdiklat-api.tls=true"
-      - "traefik.http.routers.lms-lemdiklat-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lms-lemdiklat-api.loadbalancer.server.port=4000"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=cankonix-proxy'
+      - 'traefik.http.routers.lms-lemdiklat-api.rule=Host(`api.lms-presisi.digitallearningcenter.id`)'
+      - 'traefik.http.routers.lms-lemdiklat-api.entrypoints=websecure'
+      - 'traefik.http.routers.lms-lemdiklat-api.tls=true'
+      - 'traefik.http.routers.lms-lemdiklat-api.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.lms-lemdiklat-api.loadbalancer.server.port=4000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/api/v1/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
 
   admin:
     build:
@@ -120,13 +173,25 @@ services:
     networks:
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=cankonix-proxy"
-      - "traefik.http.routers.lms-lemdiklat.rule=Host(`lms-presisi.digitallearningcenter.id`) || Host(`admin.lms-presisi.digitallearningcenter.id`)"
-      - "traefik.http.routers.lms-lemdiklat.entrypoints=websecure"
-      - "traefik.http.routers.lms-lemdiklat.tls=true"
-      - "traefik.http.routers.lms-lemdiklat.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lms-lemdiklat.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=cankonix-proxy'
+      - 'traefik.http.routers.lms-lemdiklat.rule=Host(`lms-presisi.digitallearningcenter.id`) || Host(`admin.lms-presisi.digitallearningcenter.id`)'
+      - 'traefik.http.routers.lms-lemdiklat.entrypoints=websecure'
+      - 'traefik.http.routers.lms-lemdiklat.tls=true'
+      - 'traefik.http.routers.lms-lemdiklat.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.lms-lemdiklat.loadbalancer.server.port=3000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
 
   educator:
     build:
@@ -141,13 +206,25 @@ services:
     networks:
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=cankonix-proxy"
-      - "traefik.http.routers.lms-lemdiklat-educator.rule=Host(`educator.lms-presisi.digitallearningcenter.id`)"
-      - "traefik.http.routers.lms-lemdiklat-educator.entrypoints=websecure"
-      - "traefik.http.routers.lms-lemdiklat-educator.tls=true"
-      - "traefik.http.routers.lms-lemdiklat-educator.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lms-lemdiklat-educator.loadbalancer.server.port=3001"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=cankonix-proxy'
+      - 'traefik.http.routers.lms-lemdiklat-educator.rule=Host(`educator.lms-presisi.digitallearningcenter.id`)'
+      - 'traefik.http.routers.lms-lemdiklat-educator.entrypoints=websecure'
+      - 'traefik.http.routers.lms-lemdiklat-educator.tls=true'
+      - 'traefik.http.routers.lms-lemdiklat-educator.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.lms-lemdiklat-educator.loadbalancer.server.port=3001'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
 
   student:
     build:
@@ -162,13 +239,25 @@ services:
     networks:
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=cankonix-proxy"
-      - "traefik.http.routers.lms-lemdiklat-student.rule=Host(`student.lms-presisi.digitallearningcenter.id`)"
-      - "traefik.http.routers.lms-lemdiklat-student.entrypoints=websecure"
-      - "traefik.http.routers.lms-lemdiklat-student.tls=true"
-      - "traefik.http.routers.lms-lemdiklat-student.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lms-lemdiklat-student.loadbalancer.server.port=3002"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=cankonix-proxy'
+      - 'traefik.http.routers.lms-lemdiklat-student.rule=Host(`student.lms-presisi.digitallearningcenter.id`)'
+      - 'traefik.http.routers.lms-lemdiklat-student.entrypoints=websecure'
+      - 'traefik.http.routers.lms-lemdiklat-student.tls=true'
+      - 'traefik.http.routers.lms-lemdiklat-student.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.lms-lemdiklat-student.loadbalancer.server.port=3002'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3002').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
 
   executive:
     build:
@@ -183,18 +272,30 @@ services:
     networks:
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=cankonix-proxy"
-      - "traefik.http.routers.lms-lemdiklat-executive.rule=Host(`executive.lms-presisi.digitallearningcenter.id`)"
-      - "traefik.http.routers.lms-lemdiklat-executive.entrypoints=websecure"
-      - "traefik.http.routers.lms-lemdiklat-executive.tls=true"
-      - "traefik.http.routers.lms-lemdiklat-executive.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lms-lemdiklat-executive.loadbalancer.server.port=3003"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=cankonix-proxy'
+      - 'traefik.http.routers.lms-lemdiklat-executive.rule=Host(`executive.lms-presisi.digitallearningcenter.id`)'
+      - 'traefik.http.routers.lms-lemdiklat-executive.entrypoints=websecure'
+      - 'traefik.http.routers.lms-lemdiklat-executive.tls=true'
+      - 'traefik.http.routers.lms-lemdiklat-executive.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.lms-lemdiklat-executive.loadbalancer.server.port=3003'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3003').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
 
 networks:
   internal:
     name: cankonix-lms-lemdiklat-internal
-  
+
   proxy:
     name: cankonix-proxy
     external: true
