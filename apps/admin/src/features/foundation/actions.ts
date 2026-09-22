@@ -6,8 +6,10 @@ import type {
   CreatePersonInput,
   CreateRoleAssignmentInput,
   CreateUserAccountInput,
+  Organization,
   RoleAssignmentStatus,
   ScopeInput,
+  UpdateOrganizationInput,
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
 import { createAdminApiClient } from '@/lib/api';
@@ -50,9 +52,85 @@ export async function createOrganizationAction(
   }
 
   revalidatePath('/');
+  revalidatePath('/organisasi');
   return {
     ok: true,
     message: `Organisasi ${result.data.name} berhasil dibuat.`,
+  };
+}
+
+export async function updateOrganizationAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const id = getText(formData, 'id');
+  const code = getText(formData, 'code').toUpperCase();
+  const name = getText(formData, 'name');
+  const organizationType = getText(formData, 'organizationType');
+  const parentId = getText(formData, 'parentId');
+  const status = getText(formData, 'status') as Organization['status'];
+
+  if (!id || !code || !name) {
+    return {
+      ok: false,
+      message: 'ID, kode organisasi, dan nama organisasi wajib diisi.',
+    };
+  }
+
+  const input: UpdateOrganizationInput = {
+    code,
+    name,
+    organizationType: organizationType || null,
+    parentId: parentId || null,
+    status: status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+  };
+
+  const result = await createAdminApiClient().organizations.update(id, input);
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Organisasi gagal diperbarui.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/organisasi');
+  return {
+    ok: true,
+    message: `Organisasi ${result.data.name} berhasil diperbarui.`,
+  };
+}
+
+export async function updateOrganizationStatusAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const id = getText(formData, 'id');
+  const name = getText(formData, 'name');
+  const status = getText(formData, 'status') as Organization['status'];
+
+  if (!id || !['ACTIVE', 'INACTIVE'].includes(status)) {
+    return {
+      ok: false,
+      message: 'Organisasi dan status target wajib valid.',
+    };
+  }
+
+  const result = await createAdminApiClient().organizations.update(id, {
+    status,
+  });
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Status organisasi gagal diperbarui.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/organisasi');
+  return {
+    ok: true,
+    message: `${name || result.data.name} berhasil ${status === 'ACTIVE' ? 'diaktifkan' : 'dinonaktifkan'}.`,
   };
 }
 
@@ -160,9 +238,8 @@ export async function createRoleAssignmentAction(
   if (validUntil) input.validUntil = new Date(validUntil).toISOString();
   if (scope) input.scopes = [scope];
 
-  const result = await createAdminApiClient().authorization.createAssignment(
-    input,
-  );
+  const result =
+    await createAdminApiClient().authorization.createAssignment(input);
   if (!result.ok) {
     return {
       ok: false,
@@ -284,13 +361,15 @@ function getScopeInput(formData: FormData): ScopeInput | null {
 }
 
 function isScopeType(value: string): value is ScopeInput['scopeType'] {
-  return ['ORGANIZATION', 'PROGRAM', 'BATCH', 'CLASS', 'CLASS_SUBJECT'].includes(
-    value,
-  );
+  return [
+    'ORGANIZATION',
+    'PROGRAM',
+    'BATCH',
+    'CLASS',
+    'CLASS_SUBJECT',
+  ].includes(value);
 }
 
-function isRoleAssignmentStatus(
-  value: string,
-): value is RoleAssignmentStatus {
+function isRoleAssignmentStatus(value: string): value is RoleAssignmentStatus {
   return ['ACTIVE', 'INACTIVE', 'REVOKED'].includes(value);
 }

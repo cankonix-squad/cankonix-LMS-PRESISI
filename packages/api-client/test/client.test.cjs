@@ -198,6 +198,66 @@ test('person and account client targets foundation endpoints', async () => {
   }
 });
 
+test('organization client supports filtered list and update mutation', async () => {
+  const seen = [];
+  const { server, url } = await listen(async (request, response) => {
+    let body = '';
+    for await (const chunk of request) body += chunk;
+    seen.push({
+      method: request.method,
+      url: request.url,
+      authorization: request.headers.authorization,
+      body: body ? JSON.parse(body) : null,
+    });
+    response.setHeader('content-type', 'application/json');
+    if (request.method === 'GET') {
+      response.end(JSON.stringify({ data: [], total: 0, page: 1, limit: 25 }));
+      return;
+    }
+    response.end(
+      JSON.stringify({
+        id: 'org-1',
+        code: 'LEMDIKLAT',
+        name: 'Lemdiklat Polri',
+        parentId: null,
+        organizationType: 'national',
+        status: 'INACTIVE',
+        metadata: null,
+        createdAt: '2026-09-22T00:00:00.000Z',
+        updatedAt: '2026-09-22T00:00:00.000Z',
+      }),
+    );
+  });
+
+  const client = createApiClient(url, { getAccessToken: () => 'token-123' });
+
+  try {
+    await client.organizations.list({
+      limit: 25,
+      search: 'lem',
+      status: 'ACTIVE',
+    });
+    assert.equal(
+      seen[0].url,
+      '/api/v1/organizations?page=1&limit=25&search=lem&status=ACTIVE',
+    );
+
+    await client.organizations.update('org-1', {
+      name: 'Lemdiklat Polri',
+      status: 'INACTIVE',
+    });
+    assert.equal(seen[1].method, 'PATCH');
+    assert.equal(seen[1].url, '/api/v1/organizations/org-1');
+    assert.equal(seen[1].authorization, 'Bearer token-123');
+    assert.deepEqual(seen[1].body, {
+      name: 'Lemdiklat Polri',
+      status: 'INACTIVE',
+    });
+  } finally {
+    server.close();
+  }
+});
+
 test('role assignment client targets scope management endpoints', async () => {
   const seen = [];
   const { server, url } = await listen(async (request, response) => {

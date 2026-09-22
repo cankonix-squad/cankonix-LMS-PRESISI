@@ -49,6 +49,8 @@ export type CreateOrganizationInput = {
   status?: 'ACTIVE' | 'INACTIVE';
 };
 
+export type UpdateOrganizationInput = Partial<CreateOrganizationInput>;
+
 export type Person = {
   id: string;
   personnelNumber: string;
@@ -1171,7 +1173,15 @@ export function createApiClient(
     },
 
     organizations: {
-      list(params: { search?: string; page?: number; limit?: number } = {}) {
+      list(
+        params: {
+          search?: string;
+          status?: Organization['status'];
+          parentId?: string;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
         return request<ApiListResponse<Organization>>(
           `/organizations${buildQuery({ page: 1, limit: 20, ...params })}`,
         );
@@ -1182,6 +1192,12 @@ export function createApiClient(
       create(input: CreateOrganizationInput) {
         return mutate<Organization>('/organizations', {
           method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateOrganizationInput) {
+        return mutate<Organization>(`/organizations/${id}`, {
+          method: 'PATCH',
           body: JSON.stringify(input),
         });
       },
@@ -1242,10 +1258,13 @@ export function createApiClient(
         });
       },
       addAssignmentScopes(id: string, input: AddRoleAssignmentScopesInput) {
-        return mutate<RoleAssignment>(`/authorization/assignments/${id}/scopes`, {
-          method: 'POST',
-          body: JSON.stringify(input),
-        });
+        return mutate<RoleAssignment>(
+          `/authorization/assignments/${id}/scopes`,
+          {
+            method: 'POST',
+            body: JSON.stringify(input),
+          },
+        );
       },
       updateAssignmentStatus(id: string, status: RoleAssignmentStatus) {
         return mutate<RoleAssignment>(
