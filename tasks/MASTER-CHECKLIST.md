@@ -95,6 +95,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-063 | `tasks/TASK-063-attendance-learning-performance-kpis.md` | REVIEW | TASK-060 = DONE |
 | TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | NOT STARTED | TASK-060 dan TASK-053 = DONE |
 | TASK-065 | `tasks/TASK-065-executive-ui.md` | NOT STARTED | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
+| TASK-066 | `tasks/TASK-066-educator-portal-alignment.md` | REVIEW | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE |
 
 ## Reviewer Decision — TASK-005 approved (2026-09-16)
 
