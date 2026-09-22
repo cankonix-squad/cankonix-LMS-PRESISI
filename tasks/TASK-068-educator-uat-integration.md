@@ -2,7 +2,7 @@
 
 ## Status
 
-`IN PROGRESS`
+`REVIEW`
 
 ## Dependency
 
@@ -36,12 +36,12 @@ Memverifikasi alur Educator dari login SSO sampai konsumsi data yang dikelola me
 ## Acceptance checklist
 
 - [x] Educator production URL merespons tanpa error gateway.
-- [ ] Route login mengarah ke Keycloak dan route logout tersedia.
+- [x] Route login mengarah ke Keycloak dan route logout tersedia.
 - [x] Semua route Educator utama dapat dirender atau mengarah ke alur autentikasi yang benar.
 - [x] API health production merespons `{"status":"ok"}`.
 - [x] Tidak ada perubahan kontrak atau data production selama verifikasi.
-- [ ] Temuan UAT dicatat dengan bukti dan task perbaikan dipisahkan bila diperlukan.
-- [ ] Setelah verifikasi selesai, task dipindahkan ke `REVIEW`; Codex tidak menandai `DONE`.
+- [x] Temuan UAT dicatat dengan bukti dan task perbaikan dipisahkan bila diperlukan.
+- [x] Setelah verifikasi selesai, task dipindahkan ke `REVIEW`; Codex tidak menandai `DONE`.
 
 ## Verification plan
 
@@ -62,4 +62,6 @@ Memverifikasi alur Educator dari login SSO sampai konsumsi data yang dikelola me
 
 ## Follow-up UAT
 
-Production memperlihatkan bahwa logout sudah menghapus cookie dan mengarahkan ke host Educator, tetapi shell selalu merender tombol `Masuk` dan `Keluar`. Hal ini membuat pengguna melihat state yang ambigu dan halaman tetap merender error token setelah logout. Perbaikan state sesi pada shell diperlukan sebelum task dapat kembali ke `REVIEW`.
+Production memperlihatkan bahwa logout sudah menghapus cookie dan mengarahkan ke host Educator, tetapi shell selalu merender tombol `Masuk` dan `Keluar`. Hal ini membuat pengguna melihat state yang ambigu dan halaman tetap merender error token setelah logout. Perbaikan state sesi pada shell sudah diterapkan dan tervalidasi.
+
+Follow-up tersebut menambahkan endpoint `GET /api/auth/session`, state sesi pada shell, dan panel login setelah logout. Pada sesi tanpa token endpoint merespons `200 {"authenticated":false}` dan halaman tidak lagi menjadikan error token sebagai tampilan utama.

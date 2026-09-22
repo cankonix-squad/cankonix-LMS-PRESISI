@@ -98,7 +98,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-065 | `tasks/TASK-065-executive-ui.md` | NOT STARTED | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
 | TASK-066 | `tasks/TASK-066-educator-portal-alignment.md` | DONE | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE |
 | TASK-067 | `tasks/TASK-067-production-zero-downtime-deployment.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED |
-| TASK-068 | `tasks/TASK-068-educator-uat-integration.md` | IN PROGRESS | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE, TASK-066 = DONE |
+| TASK-068 | `tasks/TASK-068-educator-uat-integration.md` | REVIEW | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE, TASK-066 = DONE |
 
 ## Reviewer Decision — TASK-005 approved (2026-09-16)
 
