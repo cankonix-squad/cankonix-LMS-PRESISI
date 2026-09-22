@@ -17,56 +17,86 @@ export async function FoundationDashboard() {
   const hasSession = await hasAdminSession();
   if (!hasSession) return <LoginRequiredState />;
 
+  return (
+    <div className="grid gap-6 xl:grid-cols-2">
+      <OrganizationPanel />
+      <PersonAccountPanel />
+      <RolePermissionPanel />
+      <AssignmentScopePanel />
+    </div>
+  );
+}
+
+export async function OrganizationPanel() {
   const api = createAdminApiClient();
-  const [organizations, persons, roles, permissions, assignments] =
-    await Promise.all([
-      getOrEmpty(() => api.organizations.list({ limit: 8 })),
-      getOrEmpty(() => api.persons.list({ limit: 8 })),
-      getOrEmpty(() => api.authorization.roles({ limit: 8 })),
-      getOrEmpty(() => api.authorization.permissions({ limit: 8 })),
-      getOrEmpty(() => api.authorization.assignments({ limit: 8 })),
-    ]);
+  const organizations = await getOrEmpty(() =>
+    api.organizations.list({ limit: 8 }),
+  );
+
+  return (
+    <SectionCard
+      id="organizations"
+      title="Organization"
+      description="Daftar unit organisasi dan form dasar. Hierarchy tetap divalidasi server."
+    >
+      <CreateOrganizationForm />
+      <OrganizationList result={organizations} />
+    </SectionCard>
+  );
+}
+
+export async function PersonAccountPanel() {
+  const api = createAdminApiClient();
+  const persons = await getOrEmpty(() => api.persons.list({ limit: 8 }));
   const personAccounts =
     persons.data?.data.length && !persons.error
       ? await loadPersonAccounts(api, persons.data.data)
       : new Map<string, DataResult<UserAccount>>();
 
   return (
-    <div className="grid gap-6 xl:grid-cols-2">
-      <SectionCard
-        id="organizations"
-        title="Organization"
-        description="Daftar unit organisasi dan form dasar. Hierarchy tetap divalidasi server."
-      >
-        <CreateOrganizationForm />
-        <OrganizationList result={organizations} />
-      </SectionCard>
+    <SectionCard
+      id="persons"
+      title="Person & User Account"
+      description="Ringkasan personel foundation. Person dan user account tetap domain berbeda."
+    >
+      <CreatePersonAccountForm />
+      <PersonList result={persons} accounts={personAccounts} />
+    </SectionCard>
+  );
+}
 
-      <SectionCard
-        id="persons"
-        title="Person & User Account"
-        description="Ringkasan personel foundation. Person dan user account tetap domain berbeda."
-      >
-        <CreatePersonAccountForm />
-        <PersonList result={persons} accounts={personAccounts} />
-      </SectionCard>
+export async function RolePermissionPanel() {
+  const api = createAdminApiClient();
+  const [roles, permissions] = await Promise.all([
+    getOrEmpty(() => api.authorization.roles({ limit: 8 })),
+    getOrEmpty(() => api.authorization.permissions({ limit: 8 })),
+  ]);
 
-      <SectionCard
-        id="roles"
-        title="Role & Permission"
-        description="Katalog RBAC berbasis permission. UI tidak melakukan hardcoded role branching."
-      >
-        <RolePermissionList roles={roles} permissions={permissions} />
-      </SectionCard>
+  return (
+    <SectionCard
+      id="roles"
+      title="Role & Permission"
+      description="Katalog RBAC berbasis permission. UI tidak melakukan hardcoded role branching."
+    >
+      <RolePermissionList roles={roles} permissions={permissions} />
+    </SectionCard>
+  );
+}
 
-      <SectionCard
-        id="assignments"
-        title="Assignment & Scope"
-        description="Role assignment dan scope efektif. Backend tetap security boundary."
-      >
-        <AssignmentList result={assignments} />
-      </SectionCard>
-    </div>
+export async function AssignmentScopePanel() {
+  const api = createAdminApiClient();
+  const assignments = await getOrEmpty(() =>
+    api.authorization.assignments({ limit: 8 }),
+  );
+
+  return (
+    <SectionCard
+      id="assignments"
+      title="Assignment & Scope"
+      description="Role assignment dan scope efektif. Backend tetap security boundary."
+    >
+      <AssignmentList result={assignments} />
+    </SectionCard>
   );
 }
 
