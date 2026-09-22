@@ -36,7 +36,7 @@ That command means Codex must inspect current status, determine the next eligibl
 
 ## Current product priority
 The project is temporarily prioritizing Admin portal usability before continuing `TASK-064`.
-When continuing autonomously from this state, finish/review the active Admin task (`TASK-009C` if present, otherwise `TASK-009`) first unless a user explicitly redirects the work.
+When continuing autonomously from this state, finish/review the active Admin task (`TASK-009D` if present, otherwise `TASK-009C`) first unless a user explicitly redirects the work.
 
 ## Locked architecture
 - Monorepo: pnpm + Turborepo.

@@ -8,6 +8,13 @@ import type {
   UserAccount,
 } from '@lms/api-client';
 import Link from 'next/link';
+import {
+  DataTable,
+  FormPanel,
+  PageHeader,
+  StatCard,
+  Toolbar,
+} from '@/components/admin-design-system';
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
 import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
@@ -31,6 +38,11 @@ export async function FoundationDashboard() {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        eyebrow="Dashboard Admin Pusat"
+        title="Administrasi Platform Nasional"
+        description="Kelola organisasi, personel, akun, permission, assignment, dan scope dalam satu workspace operasional."
+      />
       <DashboardHero />
       <KpiGrid
         organizations={organizations}
@@ -54,31 +66,31 @@ export async function FoundationDashboard() {
 
 function DashboardHero() {
   return (
-    <section className="rounded-lg border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-[#0d2538] p-6 shadow-xl shadow-slate-950/20">
+    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300">
-            Dashboard Admin Pusat
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
+            Operasional
           </p>
-          <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white">
-            Administrasi Platform Nasional
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-            Kelola organisasi, personel, akun, permission, assignment, dan scope
-            dalam satu workspace operasional. Validasi akses tetap dilakukan
+          <h2 className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-slate-950">
+            Ringkasan kesiapan foundation
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+            Snapshot data foundation untuk memantau kesiapan Admin sebelum
+            operator masuk ke halaman detail. Validasi akses tetap dilakukan
             backend dengan permission dan scope.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/organisasi"
-            className="inline-flex min-h-10 items-center rounded-md bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+            className="inline-flex min-h-10 items-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700"
           >
             Kelola Organisasi
           </Link>
           <Link
             href="/assignments"
-            className="inline-flex min-h-10 items-center rounded-md border border-slate-700 px-4 text-sm font-medium text-slate-100 transition hover:border-sky-400 hover:bg-slate-900"
+            className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-sky-400 hover:text-sky-700"
           >
             Atur Hak Akses
           </Link>
@@ -127,18 +139,12 @@ function KpiGrid({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {kpis.map((kpi) => (
-        <article
+        <StatCard
           key={kpi.label}
-          className="rounded-lg border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-slate-950/10"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            {kpi.label}
-          </p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
-            {kpi.value}
-          </p>
-          <p className="mt-2 text-sm text-slate-400">{kpi.note}</p>
-        </article>
+          label={kpi.label}
+          value={kpi.value}
+          note={kpi.note}
+        />
       ))}
     </div>
   );
@@ -215,44 +221,32 @@ function RecentFoundationTable({
           Belum ada data foundation yang dapat ditampilkan.
         </EmptyState>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-800">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/70 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Nama</th>
-                <th className="px-4 py-3">Domain</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {rows.map((row) => (
-                <tr key={row.key}>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-slate-100">{row.name}</p>
-                    <p className="mt-1 max-w-md truncate text-xs text-slate-500">
-                      {row.code}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-slate-400">{row.domain}</td>
-                  <td className="px-4 py-3">
-                    <Pill tone={row.status === 'ACTIVE' ? 'green' : 'red'}>
-                      {row.status}
-                    </Pill>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={row.href}
-                      className="text-xs font-semibold text-sky-300 hover:text-sky-200"
-                    >
-                      Kelola
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable columns={['Nama', 'Domain', 'Status', 'Aksi']}>
+          {rows.map((row) => (
+            <tr key={row.key}>
+              <td className="px-4 py-3">
+                <p className="font-medium text-slate-950">{row.name}</p>
+                <p className="mt-1 max-w-md truncate text-xs text-slate-500">
+                  {row.code}
+                </p>
+              </td>
+              <td className="px-4 py-3 text-slate-600">{row.domain}</td>
+              <td className="px-4 py-3">
+                <Pill tone={row.status === 'ACTIVE' ? 'green' : 'red'}>
+                  {row.status}
+                </Pill>
+              </td>
+              <td className="px-4 py-3 text-right">
+                <Link
+                  href={row.href}
+                  className="text-xs font-semibold text-sky-700 hover:text-sky-900"
+                >
+                  Kelola
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </DataTable>
       )}
     </SectionCard>
   );
@@ -289,13 +283,13 @@ function QuickActions({
   ];
 
   return (
-    <aside className="rounded-lg border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-slate-950/10">
+    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
             Operasional
           </p>
-          <h2 className="mt-2 text-lg font-semibold text-white">
+          <h2 className="mt-2 text-lg font-semibold text-slate-950">
             Tindakan Cepat
           </h2>
         </div>
@@ -305,10 +299,10 @@ function QuickActions({
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center justify-between gap-4 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-3 transition hover:border-sky-400/70 hover:bg-slate-900"
+            className="flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-3 transition hover:border-sky-300 hover:bg-sky-50"
           >
             <span>
-              <span className="block text-sm font-medium text-slate-100">
+              <span className="block text-sm font-medium text-slate-950">
                 {item.label}
               </span>
               <span className="mt-1 block text-xs text-slate-500">
@@ -316,7 +310,7 @@ function QuickActions({
               </span>
             </span>
             <span
-              className="text-sm font-semibold text-sky-300"
+              className="text-sm font-semibold text-sky-700"
               aria-hidden="true"
             >
               &gt;
@@ -324,7 +318,7 @@ function QuickActions({
           </Link>
         ))}
       </div>
-      <div className="mt-5 rounded-md border border-sky-500/20 bg-sky-500/10 p-4 text-sm leading-6 text-sky-50">
+      <div className="mt-5 rounded-md border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
         Semua perubahan akses tetap diproses melalui endpoint protected. Bila
         operator belum punya permission, UI akan menampilkan arahan operasional.
       </div>
@@ -341,11 +335,26 @@ export async function OrganizationPanel() {
   return (
     <SectionCard
       id="organizations"
-      title="Organization"
-      description="Daftar unit organisasi dan form dasar. Hierarchy tetap divalidasi server."
+      title="Organisasi"
+      description="Registry unit organisasi. Buat data baru dari panel operasional tanpa mengganggu table utama."
     >
-      <CreateOrganizationForm />
-      <OrganizationList result={organizations} />
+      <Toolbar
+        title="Registry organisasi"
+        description={`${totalOf(organizations)} data terbaca dari API foundation.`}
+      >
+        <span className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+          Backend validates hierarchy
+        </span>
+      </Toolbar>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <OrganizationList result={organizations} />
+        <FormPanel
+          title="Buat Organisasi"
+          description="Gunakan untuk menambah unit baru. Validasi final tetap dilakukan API."
+        >
+          <CreateOrganizationForm />
+        </FormPanel>
+      </div>
     </SectionCard>
   );
 }
@@ -426,15 +435,15 @@ function LoginRequiredState() {
       description="Dashboard Admin membaca API protected dengan token aman hasil login SSO."
       className="mx-auto max-w-3xl"
     >
-      <div className="rounded-lg border border-sky-500/20 bg-sky-500/10 p-4">
-        <p className="text-sm leading-6 text-sky-50">
+      <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+        <p className="text-sm leading-6 text-sky-800">
           Klik tombol masuk untuk autentikasi lewat SSO LMS PRESISI. Setelah
           callback berhasil, token disimpan sebagai cookie HTTP-only dan dipakai
           server-side untuk membaca API foundation.
         </p>
         <a
           href="/api/auth/login"
-          className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-sky-500 px-4 text-sm font-medium text-slate-950 transition hover:bg-sky-400"
+          className="mt-4 inline-flex min-h-10 items-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700"
         >
           Masuk ke Admin LMS PRESISI
         </a>
@@ -453,28 +462,27 @@ function OrganizationList({
   if (items.length === 0)
     return <EmptyState>Belum ada data organisasi.</EmptyState>;
   return (
-    <div className="space-y-3">
+    <DataTable columns={['Organisasi', 'Tipe', 'Parent', 'Status']}>
       {items.map((org) => (
-        <article
-          key={org.id}
-          className="rounded-lg border border-slate-800 p-4"
-        >
-          <div className="flex items-start justify-between gap-3">
+        <tr key={org.id}>
+          <td className="px-4 py-4">
             <div>
-              <p className="font-medium text-slate-100">{org.name}</p>
+              <p className="font-medium text-slate-950">{org.name}</p>
               <p className="mt-1 text-xs text-slate-500">{org.code}</p>
             </div>
+          </td>
+          <td className="px-4 py-4 text-slate-600">
+            {org.organizationType ?? '-'}
+          </td>
+          <td className="px-4 py-4 text-slate-600">{org.parentId ?? 'Root'}</td>
+          <td className="px-4 py-4">
             <Pill tone={org.status === 'ACTIVE' ? 'green' : 'red'}>
               {org.status}
             </Pill>
-          </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Parent: {org.parentId ?? 'Root'} · Type:{' '}
-            {org.organizationType ?? '-'}
-          </p>
-        </article>
+          </td>
+        </tr>
       ))}
-    </div>
+    </DataTable>
   );
 }
 
@@ -490,9 +498,9 @@ function PersonList({
   if (items.length === 0)
     return <EmptyState>Belum ada data personel.</EmptyState>;
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-800">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <table className="w-full text-left text-sm">
-        <thead className="bg-slate-950/60 text-xs uppercase tracking-wide text-slate-500">
+        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-4 py-3">Nama</th>
             <th className="px-4 py-3">NRP</th>
@@ -500,11 +508,13 @@ function PersonList({
             <th className="px-4 py-3">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800">
+        <tbody className="divide-y divide-slate-100">
           {items.map((person) => (
             <tr key={person.id}>
-              <td className="px-4 py-3">{person.fullName}</td>
-              <td className="px-4 py-3 text-slate-400">
+              <td className="px-4 py-3 font-medium text-slate-950">
+                {person.fullName}
+              </td>
+              <td className="px-4 py-3 text-slate-600">
                 {person.personnelNumber}
               </td>
               <td className="px-4 py-3">
@@ -553,7 +563,7 @@ function RolePermissionList({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div>
-        <h3 className="mb-3 text-sm font-medium text-slate-300">Roles</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-700">Roles</h3>
         {roles.error ? (
           <ErrorState message={roles.error} />
         ) : (
@@ -561,7 +571,9 @@ function RolePermissionList({
         )}
       </div>
       <div>
-        <h3 className="mb-3 text-sm font-medium text-slate-300">Permissions</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-700">
+          Permissions
+        </h3>
         {permissions.error ? (
           <ErrorState message={permissions.error} />
         ) : (
@@ -577,9 +589,12 @@ function RoleList({ roles }: { roles: Role[] }) {
   return (
     <div className="space-y-2">
       {roles.map((role) => (
-        <div key={role.id} className="rounded-lg border border-slate-800 p-3">
+        <div
+          key={role.id}
+          className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+        >
           <div className="flex justify-between gap-3">
-            <p className="font-medium">{role.name}</p>
+            <p className="font-medium text-slate-950">{role.name}</p>
             {role.isSystem ? <Pill tone="blue">SYSTEM</Pill> : null}
           </div>
           <p className="mt-1 text-xs text-slate-500">{role.code}</p>
@@ -615,11 +630,11 @@ function AssignmentList({
       {items.map((assignment) => (
         <article
           key={assignment.id}
-          className="rounded-lg border border-slate-800 p-4"
+          className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
         >
           <div className="flex justify-between gap-3">
             <div>
-              <p className="font-medium">
+              <p className="font-medium text-slate-950">
                 {assignment.role?.name ?? assignment.roleId}
               </p>
               <p className="mt-1 text-xs text-slate-500">

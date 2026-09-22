@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { AdminSidebarNav } from './admin-sidebar-nav';
 
 const primaryNavigation = [{ href: '/', label: 'Dashboard', marker: 'D' }];
 
@@ -65,9 +66,9 @@ const navigationGroups = [
 
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-screen bg-[#071120] text-slate-100">
+    <main className="min-h-screen bg-slate-100 text-slate-950">
       <div className="mx-auto grid min-h-screen max-w-[1540px] lg:grid-cols-[304px_minmax(0,1fr)]">
-        <aside className="border-b border-slate-800/80 bg-[#071120]/98 px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-5 lg:py-6">
+        <aside className="border-b border-slate-800/80 bg-[#071120] px-4 py-4 text-slate-100 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-5 lg:py-6">
           <div className="flex items-center justify-between gap-4 lg:block">
             <Link href="/" className="block">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-300">
@@ -96,59 +97,31 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <nav
-            className="mt-5 flex gap-2 overflow-x-auto pb-1 lg:mt-8 lg:flex-col lg:overflow-visible lg:pb-0"
-            aria-label="Navigasi Admin"
-          >
-            {primaryNavigation.map((item) => (
-              <NavLink key={item.href} item={item} />
-            ))}
-            {navigationGroups.map((group) => (
-              <div key={group.label} className="contents lg:block">
-                <p className="hidden px-2 pt-5 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-600 lg:block">
-                  {group.label}
-                </p>
-                <div className="contents lg:mt-2 lg:flex lg:flex-col lg:gap-1">
-                  {group.items.map((item) =>
-                    'href' in item ? (
-                      <NavLink key={item.label} item={item} />
-                    ) : (
-                      <span
-                        key={item.label}
-                        className="hidden items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-600 lg:flex"
-                      >
-                        <span className="grid h-7 w-7 place-items-center rounded-md bg-slate-900/70 text-[0.65rem] font-semibold text-slate-600">
-                          {item.marker}
-                        </span>
-                        {item.label}
-                      </span>
-                    ),
-                  )}
-                </div>
-              </div>
-            ))}
-          </nav>
+          <AdminSidebarNav
+            primaryNavigation={primaryNavigation}
+            navigationGroups={navigationGroups}
+          />
           <div className="mt-6 hidden rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-xs leading-5 text-emerald-100 lg:block">
             Permission + Scope aktif di backend.
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-col bg-[#0a1424]">
-          <header className="sticky top-0 z-10 border-b border-slate-800/80 bg-[#0a1424]/95 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
+        <div className="flex min-w-0 flex-col bg-slate-100">
+          <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-4 shadow-sm backdrop-blur sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                   Pusat / Administrasi
                 </p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
                   Administrasi Platform Nasional
                 </h2>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="min-w-64 rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-slate-500">
+                <div className="min-w-64 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
                   Cari organisasi, personel, atau permission
                 </div>
-                <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-100">
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
                   Production API
                 </div>
               </div>
@@ -160,24 +133,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     </main>
-  );
-}
-
-function NavLink({
-  item,
-}: {
-  item: { href: string; label: string; marker: string };
-}) {
-  return (
-    <Link
-      href={item.href}
-      className="flex shrink-0 items-center gap-3 rounded-md border border-slate-800/80 bg-slate-950/40 px-3 py-2 text-sm text-slate-300 transition hover:border-sky-400/70 hover:bg-slate-900 hover:text-white lg:border-transparent lg:bg-transparent"
-    >
-      <span className="grid h-7 w-7 place-items-center rounded-md bg-slate-900 text-[0.65rem] font-semibold text-sky-200">
-        {item.marker}
-      </span>
-      {item.label}
-    </Link>
   );
 }
 
@@ -198,13 +153,13 @@ export function SectionCard({
     <section
       id={id}
       className={cn(
-        'rounded-lg border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-slate-950/20',
+        'rounded-lg border border-slate-200 bg-white p-5 shadow-sm',
         className,
       )}
     >
-      <div className="mb-5 border-b border-slate-800 pb-4">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
+      <div className="mb-5 border-b border-slate-200 pb-4">
+        <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
       </div>
       {children}
     </section>

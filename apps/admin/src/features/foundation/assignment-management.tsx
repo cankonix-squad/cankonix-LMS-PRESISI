@@ -49,14 +49,14 @@ export function AssignmentManagement({
     <div className="space-y-5">
       <form
         action={createAction}
-        className="grid gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-4 md:grid-cols-2"
+        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2"
       >
-        <label className="text-sm text-slate-300">
+        <label className="text-sm font-medium text-slate-700">
           UserAccount
           <select
             name="userAccountId"
             required
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
           >
             <option value="">Pilih UserAccount</option>
             {accounts.map((account) => (
@@ -66,12 +66,12 @@ export function AssignmentManagement({
             ))}
           </select>
         </label>
-        <label className="text-sm text-slate-300">
+        <label className="text-sm font-medium text-slate-700">
           Role
           <select
             name="roleId"
             required
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
           >
             <option value="">Pilih role</option>
             {roles.map((role) => (
@@ -81,20 +81,20 @@ export function AssignmentManagement({
             ))}
           </select>
         </label>
-        <label className="text-sm text-slate-300">
+        <label className="text-sm font-medium text-slate-700">
           Berlaku mulai
           <input
             name="validFrom"
             type="datetime-local"
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
           />
         </label>
-        <label className="text-sm text-slate-300">
+        <label className="text-sm font-medium text-slate-700">
           Berlaku sampai
           <input
             name="validUntil"
             type="datetime-local"
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
           />
         </label>
         <ScopeFields />
@@ -110,7 +110,7 @@ export function AssignmentManagement({
       <div className="grid gap-4 lg:grid-cols-2">
         <form
           action={scopeAction}
-          className="grid gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-4"
+          className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
         >
           <AssignmentSelect assignments={assignments} />
           <ScopeFields />
@@ -125,15 +125,15 @@ export function AssignmentManagement({
 
         <form
           action={statusAction}
-          className="grid gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-4"
+          className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
         >
           <AssignmentSelect assignments={assignments} />
-          <label className="text-sm text-slate-300">
+          <label className="text-sm font-medium text-slate-700">
             Status
             <select
               name="status"
               required
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+              className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             >
               {assignmentStatuses.map((status) => (
                 <option key={status} value={status}>
@@ -154,15 +154,15 @@ export function AssignmentManagement({
 
       <form
         action={removeAction}
-        className="grid gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-4 md:grid-cols-[1fr_1fr_auto]"
+        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_auto]"
       >
         <AssignmentSelect assignments={assignments} />
-        <label className="text-sm text-slate-300">
+        <label className="text-sm font-medium text-slate-700">
           Scope
           <select
             name="scopeRecordId"
             required
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
           >
             <option value="">Pilih scope</option>
             {assignments.flatMap((assignment) =>
@@ -189,12 +189,12 @@ export function AssignmentManagement({
 
 function AssignmentSelect({ assignments }: { assignments: RoleAssignment[] }) {
   return (
-    <label className="text-sm text-slate-300">
+    <label className="text-sm font-medium text-slate-700">
       Assignment
       <select
         name="assignmentId"
         required
-        className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
       >
         <option value="">Pilih assignment</option>
         {assignments.map((assignment) => (
@@ -211,11 +211,11 @@ function AssignmentSelect({ assignments }: { assignments: RoleAssignment[] }) {
 function ScopeFields() {
   return (
     <>
-      <label className="text-sm text-slate-300">
+      <label className="text-sm font-medium text-slate-700">
         Scope type
         <select
           name="scopeType"
-          className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
         >
           <option value="">Tanpa scope</option>
           {scopeTypes.map((scopeType) => (
@@ -225,12 +225,12 @@ function ScopeFields() {
           ))}
         </select>
       </label>
-      <label className="text-sm text-slate-300">
+      <label className="text-sm font-medium text-slate-700">
         Scope ID
         <input
           name="scopeId"
           placeholder="UUID organisasi/program/batch/class"
-          className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400"
+          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
         />
       </label>
     </>
@@ -259,7 +259,7 @@ function ActionFooter({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-10 items-center justify-center rounded-lg bg-sky-500 px-4 text-sm font-medium text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex min-h-10 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? pendingLabel : submitLabel}
       </button>
@@ -267,8 +267,8 @@ function ActionFooter({
         <p
           className={
             ok
-              ? 'md:col-span-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100'
-              : 'md:col-span-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-100'
+              ? 'md:col-span-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700'
+              : 'md:col-span-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700'
           }
         >
           {message}
