@@ -138,3 +138,17 @@ Verification PASS:
 - `tsc --noEmit` from `apps/admin`
 - `prettier --check` on changed files
 - `next build --webpack` from `apps/admin`
+
+## Review Revision — CI typegen/build ordering
+
+CI finding:
+- `pnpm turbo run lint typecheck build --filter=@lms/admin...` could run `@lms/admin:typecheck` and `@lms/admin:build` concurrently.
+- Both commands touch `.next`; `next typegen` failed with missing `.next/types/routes.d.ts`.
+
+Changes:
+- Updated `turbo.json` so `typecheck` depends on the same package `build` in addition to upstream builds.
+- This serializes `next build` before `next typegen && tsc --noEmit` for Next apps when CI runs multiple tasks together.
+
+Verification PASS:
+- `turbo run typecheck build --filter=@lms/admin... --dry=json` shows `@lms/admin#typecheck` depends on `@lms/admin#build`.
+- `prettier --check turbo.json`
