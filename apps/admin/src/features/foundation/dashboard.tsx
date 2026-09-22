@@ -5,11 +5,13 @@ import type {
   Person,
   Role,
   RoleAssignment,
+  UserAccount,
 } from '@lms/api-client';
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
 import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
 import { CreateOrganizationForm } from './create-organization-form';
+import { CreatePersonAccountForm } from './create-person-account-form';
 
 export async function FoundationDashboard() {
   const hasSession = await hasAdminSession();
@@ -24,6 +26,10 @@ export async function FoundationDashboard() {
       getOrEmpty(() => api.authorization.permissions({ limit: 8 })),
       getOrEmpty(() => api.authorization.assignments({ limit: 8 })),
     ]);
+  const personAccounts =
+    persons.data?.data.length && !persons.error
+      ? await loadPersonAccounts(api, persons.data.data)
+      : new Map<string, DataResult<UserAccount>>();
 
   return (
     <div className="grid gap-6 xl:grid-cols-2">
@@ -41,7 +47,8 @@ export async function FoundationDashboard() {
         title="Person & User Account"
         description="Ringkasan personel foundation. Person dan user account tetap domain berbeda."
       >
-        <PersonList result={persons} />
+        <CreatePersonAccountForm />
+        <PersonList result={persons} accounts={personAccounts} />
       </SectionCard>
 
       <SectionCard
@@ -125,8 +132,10 @@ function OrganizationList({
 
 function PersonList({
   result,
+  accounts,
 }: {
   result: DataResult<ApiListResponse<Person>>;
+  accounts: Map<string, DataResult<UserAccount>>;
 }) {
   if (result.error) return <ErrorState message={result.error} />;
   const items = result.data?.data ?? [];
@@ -139,6 +148,7 @@ function PersonList({
           <tr>
             <th className="px-4 py-3">Nama</th>
             <th className="px-4 py-3">NRP</th>
+            <th className="px-4 py-3">Akun</th>
             <th className="px-4 py-3">Status</th>
           </tr>
         </thead>
@@ -150,6 +160,9 @@ function PersonList({
                 {person.personnelNumber}
               </td>
               <td className="px-4 py-3">
+                <PersonAccountCell account={accounts.get(person.id)} />
+              </td>
+              <td className="px-4 py-3">
                 <Pill tone={person.status === 'ACTIVE' ? 'green' : 'red'}>
                   {person.status}
                 </Pill>
@@ -158,6 +171,26 @@ function PersonList({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function PersonAccountCell({
+  account,
+}: {
+  account: DataResult<UserAccount> | undefined;
+}) {
+  if (!account) return <Pill tone="slate">Belum dicek</Pill>;
+  if (account.error) return <Pill tone="red">Belum ada akun</Pill>;
+  if (!account.data) return <Pill tone="red">Belum ada akun</Pill>;
+  return (
+    <div className="flex flex-col gap-1">
+      <Pill tone={account.data.status === 'ACTIVE' ? 'green' : 'red'}>
+        {account.data.status}
+      </Pill>
+      <span className="max-w-48 truncate text-xs text-slate-500">
+        {account.data.username ?? account.data.email ?? account.data.id}
+      </span>
     </div>
   );
 }
@@ -270,3 +303,16 @@ type DataResult<T> = {
   data: T | null;
   error: string | null;
 };
+
+async function loadPersonAccounts(
+  api: ReturnType<typeof createAdminApiClient>,
+  persons: Person[],
+) {
+  const entries = await Promise.all(
+    persons.map(async (person) => {
+      const account = await getOrEmpty(() => api.persons.getAccount(person.id));
+      return [person.id, account] as const;
+    }),
+  );
+  return new Map(entries);
+}

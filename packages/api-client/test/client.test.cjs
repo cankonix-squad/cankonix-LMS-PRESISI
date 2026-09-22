@@ -147,6 +147,57 @@ test('a rejected mutation is reported instead of thrown', async () => {
   }
 });
 
+test('person and account client targets foundation endpoints', async () => {
+  const seen = [];
+  const { server, url } = await listen(async (request, response) => {
+    let body = '';
+    for await (const chunk of request) body += chunk;
+    seen.push({
+      method: request.method,
+      url: request.url,
+      authorization: request.headers.authorization,
+      body: body ? JSON.parse(body) : null,
+    });
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ id: 'person-1', personId: 'person-1' }));
+  });
+
+  const client = createApiClient(url, { getAccessToken: () => 'token-123' });
+
+  try {
+    await client.persons.create({
+      personnelNumber: 'NRP-001',
+      fullName: 'Admin Satdik',
+      email: 'admin@example.test',
+    });
+    assert.equal(seen[0].method, 'POST');
+    assert.equal(seen[0].url, '/api/v1/persons');
+    assert.equal(seen[0].authorization, 'Bearer token-123');
+    assert.deepEqual(seen[0].body, {
+      personnelNumber: 'NRP-001',
+      fullName: 'Admin Satdik',
+      email: 'admin@example.test',
+    });
+
+    await client.persons.getAccount('person-1');
+    assert.equal(seen[1].method, 'GET');
+    assert.equal(seen[1].url, '/api/v1/persons/person-1/account');
+
+    await client.persons.createAccount('person-1', {
+      username: 'admin.satdik',
+      email: 'admin@example.test',
+    });
+    assert.equal(seen[2].method, 'POST');
+    assert.equal(seen[2].url, '/api/v1/persons/person-1/account');
+    assert.deepEqual(seen[2].body, {
+      username: 'admin.satdik',
+      email: 'admin@example.test',
+    });
+  } finally {
+    server.close();
+  }
+});
+
 test('attempt client targets the participant runtime endpoints', async () => {
   const seen = [];
   const { server, url } = await listen(async (request, response) => {

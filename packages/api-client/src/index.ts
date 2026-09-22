@@ -63,6 +63,35 @@ export type Person = {
   updatedAt: string;
 };
 
+export type CreatePersonInput = {
+  personnelNumber: string;
+  fullName: string;
+  rank?: string;
+  title?: string;
+  email?: string;
+  phone?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
+};
+
+export type UserAccount = {
+  id: string;
+  personId: string;
+  externalAuthId: string | null;
+  username: string | null;
+  email: string | null;
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateUserAccountInput = {
+  externalAuthId?: string;
+  username?: string;
+  email?: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+};
+
 export type Role = {
   id: string;
   code: string;
@@ -1147,6 +1176,21 @@ export function createApiClient(
         return request<ApiListResponse<Person>>(
           `/persons${buildQuery({ page: 1, limit: 20, ...params })}`,
         );
+      },
+      create(input: CreatePersonInput) {
+        return mutate<Person>('/persons', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      getAccount(personId: string) {
+        return request<UserAccount>(`/persons/${personId}/account`);
+      },
+      createAccount(personId: string, input: CreateUserAccountInput) {
+        return mutate<UserAccount>(`/persons/${personId}/account`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
       },
     },
 
