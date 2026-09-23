@@ -82,6 +82,8 @@ services:
       KC_HOSTNAME: auth.lms-presisi.digitallearningcenter.id
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:?KEYCLOAK_ADMIN is required}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+    volumes:
+      - ./themes/keycloak/lms-presisi:/opt/keycloak/themes/lms-presisi:ro
     depends_on:
       keycloak-db:
         condition: service_healthy

@@ -56,6 +56,7 @@ jobs:
           CHANGED_FILES=$(git diff --name-only "$PREVIOUS_SHA" "$TARGET_SHA")
           SERVICES=()
           INFRA_CHANGED=false
+          THEME_CHANGED=false
 
           add_service() {
             local service="$1"
@@ -64,6 +65,11 @@ jobs:
               *) SERVICES+=("$service") ;;
             esac
           }
+
+          if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^themes/keycloak/'; then
+            INFRA_CHANGED=true
+            THEME_CHANGED=true
+          fi
 
           if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^docker-compose\.production\.yml$'; then
             INFRA_CHANGED=true
@@ -86,7 +92,7 @@ jobs:
             printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/api/' && add_service api || true
           fi
 
-          if [ "${#SERVICES[@]}" -eq 0 ]; then
+          if [ "${#SERVICES[@]}" -eq 0 ] && [ "$INFRA_CHANGED" = false ]; then
             echo "No deployable application service changed. Updating revision only."
             git reset --hard "$TARGET_SHA"
             exit 0
@@ -105,7 +111,9 @@ jobs:
                   docker tag "$rollback_image" "$image:latest"
                 fi
               done
-              docker compose -f docker-compose.production.yml up -d --no-build "${SERVICES[@]}" || true
+              if [ "${#SERVICES[@]}" -gt 0 ]; then
+                docker compose -f docker-compose.production.yml up -d --no-build "${SERVICES[@]}" || true
+              fi
             fi
             exit "$exit_code"
           }
@@ -121,10 +129,15 @@ jobs:
           if [ "$INFRA_CHANGED" = true ]; then
             docker compose -f docker-compose.production.yml up -d --no-build \
               postgres redis minio keycloak-db keycloak
+            if [ "$THEME_CHANGED" = true ]; then
+              docker compose -f docker-compose.production.yml up -d --no-build --force-recreate keycloak
+            fi
           fi
 
-          docker compose --parallel 1 -f docker-compose.production.yml build "${SERVICES[@]}"
-          docker compose -f docker-compose.production.yml up -d --no-build "${SERVICES[@]}"
+          if [ "${#SERVICES[@]}" -gt 0 ]; then
+            docker compose --parallel 1 -f docker-compose.production.yml build "${SERVICES[@]}"
+            docker compose -f docker-compose.production.yml up -d --no-build "${SERVICES[@]}"
+          fi
 
           wait_for_healthy() {
             local container="$1"
@@ -155,6 +168,23 @@ jobs:
               cankonix-lms-lemdiklat-keycloak-1; do
               wait_for_healthy "$container"
             done
+          fi
+
+          if [ "$INFRA_CHANGED" = true ]; then
+            for attempt in $(seq 1 30); do
+              if docker compose -f docker-compose.production.yml exec -T keycloak sh -c \
+                '/opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user "$KEYCLOAK_ADMIN" --password "$KEYCLOAK_ADMIN_PASSWORD"' >/dev/null 2>&1; then
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "Keycloak admin CLI did not become ready in time" >&2
+                exit 1
+              fi
+              sleep 5
+            done
+            docker compose -f docker-compose.production.yml exec -T keycloak \
+              /opt/keycloak/bin/kcadm.sh update realms/lemdiklat \
+              -s loginTheme=lms-presisi
           fi
 
           for service in "${SERVICES[@]}"; do
