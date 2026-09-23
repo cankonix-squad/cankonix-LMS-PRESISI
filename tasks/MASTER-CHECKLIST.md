@@ -59,6 +59,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009H | `tasks/TASK-009H-admin-login-fullscreen-hero.md` | REVIEW | TASK-009G = REVIEW |
 | TASK-009I | `tasks/TASK-009I-login-poster-responsive-keycloak-apply.md` | REVIEW | TASK-009H = REVIEW |
 | TASK-009J | `tasks/TASK-009J-local-admin-prod-keycloak-login.md` | REVIEW | TASK-009I = REVIEW |
+| TASK-009K | `tasks/TASK-009K-admin-organization-operator-ux-polish.md` | REVIEW | TASK-009J = REVIEW |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |
@@ -109,6 +110,12 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 The Admin `/login` route was implemented as a responsive LMS PRESISI landing page using local assets only. The page includes transparent navigation, full-screen hero, Keycloak CTA at `/api/auth/login`, statistics, overview/dashboard visual, role cards, feature grid, news cards, and footer. No Admin username/password form or authorization/API model was changed.
 
 Verification: Prettier, `pnpm --filter @lms/admin lint`, `pnpm --filter @lms/admin exec next typegen`, `pnpm --filter @lms/admin exec tsc --noEmit`, and `pnpm --filter @lms/admin exec next build --webpack` → PASS. Task remains `REVIEW`; no task was marked `DONE`.
+
+### TASK-009K verification update — 2026-09-23
+
+Admin `/organisasi` was polished for operator workflows without changing API, authentication, authorization, or Permission + Scope behavior. The organization workspace now has clearer table-first hierarchy, search/status filters, pagination and page-size controls, error/empty states, a route-level loading skeleton, drawer-based create/edit with explicit cancel, disabled non-fake Detail action, status mutation actions, and compact responsive mobile cards.
+
+Verification: `pnpm turbo run lint typecheck build --filter=@lms/admin...`, Prettier, and `git diff --check` → PASS. Task remains `REVIEW`; live browser review against an authenticated production API session is pending.
 
 ## Reviewer Decision — TASK-005 approved (2026-09-16)
 

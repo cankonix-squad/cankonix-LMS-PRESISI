@@ -47,15 +47,18 @@ export function OrganizationWorkspace({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 border-b border-slate-200 bg-white px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="flex flex-col gap-4 border-b border-slate-200 bg-white px-5 py-5 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-slate-950">
-            Daftar organisasi
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
+            Foundation / Organisasi
+          </p>
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
+            Kelola organisasi
           </h2>
           <p className="mt-1 text-sm text-slate-500">
             {result.error
               ? 'Data belum dapat dimuat.'
-              : `${total} organisasi ditemukan.`}
+              : `${total} organisasi ditemukan. Gunakan pencarian dan filter untuk mempersempit daftar.`}
           </p>
         </div>
         <button
@@ -63,11 +66,11 @@ export function OrganizationWorkspace({
           onClick={() => setDrawer({ mode: 'create' })}
           className="inline-flex min-h-10 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700"
         >
-          + Tambah Organisasi
+          + Buat organisasi
         </button>
       </div>
 
-      <div className="px-5">
+      <div className="px-5 pt-1">
         <OrganizationToolbar filters={filters} />
       </div>
 
@@ -129,32 +132,40 @@ function OrganizationToolbar({ filters }: { filters: OrganizationFilters }) {
   ];
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 xl:flex-row xl:items-center xl:justify-between">
-      <div className="flex flex-wrap gap-2">
-        {statusTabs.map((tab) => {
-          const active =
-            filters.status === tab.status || (!filters.status && !tab.status);
-          return (
-            <Link
-              key={tab.label}
-              href={organizationHref({
-                ...filters,
-                status: tab.status,
-                page: 1,
-              })}
-              className={
-                active
-                  ? 'inline-flex min-h-9 items-center rounded-md bg-slate-900 px-3 text-sm font-semibold text-white'
-                  : 'inline-flex min-h-9 items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700'
-              }
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
+    <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Filter daftar
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {statusTabs.map((tab) => {
+            const active =
+              filters.status === tab.status || (!filters.status && !tab.status);
+            return (
+              <Link
+                key={tab.label}
+                href={organizationHref({
+                  ...filters,
+                  status: tab.status,
+                  page: 1,
+                })}
+                className={
+                  active
+                    ? 'inline-flex min-h-9 items-center rounded-md bg-slate-900 px-3 text-sm font-semibold text-white'
+                    : 'inline-flex min-h-9 items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700'
+                }
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
-      <form action="/organisasi" className="flex flex-wrap items-center gap-2">
+      <form
+        action="/organisasi"
+        className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
+      >
         <input type="hidden" name="status" value={filters.status ?? ''} />
         <input type="hidden" name="limit" value={filters.limit} />
         <input
@@ -162,7 +173,7 @@ function OrganizationToolbar({ filters }: { filters: OrganizationFilters }) {
           name="search"
           defaultValue={filters.search}
           placeholder="Cari nama atau kode organisasi"
-          className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 sm:w-72"
+          className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 sm:w-80"
         />
         <button
           type="submit"
@@ -192,7 +203,7 @@ function OrganizationTable({
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="overflow-x-auto">
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
@@ -246,6 +257,46 @@ function OrganizationTable({
           </tbody>
         </table>
       </div>
+      <div className="divide-y divide-slate-100 md:hidden">
+        {items.map((organization) => (
+          <div key={`mobile-${organization.id}`} className="space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-slate-950">
+                  {organization.name}
+                </p>
+                <p className="mt-1 text-xs font-medium text-slate-500">
+                  {organization.code}
+                </p>
+              </div>
+              <Pill tone={organization.status === 'ACTIVE' ? 'green' : 'red'}>
+                {organization.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}
+              </Pill>
+            </div>
+            <dl className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <dt className="text-slate-400">Jenis</dt>
+                <dd className="mt-1 font-medium text-slate-700">
+                  {organization.organizationType || '-'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">Induk</dt>
+                <dd className="mt-1 truncate font-medium text-slate-700">
+                  {organization.parentId
+                    ? (parentNames.get(organization.parentId) ??
+                      'Tidak terbaca')
+                    : 'Tanpa induk'}
+                </dd>
+              </div>
+            </dl>
+            <OrganizationRowActions
+              organization={organization}
+              onEdit={() => onEdit(organization)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -267,8 +318,16 @@ function OrganizationRowActions({
   const targetStatus = organization.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex justify-end gap-2">
+    <div className="flex flex-col items-stretch gap-2 sm:items-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          disabled
+          title="Detail organisasi belum tersedia pada API Admin"
+          className="inline-flex min-h-9 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-400"
+        >
+          Detail
+        </button>
         <button
           type="button"
           onClick={onEdit}
@@ -359,6 +418,7 @@ function OrganizationDrawer({
             mode={mode}
             organization={organization}
             parentOptions={parentOptions}
+            onClose={onClose}
           />
         </div>
       </aside>
@@ -370,10 +430,12 @@ function OrganizationDrawerForm({
   mode,
   organization,
   parentOptions,
+  onClose,
 }: {
   mode: 'create' | 'edit';
   organization: Organization | null;
   parentOptions: Organization[];
+  onClose: () => void;
 }) {
   const actionFn =
     mode === 'create' ? createOrganizationAction : updateOrganizationAction;
@@ -394,10 +456,13 @@ function OrganizationDrawerForm({
         Kode organisasi <span className="text-rose-600">*</span>
         <input
           name="code"
+          id="organization-code"
           defaultValue={organization?.code ?? ''}
           placeholder="Contoh: LEMDIKLAT"
           required
           maxLength={64}
+          pattern="[A-Za-z0-9_-]+"
+          title="Gunakan huruf, angka, garis bawah, atau tanda hubung."
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
         />
       </label>
@@ -405,10 +470,12 @@ function OrganizationDrawerForm({
         Nama organisasi <span className="text-rose-600">*</span>
         <input
           name="name"
+          id="organization-name"
           defaultValue={organization?.name ?? ''}
           placeholder="Contoh: Lemdiklat Polri"
           required
           maxLength={255}
+          minLength={2}
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
         />
       </label>
@@ -454,17 +521,27 @@ function OrganizationDrawerForm({
         Tips: gunakan nama yang mudah dikenali operator. Kode organisasi cukup
         singkat dan konsisten.
       </p>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="inline-flex min-h-11 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isPending
-          ? 'Menyimpan...'
-          : mode === 'create'
-            ? 'Simpan Organisasi'
-            : 'Simpan Perubahan'}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isPending}
+          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Batal
+        </button>
+        <button
+          type="submit"
+          disabled={isPending}
+          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isPending
+            ? 'Menyimpan...'
+            : mode === 'create'
+              ? 'Simpan Organisasi'
+              : 'Simpan Perubahan'}
+        </button>
+      </div>
       {state.message ? <ActionMessage state={state} /> : null}
     </form>
   );
