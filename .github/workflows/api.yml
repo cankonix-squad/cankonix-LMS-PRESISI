@@ -35,4 +35,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @lms/api db:validate
+      - run: pnpm --filter @lms/api db:generate
       - run: pnpm turbo run lint typecheck test build --filter=@lms/api...
