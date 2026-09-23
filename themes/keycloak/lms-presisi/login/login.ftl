@@ -10,19 +10,10 @@
 </head>
 <body class="login-page">
   <div class="login-shell">
-    <section class="login-visual" aria-label="Identitas LMS PRESISI Lemdiklat Polri">
-      <img class="login-hero-art" src="${url.resourcesPath}/img/login-hero-v3.png" alt="LMS PRESISI Lemdiklat Polri, platform induk pendidikan Polri">
-    </section>
+    <img class="login-hero-art" src="${url.resourcesPath}/img/login-hero-v3.png" alt="LMS PRESISI Lemdiklat Polri, platform induk pendidikan Polri">
 
     <main class="login-panel">
-      <p class="login-principles">PRESISI <i></i> PROFESIONAL <i></i> BERINTEGRITAS</p>
-
       <form class="login-card" id="kc-form-login" action="${url.loginAction}" method="post">
-        <div class="login-brand-mobile">
-          <img src="${url.resourcesPath}/img/logo-lemdiklat-polri.png" alt="Logo Lemdiklat Polri">
-          <span>LMS PRESISI<br>LEMDIKLAT POLRI</span>
-        </div>
-
         <div class="login-card-heading">
           <span class="login-card-mark">
             <img src="${url.resourcesPath}/img/logo-lemdiklat-polri.png" alt="Logo Lemdiklat Polri">

@@ -130,12 +130,11 @@ jobs:
           fi
 
           if [ "${#SERVICES[@]}" -eq 0 ] && [ "$INFRA_CHANGED" = false ]; then
-            echo "No deployable application service changed. Updating revision only."
+            echo "No deployable application service changed. Updating revision and verifying shared services."
             git reset --hard "$TARGET_SHA"
-            exit 0
+          else
+            git reset --hard "$TARGET_SHA"
           fi
-
-          git reset --hard "$TARGET_SHA"
 
           rollback() {
             local exit_code=$?
@@ -207,22 +206,24 @@ jobs:
             done
           fi
 
-          if [ "$INFRA_CHANGED" = true ]; then
-            for attempt in $(seq 1 30); do
-              if docker compose -f docker-compose.production.yml exec -T keycloak sh -c \
-                '/opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user "$KEYCLOAK_ADMIN" --password "$KEYCLOAK_ADMIN_PASSWORD"' >/dev/null 2>&1; then
-                break
-              fi
-              if [ "$attempt" -eq 30 ]; then
-                echo "Keycloak admin CLI did not become ready in time" >&2
-                exit 1
-              fi
-              sleep 5
-            done
-            docker compose -f docker-compose.production.yml exec -T keycloak \
-              /opt/keycloak/bin/kcadm.sh update realms/lemdiklat \
-              -s loginTheme=lms-presisi
-          fi
+          wait_for_healthy cankonix-lms-lemdiklat-keycloak-1
+          for attempt in $(seq 1 30); do
+            if docker compose -f docker-compose.production.yml exec -T keycloak sh -c \
+              '/opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user "$KEYCLOAK_ADMIN" --password "$KEYCLOAK_ADMIN_PASSWORD"' >/dev/null 2>&1; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "Keycloak admin CLI did not become ready in time" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          docker compose -f docker-compose.production.yml exec -T keycloak \
+            /opt/keycloak/bin/kcadm.sh update realms/lemdiklat \
+            -s loginTheme=lms-presisi
+          docker compose -f docker-compose.production.yml exec -T keycloak \
+            /opt/keycloak/bin/kcadm.sh get realms/lemdiklat \
+            --fields loginTheme
 
           for service in "${SERVICES[@]}"; do
             case "$service" in

@@ -14,17 +14,17 @@ export default function LoginPage() {
         alt="LMS PRESISI Lemdiklat Polri, platform induk pendidikan Polri"
         fill
         priority
-        className="object-cover object-center"
+        className="object-contain object-center"
         sizes="100vw"
       />
 
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,17,36,0.14),rgba(3,17,36,0.04)_42%,rgba(3,17,36,0.52))]"
+        className="absolute inset-0 bg-[radial-gradient(circle_at_86%_82%,rgba(3,17,36,0.18),transparent_24%),linear-gradient(180deg,rgba(3,17,36,0.04),rgba(3,17,36,0.12))]"
       />
 
       <section
-        className="relative z-10 flex min-h-screen items-end justify-center px-5 py-8 sm:justify-end sm:px-10 sm:py-10 lg:px-16 lg:py-14"
+        className="relative z-10 flex min-h-screen items-end justify-center px-5 py-6 sm:justify-end sm:px-8 sm:py-8 lg:px-12 lg:py-10"
         aria-label="Login Admin LMS PRESISI"
       >
         <div className="flex w-full justify-center sm:w-auto">
