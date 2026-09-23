@@ -10,6 +10,8 @@ import type {
   RoleAssignmentStatus,
   ScopeInput,
   UpdateOrganizationInput,
+  UpdatePersonInput,
+  UpdateUserAccountInput,
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
 import { createAdminApiClient } from '@/lib/api';
@@ -214,6 +216,66 @@ export async function createPersonWithAccountAction(
     ok: true,
     message: `Person ${personResult.data.fullName} dan UserAccount ${accountResult.data.username ?? accountResult.data.email ?? accountResult.data.id} berhasil dibuat.`,
   };
+}
+
+export async function updatePersonAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const id = getText(formData, 'id');
+  const personnelNumber = getText(formData, 'personnelNumber');
+  const fullName = getText(formData, 'fullName');
+  if (!id || !personnelNumber || !fullName)
+    return { ok: false, message: 'ID, NRP/NIP, dan nama lengkap wajib diisi.' };
+  const input: UpdatePersonInput = {
+    personnelNumber,
+    fullName,
+    status: getText(formData, 'status') === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+  };
+  for (const key of ['rank', 'title', 'email', 'phone'] as const) {
+    const value = getText(formData, key);
+    input[key] = value || undefined;
+  }
+  const result = await createAdminApiClient().persons.update(id, input);
+  if (!result.ok)
+    return {
+      ok: false,
+      message: result.message || 'Data personel gagal diperbarui.',
+    };
+  revalidatePath('/personel');
+  revalidatePath('/');
+  return {
+    ok: true,
+    message: `Data ${result.data.fullName} berhasil diperbarui.`,
+  };
+}
+
+export async function updatePersonAccountAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const personId = getText(formData, 'personId');
+  if (!personId) return { ok: false, message: 'Personel akun wajib dipilih.' };
+  const input: UpdateUserAccountInput = {
+    username: getText(formData, 'username') || undefined,
+    email: getText(formData, 'accountEmail').toLowerCase() || undefined,
+    externalAuthId: getText(formData, 'externalAuthId') || undefined,
+    status: getText(
+      formData,
+      'accountStatus',
+    ) as UpdateUserAccountInput['status'],
+  };
+  const result = await createAdminApiClient().persons.updateAccount(
+    personId,
+    input,
+  );
+  if (!result.ok)
+    return {
+      ok: false,
+      message: result.message || 'Akun login gagal diperbarui.',
+    };
+  revalidatePath('/personel');
+  return { ok: true, message: 'Akun login berhasil diperbarui.' };
 }
 
 export async function createRoleAssignmentAction(

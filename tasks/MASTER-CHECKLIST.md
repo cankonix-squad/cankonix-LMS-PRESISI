@@ -59,7 +59,8 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009H | `tasks/TASK-009H-admin-login-fullscreen-hero.md` | REVIEW | TASK-009G = REVIEW |
 | TASK-009I | `tasks/TASK-009I-login-poster-responsive-keycloak-apply.md` | REVIEW | TASK-009H = REVIEW |
 | TASK-009J | `tasks/TASK-009J-local-admin-prod-keycloak-login.md` | REVIEW | TASK-009I = REVIEW |
-| TASK-009K | `tasks/TASK-009K-admin-organization-operator-ux-polish.md` | REVIEW | TASK-009J = REVIEW |
+| TASK-009K | `tasks/TASK-009K-admin-organization-operator-ux-polish.md` | DONE | TASK-009J = REVIEW |
+| TASK-009L | `tasks/TASK-009L-admin-person-user-operator-ux-polish.md` | REVIEW | TASK-009K = DONE |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |
@@ -99,7 +100,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-061 | `tasks/TASK-061-executive-overview-api.md` | DONE | TASK-060 dan TASK-005 = DONE |
 | TASK-062 | `tasks/TASK-062-organization-program-drill-down.md` | REVIEW | TASK-061 = DONE |
 | TASK-063 | `tasks/TASK-063-attendance-learning-performance-kpis.md` | REVIEW | TASK-060 = DONE |
-| TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | NOT STARTED | TASK-060 dan TASK-053 = DONE |
+| TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | IN PROGRESS | TASK-060 dan TASK-053 = DONE |
 | TASK-065 | `tasks/TASK-065-executive-ui.md` | NOT STARTED | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
 | TASK-066 | `tasks/TASK-066-educator-portal-alignment.md` | DONE | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE |
 | TASK-067 | `tasks/TASK-067-production-zero-downtime-deployment.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED |

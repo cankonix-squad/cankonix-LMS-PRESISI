@@ -65,6 +65,18 @@ export type Person = {
   updatedAt: string;
 };
 
+export type PersonOrganization = {
+  id: string;
+  personId: string;
+  organizationId: string;
+  positionName: string | null;
+  startDate: string;
+  endDate: string | null;
+  isPrimary: boolean;
+  isActive: boolean;
+  organization?: Pick<Organization, 'id' | 'code' | 'name'>;
+};
+
 export type CreatePersonInput = {
   personnelNumber: string;
   fullName: string;
@@ -74,6 +86,8 @@ export type CreatePersonInput = {
   phone?: string;
   status?: 'ACTIVE' | 'INACTIVE';
 };
+
+export type UpdatePersonInput = Partial<CreatePersonInput>;
 
 export type UserAccount = {
   id: string;
@@ -93,6 +107,8 @@ export type CreateUserAccountInput = {
   email?: string;
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 };
+
+export type UpdateUserAccountInput = Partial<CreateUserAccountInput>;
 
 export type Role = {
   id: string;
@@ -1204,7 +1220,14 @@ export function createApiClient(
     },
 
     persons: {
-      list(params: { search?: string; page?: number; limit?: number } = {}) {
+      list(
+        params: {
+          search?: string;
+          status?: Person['status'];
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
         return request<ApiListResponse<Person>>(
           `/persons${buildQuery({ page: 1, limit: 20, ...params })}`,
         );
@@ -1218,9 +1241,26 @@ export function createApiClient(
       getAccount(personId: string) {
         return request<UserAccount>(`/persons/${personId}/account`);
       },
+      listOrganizations(personId: string) {
+        return request<PersonOrganization[]>(
+          `/persons/${personId}/organizations`,
+        );
+      },
       createAccount(personId: string, input: CreateUserAccountInput) {
         return mutate<UserAccount>(`/persons/${personId}/account`, {
           method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(personId: string, input: UpdatePersonInput) {
+        return mutate<Person>(`/persons/${personId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+      updateAccount(personId: string, input: UpdateUserAccountInput) {
+        return mutate<UserAccount>(`/persons/${personId}/account`, {
+          method: 'PATCH',
           body: JSON.stringify(input),
         });
       },
