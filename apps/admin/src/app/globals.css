@@ -1,2 +1,10 @@
 @import 'tailwindcss';
 @source "../../../../packages/ui/src";
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+}

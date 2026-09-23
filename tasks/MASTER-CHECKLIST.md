@@ -104,6 +104,12 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-067 | `tasks/TASK-067-production-zero-downtime-deployment.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED |
 | TASK-068 | `tasks/TASK-068-educator-uat-integration.md` | REVIEW | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE, TASK-066 = DONE |
 
+### TASK-009J verification update — 2026-09-23
+
+The Admin `/login` route was implemented as a responsive LMS PRESISI landing page using local assets only. The page includes transparent navigation, full-screen hero, Keycloak CTA at `/api/auth/login`, statistics, overview/dashboard visual, role cards, feature grid, news cards, and footer. No Admin username/password form or authorization/API model was changed.
+
+Verification: Prettier, `pnpm --filter @lms/admin lint`, `pnpm --filter @lms/admin exec next typegen`, `pnpm --filter @lms/admin exec tsc --noEmit`, and `pnpm --filter @lms/admin exec next build --webpack` → PASS. Task remains `REVIEW`; no task was marked `DONE`.
+
 ## Reviewer Decision — TASK-005 approved (2026-09-16)
 
 Human review confirmed that all three blocking findings from the 2026-09-16 code review are closed:

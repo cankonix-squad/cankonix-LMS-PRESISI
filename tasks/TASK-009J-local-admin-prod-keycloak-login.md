@@ -28,6 +28,10 @@ Membuat Admin portal dapat dijalankan lokal tanpa Docker memakai Keycloak produc
 [x] Keycloak client `lms-admin` menyimpan redirect URI dan web origin lokal.
 [x] checks green.
 
+## UI follow-up — LMS PRESISI landing page (2026-09-23)
+
+The local Admin `/login` route now presents an enterprise landing page rather than a login panel. It uses the local login imagery, transparent hero navigation, responsive mobile menu, hero CTA to `/api/auth/login`, KPI strip, platform overview, role cards, feature grid, news cards, and navy footer. Authentication remains entirely in the existing Keycloak/OIDC flow; no username/password form was added to the Admin app.
+
 ## Verification
 
 - PASS: workflow YAML parse.
@@ -36,5 +40,6 @@ Membuat Admin portal dapat dijalankan lokal tanpa Docker memakai Keycloak produc
 - PASS: `next typegen`.
 - PASS: `tsc --noEmit` for `apps/admin`.
 - PASS: `next build --webpack` for `apps/admin`.
+- PASS: Prettier, `pnpm --filter @lms/admin lint`, `next typegen`, `tsc --noEmit`, and `next build --webpack` after the landing-page implementation.
 - PASS: `git diff --check`.
 - PENDING PRODUCTION APPLY: deploy workflow must run once to write the new Keycloak client redirect/web origin configuration to production.
