@@ -1298,6 +1298,7 @@ export function createApiClient(
         params: {
           userAccountId?: string;
           roleId?: string;
+          status?: RoleAssignment['status'];
           page?: number;
           limit?: number;
         } = {},
