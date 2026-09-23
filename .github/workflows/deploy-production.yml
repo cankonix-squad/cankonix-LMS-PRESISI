@@ -25,20 +25,57 @@ jobs:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
       - name: Trust deployment host
+        env:
+          DEPLOY_HOST: ${{ secrets.VPS_HOST }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
         run: |
+          set -Eeuo pipefail
           mkdir -p ~/.ssh
-          if [ -n "${{ secrets.VPS_KNOWN_HOSTS }}" ]; then
-            printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-          else
-            ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          chmod 700 ~/.ssh
+
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "::error::GitHub secret VPS_HOST is empty or unavailable."
+            exit 1
           fi
+
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$VPS_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          else
+            : > ~/.ssh/known_hosts.scan
+            for attempt in $(seq 1 5); do
+              if ssh-keyscan -T 20 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts.scan 2>/dev/null &&
+                [ -s ~/.ssh/known_hosts.scan ]; then
+                break
+              fi
+              echo "Waiting for SSH host key from $DEPLOY_HOST (attempt $attempt/5)"
+              sleep 5
+            done
+
+            if [ ! -s ~/.ssh/known_hosts.scan ]; then
+              echo "::error::Could not read SSH host key from $DEPLOY_HOST. Check VPS_HOST, port 22 reachability from GitHub Actions, or set VPS_KNOWN_HOSTS."
+              exit 1
+            fi
+
+            cat ~/.ssh/known_hosts.scan >> ~/.ssh/known_hosts
+          fi
+
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy and verify
         env:
           DEPLOY_HOST: ${{ secrets.VPS_HOST }}
           DEPLOY_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" 'bash -se' <<'REMOTE_SCRIPT'
+          set -Eeuo pipefail
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "::error::GitHub secret VPS_HOST is empty or unavailable."
+            exit 1
+          fi
+          if [ -z "$DEPLOY_USER" ]; then
+            echo "::error::GitHub secret VPS_USER is empty or unavailable."
+            exit 1
+          fi
+          ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=4 "$DEPLOY_USER@$DEPLOY_HOST" 'bash -se' <<'REMOTE_SCRIPT'
           set -Eeuo pipefail
           APP_DIR=/root/cankonix-node/apps/cankonix-lms-lemdiklat
           cd "$APP_DIR"
