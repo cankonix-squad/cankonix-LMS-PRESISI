@@ -1267,10 +1267,25 @@ export function createApiClient(
     },
 
     authorization: {
-      roles(params: { search?: string; page?: number; limit?: number } = {}) {
+      roles(
+        params: {
+          search?: string;
+          status?: Role['status'];
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
         return request<ApiListResponse<Role>>(
           `/authorization/roles${buildQuery({ page: 1, limit: 20, ...params })}`,
         );
+      },
+      role(id: string) {
+        return request<Role & { permissions: Permission[] }>(
+          `/authorization/roles/${id}`,
+        );
+      },
+      rolePermissions(id: string) {
+        return request<Permission[]>(`/authorization/roles/${id}/permissions`);
       },
       permissions(
         params: { search?: string; page?: number; limit?: number } = {},
