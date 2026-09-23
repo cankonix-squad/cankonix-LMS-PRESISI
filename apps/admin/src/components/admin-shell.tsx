@@ -21,7 +21,7 @@ const navigationGroups = [
   {
     label: 'Akademik',
     items: [
-      { label: 'Program', marker: 'PR' },
+      { href: '/program', label: 'Program', marker: 'PR' },
       { label: 'Kurikulum', marker: 'K' },
       { label: 'Mata Pelajaran', marker: 'MP' },
       { label: 'Angkatan / Batch', marker: 'B' },

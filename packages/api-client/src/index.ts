@@ -41,6 +41,36 @@ export type OrganizationTree = Organization & {
   children: OrganizationTree[];
 };
 
+export type EducationProgram = {
+  id: string;
+  organizationId: string;
+  code: string;
+  name: string;
+  description: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  metadata: unknown;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateEducationProgramInput = {
+  organizationId: string;
+  code: string;
+  name: string;
+  description?: string;
+  status?: EducationProgram['status'];
+  metadata?: Record<string, unknown>;
+};
+
+export type UpdateEducationProgramInput = {
+  organizationId?: string;
+  code?: string;
+  name?: string;
+  description?: string | null;
+  status?: EducationProgram['status'];
+  metadata?: Record<string, unknown> | null;
+};
+
 export type CreateOrganizationInput = {
   code: string;
   name: string;
@@ -1213,6 +1243,37 @@ export function createApiClient(
       },
       update(id: string, input: UpdateOrganizationInput) {
         return mutate<Organization>(`/organizations/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+
+    educationPrograms: {
+      list(
+        params: {
+          organizationId?: string;
+          search?: string;
+          status?: EducationProgram['status'];
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiListResponse<EducationProgram>>(
+          `/education-programs${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<EducationProgram>(`/education-programs/${id}`);
+      },
+      create(input: CreateEducationProgramInput) {
+        return mutate<EducationProgram>('/education-programs', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateEducationProgramInput) {
+        return mutate<EducationProgram>(`/education-programs/${id}`, {
           method: 'PATCH',
           body: JSON.stringify(input),
         });
