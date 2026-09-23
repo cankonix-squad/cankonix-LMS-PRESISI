@@ -12,10 +12,15 @@ export async function GET(request: Request) {
   const clientId = process.env.LMS_OIDC_CLIENT_ID;
   if (!issuer || !clientId)
     return new NextResponse('OIDC is not configured', { status: 500 });
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  const host =
+    request.headers.get('x-forwarded-host') ?? request.headers.get('host');
   const protocol = request.headers.get('x-forwarded-proto') ?? 'https';
   if (!host) return new NextResponse('Missing forwarded host', { status: 400 });
-  const redirectUri = new URL('/api/auth/callback', `${protocol}://${host}`).toString();
+  const redirectUri = new URL(
+    '/api/auth/callback',
+    `${protocol}://${host}`,
+  ).toString();
+  const secureCookie = protocol === 'https';
   const tokenResponse = await fetch(`${issuer}/protocol/openid-connect/token`, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -38,7 +43,7 @@ export async function GET(request: Request) {
   const response = NextResponse.redirect(new URL('/', `${protocol}://${host}`));
   response.cookies.set('lms_access_token', token.access_token, {
     httpOnly: true,
-    secure: true,
+    secure: secureCookie,
     sameSite: 'lax',
     maxAge: token.expires_in ?? 300,
     path: '/',
