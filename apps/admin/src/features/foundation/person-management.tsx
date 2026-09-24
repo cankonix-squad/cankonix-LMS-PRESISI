@@ -9,7 +9,26 @@ import type {
 } from '@lms/api-client';
 import Link from 'next/link';
 import { useActionState, useState } from 'react';
-import { EmptyState, ErrorState, Pill } from '@/components/data-state';
+import {
+  ActionButton,
+  ActionGroup,
+  ActionMessage,
+  AdminPage,
+  EmptyState,
+  EnterpriseDrawer,
+  EnterpriseTable,
+  ErrorState,
+  FilterTabs,
+  FilterToolbar,
+  FormActions,
+  FormField,
+  PageHeader,
+  PaginationBar,
+  Pill,
+  PrimaryActionButton,
+  StickyActionCell,
+  enterpriseInputClass,
+} from '@/components/admin';
 import {
   createPersonWithAccountAction,
   updatePersonAccountAction,
@@ -46,29 +65,21 @@ export function PersonWorkspace({
   const total = result.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / filters.limit));
   return (
-    <div className="space-y-4">
-      <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-5 py-5 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
-            Foundation / Personel
-          </p>
-          <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
-            Kelola personel dan akun
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {result.error
-              ? 'Data belum dapat dimuat.'
-              : `${total} personel ditemukan. Kelola identitas dan status akun dari satu workspace.`}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setDrawer({ kind: 'create' })}
-          className="inline-flex min-h-10 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700"
-        >
-          + Tambah personel
-        </button>
-      </header>
+    <AdminPage>
+      <PageHeader
+        eyebrow="Foundation / Personel"
+        title="Kelola personel dan akun"
+        description={
+          result.error
+            ? 'Data belum dapat dimuat.'
+            : `${total} personel ditemukan. Kelola identitas dan status akun dari satu workspace.`
+        }
+        actions={
+          <PrimaryActionButton onClick={() => setDrawer({ kind: 'create' })}>
+            + Tambah personel
+          </PrimaryActionButton>
+        }
+      />
       <PersonToolbar filters={filters} />
       <div className="px-5 pb-5">
         {result.error ? (
@@ -97,7 +108,14 @@ export function PersonWorkspace({
           />
         )}
         {!result.error ? (
-          <Pagination filters={filters} total={total} totalPages={totalPages} />
+          <PaginationBar
+            page={filters.page}
+            limit={filters.limit}
+            total={total}
+            totalPages={totalPages}
+            itemLabel="personel"
+            hrefFor={(next) => personelHref({ ...filters, ...next })}
+          />
         ) : null}
       </div>
       {drawer ? (
@@ -107,64 +125,56 @@ export function PersonWorkspace({
           onClose={() => setDrawer(null)}
         />
       ) : null}
-    </div>
+    </AdminPage>
   );
 }
 
 function PersonToolbar({ filters }: { filters: Filters }) {
   return (
-    <div className="mx-5 flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 xl:flex-row xl:items-end xl:justify-between">
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Filter daftar
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {[
-            ['Semua', undefined],
-            ['Aktif', 'ACTIVE'],
-            ['Nonaktif', 'INACTIVE'],
-          ].map(([label, status]) => (
-            <Link
-              key={label}
-              href={personelHref({
+    <div className="mx-5">
+      <FilterToolbar
+        filters={
+          <FilterTabs
+            tabs={[
+              ['Semua', undefined],
+              ['Aktif', 'ACTIVE'],
+              ['Nonaktif', 'INACTIVE'],
+            ].map(([label, status]) => ({
+              label: label as string,
+              href: personelHref({
                 ...filters,
                 status: status as Filters['status'],
                 page: 1,
-              })}
-              className={
-                filters.status === status || (!filters.status && !status)
-                  ? 'inline-flex min-h-9 items-center rounded-md bg-slate-900 px-3 text-sm font-semibold text-white'
-                  : 'inline-flex min-h-9 items-center rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700'
-              }
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-      </div>
-      <form
-        action="/personel"
-        className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
+              }),
+              active: filters.status === status || (!filters.status && !status),
+            }))}
+          />
+        }
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
-        <input type="hidden" name="limit" value={filters.limit} />
-        <input
-          type="search"
-          name="search"
-          defaultValue={filters.search}
-          placeholder="Cari nama, NRP/NIP, atau email"
-          className="min-h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-80 xl:w-[28rem]"
-        />
-        <button className="min-h-10 flex-1 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white sm:flex-none">
-          Cari
-        </button>
-        <Link
-          href="/personel"
-          className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 sm:flex-none"
+        <form
+          action="/personel"
+          className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
         >
-          Reset
-        </Link>
-      </form>
+          <input type="hidden" name="status" value={filters.status ?? ''} />
+          <input type="hidden" name="limit" value={filters.limit} />
+          <input
+            type="search"
+            name="search"
+            defaultValue={filters.search}
+            placeholder="Cari nama, NRP/NIP, atau email"
+            className="min-h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-80 xl:w-[28rem]"
+          />
+          <button className="min-h-10 flex-1 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white sm:flex-none">
+            Cari
+          </button>
+          <Link
+            href="/personel"
+            className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 sm:flex-none"
+          >
+            Reset
+          </Link>
+        </form>
+      </FilterToolbar>
     </div>
   );
 }
@@ -182,58 +192,52 @@ function PersonTable({
 }) {
   const orgMap = new Map(organizations.map((org) => [org.id, org.name]));
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[1080px] table-fixed text-left text-sm">
-          <colgroup>
-            <col className="w-[190px]" />
-            <col className="w-[140px]" />
-            <col className="w-[210px]" />
-            <col className="w-[160px]" />
-            <col className="w-[170px]" />
-            <col className="w-[110px]" />
-            <col className="w-[120px]" />
-            <col className="w-[180px]" />
-          </colgroup>
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Nama personel</th>
-              <th className="px-4 py-3">NIP/NRP</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Organisasi/unit</th>
-              <th className="px-4 py-3">Akun login</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Diubah</th>
-              <th className="sticky right-0 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_16px_rgba(15,23,42,0.05)]">
-                Aksi
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.map((row) => (
-              <PersonRow
-                key={row.person.id}
-                row={row}
-                orgMap={orgMap}
-                onPerson={onPerson}
-                onAccount={onAccount}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="divide-y divide-slate-100 md:hidden">
-        {rows.map((row) => (
-          <PersonCard
-            key={row.person.id}
-            row={row}
-            orgMap={orgMap}
-            onPerson={onPerson}
-            onAccount={onAccount}
-          />
-        ))}
-      </div>
-    </div>
+    <EnterpriseTable
+      minWidth={1080}
+      columns={[
+        { label: 'Nama personel' },
+        { label: 'NIP/NRP' },
+        { label: 'Email' },
+        { label: 'Organisasi/unit' },
+        { label: 'Akun login' },
+        { label: 'Status' },
+        { label: 'Diubah' },
+        { label: 'Aksi', sticky: true },
+      ]}
+      colWidths={[
+        '190px',
+        '140px',
+        '210px',
+        '160px',
+        '170px',
+        '110px',
+        '120px',
+        '180px',
+      ]}
+      mobile={
+        <>
+          {rows.map((row) => (
+            <PersonCard
+              key={row.person.id}
+              row={row}
+              orgMap={orgMap}
+              onPerson={onPerson}
+              onAccount={onAccount}
+            />
+          ))}
+        </>
+      }
+    >
+      {rows.map((row) => (
+        <PersonRow
+          key={row.person.id}
+          row={row}
+          orgMap={orgMap}
+          onPerson={onPerson}
+          onAccount={onAccount}
+        />
+      ))}
+    </EnterpriseTable>
   );
 }
 
@@ -276,9 +280,9 @@ function PersonRow({
       <td className="px-4 py-3 align-middle text-slate-600">
         {formatDate(row.person.updatedAt)}
       </td>
-      <td className="sticky right-0 bg-white px-4 py-3 align-middle shadow-[-8px_0_16px_rgba(15,23,42,0.05)] group-hover:bg-slate-50">
+      <StickyActionCell>
         <Actions row={row} onPerson={onPerson} onAccount={onAccount} />
-      </td>
+      </StickyActionCell>
     </tr>
   );
 }
@@ -346,38 +350,22 @@ function Actions({
   onAccount: (row: Row) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <button
-        type="button"
+    <ActionGroup>
+      <ActionButton
         disabled
         title="Detail personel belum memiliki panel kontrak khusus"
-        className="min-h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-400"
       >
         Detail
-      </button>
-      <button
-        type="button"
-        onClick={() => onPerson(row)}
-        className="min-h-9 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700"
-      >
-        Edit
-      </button>
-      <button
-        type="button"
-        onClick={() => onAccount(row)}
-        className="min-h-9 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700"
-      >
-        Kelola Akun
-      </button>
-      <button
-        type="button"
+      </ActionButton>
+      <ActionButton onClick={() => onPerson(row)}>Edit</ActionButton>
+      <ActionButton onClick={() => onAccount(row)}>Kelola Akun</ActionButton>
+      <ActionButton
         disabled
         title="Status personel diubah melalui Edit agar tidak ada mutation palsu"
-        className="min-h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-400"
       >
         {row.person.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
-      </button>
-    </div>
+      </ActionButton>
+    </ActionGroup>
   );
 }
 
@@ -392,59 +380,30 @@ function PersonDrawer({
 }) {
   const row = drawer.kind === 'create' ? null : drawer.row;
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/35">
-      <button
-        type="button"
-        aria-label="Tutup panel"
-        className="absolute inset-0 cursor-default"
-        onClick={onClose}
-      />
-      <aside className="relative flex h-full w-full max-w-xl flex-col bg-white shadow-2xl">
-        <div className="border-b border-slate-200 px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                {drawer.kind === 'account'
-                  ? 'Akun Login'
-                  : drawer.kind === 'create'
-                    ? 'Tambah data'
-                    : 'Data Personel'}
-              </p>
-              <h2 className="mt-1 text-xl font-semibold text-slate-950">
-                {drawer.kind === 'account'
-                  ? 'Kelola Akun Login'
-                  : drawer.kind === 'create'
-                    ? 'Tambah Personel'
-                    : 'Edit Personel'}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Kolom bertanda wajib harus diisi. Password tetap dikelola oleh
-                SSO Keycloak.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Tutup"
-              className="h-9 w-9 rounded-md border border-slate-300 text-lg text-slate-500"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          {drawer.kind === 'account' && row ? (
-            <AccountForm row={row} onClose={onClose} />
-          ) : (
-            <PersonForm
-              row={row}
-              organizations={organizations}
-              onClose={onClose}
-            />
-          )}
-        </div>
-      </aside>
-    </div>
+    <EnterpriseDrawer
+      eyebrow={
+        drawer.kind === 'account'
+          ? 'Akun Login'
+          : drawer.kind === 'create'
+            ? 'Tambah data'
+            : 'Data Personel'
+      }
+      title={
+        drawer.kind === 'account'
+          ? 'Kelola Akun Login'
+          : drawer.kind === 'create'
+            ? 'Tambah Personel'
+            : 'Edit Personel'
+      }
+      description="Kolom bertanda wajib harus diisi. Password tetap dikelola oleh SSO Keycloak."
+      onClose={onClose}
+    >
+      {drawer.kind === 'account' && row ? (
+        <AccountForm row={row} onClose={onClose} />
+      ) : (
+        <PersonForm row={row} organizations={organizations} onClose={onClose} />
+      )}
+    </EnterpriseDrawer>
   );
 }
 
@@ -476,19 +435,19 @@ function PersonForm({
           ['phone', 'Telepon', row?.person.phone],
         ] as [string, string, string | null | undefined][]
       ).map(([name, label, value]) => (
-        <label key={name} className="text-sm font-medium text-slate-700">
-          {label}
-          {name === 'personnelNumber' || name === 'fullName' ? (
-            <span className="text-rose-600"> *</span>
-          ) : null}
+        <FormField
+          key={name}
+          label={label}
+          required={name === 'personnelNumber' || name === 'fullName'}
+        >
           <input
             name={name}
             type={name === 'email' ? 'email' : 'text'}
             defaultValue={(value ?? undefined) as string | undefined}
             required={name === 'personnelNumber' || name === 'fullName'}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className={enterpriseInputClass}
           />
-        </label>
+        </FormField>
       ))}
       {!row ? (
         <>
@@ -507,33 +466,27 @@ function PersonForm({
               Peserta diatur dari halaman Assignment & Scope.
             </p>
           </div>
-          <label className="text-sm font-medium text-slate-700">
-            Username akun
-            <input
-              name="username"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Email akun
+          <FormField label="Username akun">
+            <input name="username" className={enterpriseInputClass} />
+          </FormField>
+          <FormField label="Email akun">
             <input
               name="accountEmail"
               type="email"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className={enterpriseInputClass}
             />
-          </label>
+          </FormField>
           <details className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
             <summary className="cursor-pointer text-sm font-semibold text-slate-800">
               Opsi lanjutan: hubungkan user Keycloak
             </summary>
-            <label className="mt-3 block text-sm font-medium text-slate-700">
-              ID User Keycloak
+            <FormField label="ID User Keycloak">
               <input
                 name="externalAuthId"
                 placeholder="Kosongkan bila user Keycloak belum dibuat"
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                className={enterpriseInputClass}
               />
-            </label>
+            </FormField>
             <p className="mt-2 text-xs leading-5 text-slate-500">
               Field ini adalah nilai <code>sub</code> dari Keycloak, bukan
               email, username, atau pilihan peran. Kosongkan dulu bila operator
@@ -542,41 +495,26 @@ function PersonForm({
           </details>
         </>
       ) : (
-        <label className="text-sm font-medium text-slate-700">
-          Status
+        <FormField label="Status">
           <select
             name="status"
             defaultValue={row.person.status}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className={enterpriseInputClass}
           >
             <option value="ACTIVE">Aktif</option>
             <option value="INACTIVE">Nonaktif</option>
           </select>
-        </label>
+        </FormField>
       )}
       <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
         Password tidak dibuat di LMS. Agar personel bisa login, user harus ada
         di Keycloak dan perannya diberikan melalui Assignment & Scope.
       </p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="min-h-11 flex-1 rounded-md border border-slate-300 font-semibold"
-        >
-          Batal
-        </button>
-        <button
-          disabled={pending}
-          className="min-h-11 flex-1 rounded-md bg-sky-600 font-semibold text-white"
-        >
-          {pending
-            ? 'Menyimpan...'
-            : row
-              ? 'Simpan Perubahan'
-              : 'Simpan Personel'}
-        </button>
-      </div>
+      <FormActions
+        onCancel={onClose}
+        pending={pending}
+        submitLabel={row ? 'Simpan Perubahan' : 'Simpan Personel'}
+      />
       {state.message ? <ActionMessage state={state} /> : null}
     </form>
   );
@@ -608,68 +546,39 @@ function AccountForm({ row, onClose }: { row: Row; onClose: () => void }) {
           ['externalAuthId', 'Keycloak subject', account.externalAuthId],
         ] as [string, string, string | null | undefined][]
       ).map(([name, label, value]) => (
-        <label key={name} className="text-sm font-medium text-slate-700">
-          {label}
+        <FormField key={name} label={label}>
           <input
             name={name}
             defaultValue={(value ?? undefined) as string | undefined}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className={enterpriseInputClass}
           />
-        </label>
+        </FormField>
       ))}
-      <label className="text-sm font-medium text-slate-700">
-        Status akun
+      <FormField label="Status akun">
         <select
           name="accountStatus"
           defaultValue={account.status}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={enterpriseInputClass}
         >
           <option value="ACTIVE">Aktif</option>
           <option value="INACTIVE">Nonaktif</option>
           <option value="SUSPENDED">Ditangguhkan</option>
         </select>
-      </label>
+      </FormField>
       <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
         Password tidak disimpan di LMS. Perubahan username, email, dan status
         hanya memperbarui metadata akun lokal.
       </p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="min-h-11 flex-1 rounded-md border border-slate-300 font-semibold"
-        >
-          Batal
-        </button>
-        <button
-          disabled={pending}
-          className="min-h-11 flex-1 rounded-md bg-sky-600 font-semibold text-white"
-        >
-          {pending ? 'Menyimpan...' : 'Simpan Akun'}
-        </button>
-      </div>
+      <FormActions
+        onCancel={onClose}
+        pending={pending}
+        submitLabel="Simpan Akun"
+      />
       {state.message ? <ActionMessage state={state} /> : null}
     </form>
   );
 }
 
-function ActionMessage({
-  state,
-}: {
-  state: { ok: boolean; message: string | null };
-}) {
-  return state.message ? (
-    <p
-      className={
-        state.ok
-          ? 'rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700'
-          : 'rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700'
-      }
-    >
-      {state.message}
-    </p>
-  ) : null;
-}
 function accountLabel(account: UserAccount | null) {
   return account ? (
     <div className="flex flex-col gap-1">
@@ -713,71 +622,4 @@ function personelHref(filters: Filters) {
   if (filters.limit !== 25) params.set('limit', String(filters.limit));
   const query = params.toString();
   return query ? `/personel?${query}` : '/personel';
-}
-function Pagination({
-  filters,
-  total,
-  totalPages,
-}: {
-  filters: Filters;
-  total: number;
-  totalPages: number;
-}) {
-  const start = total ? (filters.page - 1) * filters.limit + 1 : 0;
-  const end = Math.min(total, filters.page * filters.limit);
-  return (
-    <div className="mt-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 lg:flex-row lg:items-center lg:justify-between">
-      <p>
-        Menampilkan{' '}
-        <b className="text-slate-950">
-          {start} - {end}
-        </b>{' '}
-        dari <b className="text-slate-950">{total}</b> personel
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          aria-label="Jumlah data per halaman"
-          defaultValue={filters.limit}
-          onChange={(event) => {
-            window.location.href = personelHref({
-              ...filters,
-              limit: Number(event.target.value),
-              page: 1,
-            });
-          }}
-          className="min-h-9 rounded-md border border-slate-300 bg-white px-2"
-        >
-          <option value="10">10 / halaman</option>
-          <option value="25">25 / halaman</option>
-          <option value="50">50 / halaman</option>
-        </select>
-        <Link
-          href={personelHref({
-            ...filters,
-            page: Math.max(1, filters.page - 1),
-          })}
-          className={
-            filters.page > 1
-              ? 'rounded-md border border-slate-300 px-3 py-2'
-              : 'pointer-events-none rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-slate-400'
-          }
-        >
-          Sebelumnya
-        </Link>
-        <span>
-          {filters.page} / {totalPages}
-        </span>
-        <Link
-          href={personelHref({ ...filters, page: filters.page + 1 })}
-          className={
-            filters.page < totalPages
-              ? 'rounded-md border border-slate-300 px-3 py-2'
-              : 'pointer-events-none rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-slate-400'
-          }
-        >
-          Berikutnya
-        </Link>
-      </div>
-    </div>
-  );
 }

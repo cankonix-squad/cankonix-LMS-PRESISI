@@ -72,6 +72,9 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009U | `tasks/TASK-009U-admin-learning-material-operator-ux.md` | REVIEW | TASK-009T = REVIEW; TASK-020/021/022 = DONE-WITH-DEFERRED |
 | TASK-009V | `tasks/TASK-009V-admin-learning-activity-operator-ux.md` | REVIEW | TASK-009U = REVIEW |
 | TASK-009W | `tasks/TASK-009W-admin-assignment-operator-ux-polish.md` | REVIEW | TASK-009V = REVIEW |
+| TASK-009X | `tasks/TASK-009X-admin-frontend-enterprise-standardization.md` | REVIEW | TASK-009L = REVIEW |
+| TASK-009Y | `tasks/TASK-009Y-admin-frontend-structure-component-governance.md` | REVIEW | TASK-009X = REVIEW |
+| TASK-009Z | `tasks/TASK-009Z-admin-foundation-pattern-rollout.md` | REVIEW | TASK-009Y = REVIEW |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |

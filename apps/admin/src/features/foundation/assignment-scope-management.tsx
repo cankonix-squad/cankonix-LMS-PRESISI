@@ -10,8 +10,24 @@ import type {
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
-import { DataTable, StatusBadge } from '@/components/admin-design-system';
-import { EmptyState, ErrorState } from '@/components/data-state';
+import {
+  ActionButton,
+  ActionGroup,
+  ActionMessage,
+  AdminPage,
+  EmptyState,
+  EnterpriseDrawer,
+  EnterpriseTable,
+  ErrorState,
+  FilterTabs,
+  FilterToolbar,
+  PageHeader,
+  PaginationBar,
+  PrimaryActionButton,
+  StatusBadge,
+  StickyActionCell,
+  enterpriseInputClass,
+} from '@/components/admin';
 import {
   addAssignmentScopeAction,
   createRoleAssignmentAction,
@@ -93,28 +109,17 @@ export function AssignmentWorkspace({
   );
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-5 py-5 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
-            Foundation / Authorization
-          </p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
-            Assignment & scope
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-500">
-            Kelola assignment role dan batas scope secara operasional. Validasi
-            akses tetap berada di backend.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setDrawer({ kind: 'create' })}
-          className="inline-flex min-h-10 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700"
-        >
-          + Buat assignment
-        </button>
-      </header>
+    <AdminPage>
+      <PageHeader
+        eyebrow="Foundation / Authorization"
+        title="Assignment & scope"
+        description="Kelola assignment role dan batas scope secara operasional. Validasi akses tetap berada di backend."
+        actions={
+          <PrimaryActionButton onClick={() => setDrawer({ kind: 'create' })}>
+            + Buat assignment
+          </PrimaryActionButton>
+        }
+      />
       <AssignmentToolbar filters={filters} roles={roles} />
       <div className="px-5 pb-5">
         {result.error ? (
@@ -160,7 +165,7 @@ export function AssignmentWorkspace({
           onClose={() => setDrawer(null)}
         />
       ) : null}
-    </div>
+    </AdminPage>
   );
 }
 
@@ -172,58 +177,82 @@ function AssignmentToolbar({
   roles: Role[];
 }) {
   return (
-    <div className="mx-5 flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 xl:flex-row xl:items-end xl:justify-between">
-      <div className="flex flex-wrap gap-2">
-        <FilterLink
-          label="Semua"
-          filters={{ ...filters, status: undefined, page: 1 }}
-          active={!filters.status}
-        />
-        <FilterLink
-          label="Aktif"
-          filters={{ ...filters, status: 'ACTIVE', page: 1 }}
-          active={filters.status === 'ACTIVE'}
-        />
-        <FilterLink
-          label="Nonaktif"
-          filters={{ ...filters, status: 'INACTIVE', page: 1 }}
-          active={filters.status === 'INACTIVE'}
-        />
-        <FilterLink
-          label="Dicabut"
-          filters={{ ...filters, status: 'REVOKED', page: 1 }}
-          active={filters.status === 'REVOKED'}
-        />
-      </div>
-      <form
-        action="/assignments"
-        className="flex w-full flex-wrap gap-2 xl:w-auto"
+    <div className="mx-5 space-y-3">
+      <FilterToolbar
+        label="Filter assignment"
+        filters={
+          <FilterTabs
+            tabs={[
+              {
+                label: 'Semua',
+                href: assignmentHref({
+                  ...filters,
+                  status: undefined,
+                  page: 1,
+                }),
+                active: !filters.status,
+              },
+              {
+                label: 'Aktif',
+                href: assignmentHref({ ...filters, status: 'ACTIVE', page: 1 }),
+                active: filters.status === 'ACTIVE',
+              },
+              {
+                label: 'Nonaktif',
+                href: assignmentHref({
+                  ...filters,
+                  status: 'INACTIVE',
+                  page: 1,
+                }),
+                active: filters.status === 'INACTIVE',
+              },
+              {
+                label: 'Dicabut',
+                href: assignmentHref({
+                  ...filters,
+                  status: 'REVOKED',
+                  page: 1,
+                }),
+                active: filters.status === 'REVOKED',
+              },
+            ]}
+          />
+        }
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
-        <input type="hidden" name="roleId" value={filters.roleId ?? ''} />
-        <input type="hidden" name="scopeType" value={filters.scopeType ?? ''} />
-        <input type="hidden" name="limit" value={filters.limit} />
-        <input
-          type="search"
-          name="search"
-          defaultValue={filters.search}
-          placeholder="Cari user, person, akun, atau role"
-          className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 sm:w-80"
-        />
-        <button
-          type="submit"
-          className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white"
+        <form
+          action="/assignments"
+          className="flex w-full flex-wrap gap-2 xl:w-auto"
         >
-          Cari
-        </button>
-        <Link
-          href="/assignments"
-          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700"
-        >
-          Reset
-        </Link>
-      </form>
-      <div className="flex flex-wrap gap-2">
+          <input type="hidden" name="status" value={filters.status ?? ''} />
+          <input type="hidden" name="roleId" value={filters.roleId ?? ''} />
+          <input
+            type="hidden"
+            name="scopeType"
+            value={filters.scopeType ?? ''}
+          />
+          <input type="hidden" name="limit" value={filters.limit} />
+          <input
+            type="search"
+            name="search"
+            defaultValue={filters.search}
+            placeholder="Cari user, person, akun, atau role"
+            className={`${enterpriseInputClass} sm:w-80`}
+          />
+          <button
+            type="submit"
+            className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white"
+          >
+            Cari
+          </button>
+          <Link
+            href="/assignments"
+            className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700"
+          >
+            Reset
+          </Link>
+        </form>
+      </FilterToolbar>
+      <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-3">
         <select
           aria-label="Filter role"
           defaultValue={filters.roleId ?? ''}
@@ -234,7 +263,7 @@ function AssignmentToolbar({
               page: 1,
             });
           }}
-          className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
+          className={`${enterpriseInputClass} w-auto`}
         >
           <option value="">Semua role</option>
           {roles.map((role) => (
@@ -253,7 +282,7 @@ function AssignmentToolbar({
               page: 1,
             });
           }}
-          className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
+          className={`${enterpriseInputClass} w-auto`}
         >
           <option value="">Semua scope</option>
           {scopeTypes.map((scope) => (
@@ -264,29 +293,6 @@ function AssignmentToolbar({
         </select>
       </div>
     </div>
-  );
-}
-
-function FilterLink({
-  label,
-  filters,
-  active,
-}: {
-  label: string;
-  filters: Filters;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={assignmentHref(filters)}
-      className={
-        active
-          ? 'inline-flex min-h-9 items-center rounded-md bg-slate-900 px-3 text-sm font-semibold text-white'
-          : 'inline-flex min-h-9 items-center rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 hover:border-sky-300'
-      }
-    >
-      {label}
-    </Link>
   );
 }
 
@@ -304,55 +310,55 @@ function AssignmentTable({
   onStatus: (assignment: RoleAssignment) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden overflow-x-auto md:block">
-        <DataTable
-          columns={[
-            'User / akun',
-            'Role',
-            'Scope',
-            'Status',
-            'Diperbarui',
-            'Aksi',
-          ]}
-        >
+    <EnterpriseTable
+      columns={[
+        { label: 'User / akun' },
+        { label: 'Role' },
+        { label: 'Scope' },
+        { label: 'Status' },
+        { label: 'Diperbarui' },
+        { label: 'Aksi', sticky: true },
+      ]}
+      colWidths={['22%', '18%', '20%', '12%', '14%', '14%']}
+      minWidth={1100}
+      mobile={
+        <>
           {items.map((assignment) => (
-            <AssignmentRow
-              key={assignment.id}
-              assignment={assignment}
-              account={accountMap.get(assignment.userAccountId)}
-              onDetail={onDetail}
-              onScope={onScope}
-              onStatus={onStatus}
-            />
+            <article key={assignment.id} className="space-y-3 p-4">
+              <div className="flex justify-between gap-3">
+                <UserCell account={accountMap.get(assignment.userAccountId)} />
+                <StatusBadge
+                  tone={assignment.status === 'ACTIVE' ? 'green' : 'red'}
+                >
+                  {assignment.status}
+                </StatusBadge>
+              </div>
+              <p className="font-semibold text-slate-900">
+                {assignment.role?.name ?? assignment.roleId}
+              </p>
+              <ScopeBadges assignment={assignment} />
+              <AssignmentActions
+                assignment={assignment}
+                onDetail={onDetail}
+                onScope={onScope}
+                onStatus={onStatus}
+              />
+            </article>
           ))}
-        </DataTable>
-      </div>
-      <div className="divide-y divide-slate-100 md:hidden">
-        {items.map((assignment) => (
-          <article key={assignment.id} className="space-y-3 p-4">
-            <div className="flex justify-between gap-3">
-              <UserCell account={accountMap.get(assignment.userAccountId)} />
-              <StatusBadge
-                tone={assignment.status === 'ACTIVE' ? 'green' : 'red'}
-              >
-                {assignment.status}
-              </StatusBadge>
-            </div>
-            <p className="font-semibold text-slate-900">
-              {assignment.role?.name ?? assignment.roleId}
-            </p>
-            <ScopeBadges assignment={assignment} />
-            <AssignmentActions
-              assignment={assignment}
-              onDetail={onDetail}
-              onScope={onScope}
-              onStatus={onStatus}
-            />
-          </article>
-        ))}
-      </div>
-    </div>
+        </>
+      }
+    >
+      {items.map((assignment) => (
+        <AssignmentRow
+          key={assignment.id}
+          assignment={assignment}
+          account={accountMap.get(assignment.userAccountId)}
+          onDetail={onDetail}
+          onScope={onScope}
+          onStatus={onStatus}
+        />
+      ))}
+    </EnterpriseTable>
   );
 }
 
@@ -370,7 +376,7 @@ function AssignmentRow({
   onStatus: (assignment: RoleAssignment) => void;
 }) {
   return (
-    <tr className="hover:bg-slate-50/80">
+    <tr className="group hover:bg-slate-50/80">
       <td className="px-4 py-3">
         <UserCell account={account} />
       </td>
@@ -391,14 +397,14 @@ function AssignmentRow({
       <td className="px-4 py-3 text-xs text-slate-500">
         {formatDate(assignment.updatedAt)}
       </td>
-      <td className="px-4 py-3">
+      <StickyActionCell>
         <AssignmentActions
           assignment={assignment}
           onDetail={onDetail}
           onScope={onScope}
           onStatus={onStatus}
         />
-      </td>
+      </StickyActionCell>
     </tr>
   );
 }
@@ -444,37 +450,16 @@ function AssignmentActions({
   onStatus: (assignment: RoleAssignment) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => onDetail(assignment)}
-        className="text-xs font-semibold text-sky-700"
-      >
-        Detail
-      </button>
-      <button
-        type="button"
-        onClick={() => onScope(assignment)}
-        className="text-xs font-semibold text-sky-700"
-      >
+    <ActionGroup>
+      <ActionButton onClick={() => onDetail(assignment)}>Detail</ActionButton>
+      <ActionButton onClick={() => onScope(assignment)}>
         Kelola scope
-      </button>
-      <button
-        type="button"
-        onClick={() => onStatus(assignment)}
-        className="text-xs font-semibold text-sky-700"
-      >
-        Status
-      </button>
-      <button
-        type="button"
-        disabled
-        title="Endpoint edit assignment belum tersedia"
-        className="cursor-not-allowed text-xs text-slate-400"
-      >
+      </ActionButton>
+      <ActionButton onClick={() => onStatus(assignment)}>Status</ActionButton>
+      <ActionButton disabled title="Endpoint edit assignment belum tersedia">
         Edit
-      </button>
-    </div>
+      </ActionButton>
+    </ActionGroup>
   );
 }
 
@@ -497,57 +482,35 @@ function AssignmentDrawer({
 }) {
   const assignment = drawer.kind === 'create' ? null : drawer.assignment;
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-950/30"
-      role="dialog"
-      aria-modal="true"
+    <EnterpriseDrawer
+      eyebrow="Assignment & scope"
+      title={
+        drawer.kind === 'create'
+          ? 'Buat assignment'
+          : drawer.kind === 'detail'
+            ? 'Detail assignment'
+            : drawer.kind === 'scope'
+              ? 'Kelola scope'
+              : 'Ubah status'
+      }
+      description="Role assignment dan scope efektif tetap divalidasi oleh backend."
+      onClose={onClose}
     >
-      <button
-        type="button"
-        aria-label="Tutup drawer"
-        onClick={onClose}
-        className="absolute inset-0 cursor-default"
-      />
-      <aside className="relative h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-xl">
-        <div className="flex items-start justify-between border-b border-slate-200 pb-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
-              Assignment & scope
-            </p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-950">
-              {drawer.kind === 'create'
-                ? 'Buat assignment'
-                : drawer.kind === 'detail'
-                  ? 'Detail assignment'
-                  : drawer.kind === 'scope'
-                    ? 'Kelola scope'
-                    : 'Ubah status'}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700"
-          >
-            Tutup
-          </button>
-        </div>
-        <div className="space-y-5 py-5">
-          {drawer.kind === 'create' ? (
-            <CreateAssignmentForm roles={roles} accounts={accounts} />
-          ) : drawer.kind === 'detail' ? (
-            <AssignmentDetail
-              assignment={assignment!}
-              account={accountMap.get(assignment!.userAccountId)}
-            />
-          ) : drawer.kind === 'scope' ? (
-            <ScopeForm assignment={assignment!} />
-          ) : (
-            <StatusForm assignment={assignment!} />
-          )}
-        </div>
-      </aside>
-    </div>
+      <div className="space-y-5">
+        {drawer.kind === 'create' ? (
+          <CreateAssignmentForm roles={roles} accounts={accounts} />
+        ) : drawer.kind === 'detail' ? (
+          <AssignmentDetail
+            assignment={assignment!}
+            account={accountMap.get(assignment!.userAccountId)}
+          />
+        ) : drawer.kind === 'scope' ? (
+          <ScopeForm assignment={assignment!} />
+        ) : (
+          <StatusForm assignment={assignment!} />
+        )}
+      </div>
+    </EnterpriseDrawer>
   );
 }
 
@@ -588,7 +551,7 @@ function CreateAssignmentForm({
           <input
             name="validFrom"
             type="datetime-local"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className={enterpriseInputClass}
           />
         </label>
         <label className="text-sm font-medium text-slate-700">
@@ -596,7 +559,7 @@ function CreateAssignmentForm({
           <input
             name="validUntil"
             type="datetime-local"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className={enterpriseInputClass}
           />
         </label>
       </div>
@@ -709,7 +672,7 @@ function SelectField({
         required
         name={name}
         defaultValue={defaultValue}
-        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+        className={enterpriseInputClass}
       >
         <option value="">Pilih {label.toLowerCase()}</option>
         {options.map((option) => (
@@ -735,7 +698,7 @@ function ScopeFields() {
           required
           name="scopeId"
           placeholder="UUID target scope"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={enterpriseInputClass}
         />
         <span className="mt-1 block text-xs font-normal text-slate-500">
           Daftar target belum tersedia dari kontrak API; masukkan ID target yang
@@ -763,17 +726,7 @@ function FormFooter({
       >
         {pending ? 'Menyimpan...' : label}
       </button>
-      {state.message ? (
-        <p
-          className={
-            state.ok
-              ? 'rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700'
-              : 'rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700'
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <ActionMessage state={state} />
     </div>
   );
 }
@@ -852,68 +805,15 @@ function Pagination({
   total: number;
   totalPages: number;
 }) {
-  if (totalPages <= 1 && total <= filters.limit)
-    return (
-      <div className="flex items-center justify-between text-sm text-slate-500">
-        <span>{total} assignment</span>
-        <RowsPerPage filters={filters} />
-      </div>
-    );
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-      <span className="text-slate-500">
-        Halaman {filters.page} dari {totalPages} · {total} assignment
-      </span>
-      <div className="flex gap-2">
-        <Link
-          className={
-            filters.page <= 1
-              ? 'pointer-events-none rounded-md border px-3 py-2 text-slate-400'
-              : 'rounded-md border px-3 py-2 text-slate-700'
-          }
-          href={assignmentHref({
-            ...filters,
-            page: Math.max(1, filters.page - 1),
-          })}
-        >
-          Sebelumnya
-        </Link>
-        <Link
-          className={
-            filters.page >= totalPages
-              ? 'pointer-events-none rounded-md border px-3 py-2 text-slate-400'
-              : 'rounded-md border px-3 py-2 text-slate-700'
-          }
-          href={assignmentHref({
-            ...filters,
-            page: Math.min(totalPages, filters.page + 1),
-          })}
-        >
-          Berikutnya
-        </Link>
-      </div>
-      <RowsPerPage filters={filters} />
-    </div>
-  );
-}
-function RowsPerPage({ filters }: { filters: Filters }) {
-  return (
-    <select
-      aria-label="Baris per halaman"
-      defaultValue={String(filters.limit)}
-      onChange={(event) => {
-        window.location.href = assignmentHref({
-          ...filters,
-          limit: Number(event.target.value),
-          page: 1,
-        });
-      }}
-      className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
-    >
-      <option value="10">10 baris</option>
-      <option value="25">25 baris</option>
-      <option value="50">50 baris</option>
-    </select>
+    <PaginationBar
+      page={filters.page}
+      limit={filters.limit}
+      total={total}
+      totalPages={totalPages}
+      itemLabel="assignment"
+      hrefFor={({ page, limit }) => assignmentHref({ ...filters, page, limit })}
+    />
   );
 }
 function assignmentHref(filters: Filters) {
