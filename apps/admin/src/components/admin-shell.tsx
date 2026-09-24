@@ -23,10 +23,10 @@ const navigationGroups = [
     items: [
       { href: '/program', label: 'Program', marker: 'PR' },
       { href: '/kurikulum', label: 'Kurikulum', marker: 'K' },
-      { label: 'Mata Pelajaran', marker: 'MP' },
-      { label: 'Angkatan / Batch', marker: 'B' },
-      { label: 'Kelas', marker: 'KL' },
-      { label: 'Enrollment', marker: 'E' },
+      { href: '/mata-pelajaran', label: 'Mata Pelajaran', marker: 'MP' },
+      { href: '/angkatan', label: 'Angkatan / Batch', marker: 'B' },
+      { href: '/kelas', label: 'Kelas', marker: 'KL' },
+      { href: '/enrollment', label: 'Enrollment', marker: 'E' },
     ],
   },
   {

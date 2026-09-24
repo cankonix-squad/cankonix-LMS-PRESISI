@@ -65,6 +65,10 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009N | `tasks/TASK-009N-admin-assignment-scope-operator-ux-polish.md` | REVIEW | TASK-009M = REVIEW |
 | TASK-009O | `tasks/TASK-009O-admin-academic-program-operator-ux.md` | REVIEW | TASK-009N = REVIEW; TASK-010 = DONE-WITH-DEFERRED |
 | TASK-009P | `tasks/TASK-009P-admin-curriculum-operator-ux.md` | REVIEW | TASK-009O = REVIEW; TASK-011 = DONE-WITH-DEFERRED |
+| TASK-009Q | `tasks/TASK-009Q-admin-subject-operator-ux.md` | REVIEW | TASK-009P = REVIEW; TASK-011 = DONE-WITH-DEFERRED |
+| TASK-009R | `tasks/TASK-009R-admin-batch-operator-ux.md` | REVIEW | TASK-009Q = REVIEW; TASK-012 = DONE-WITH-DEFERRED |
+| TASK-009S | `tasks/TASK-009S-admin-class-operator-ux.md` | REVIEW | TASK-009R = REVIEW; TASK-013 = DONE-WITH-DEFERRED |
+| TASK-009T | `tasks/TASK-009T-admin-enrollment-operator-ux.md` | REVIEW | TASK-009S = REVIEW; TASK-015 = DONE-WITH-DEFERRED |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |

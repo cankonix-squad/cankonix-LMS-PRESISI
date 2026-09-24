@@ -74,6 +74,81 @@ export type CreateCurriculumInput = {
 
 export type UpdateCurriculumInput = Partial<CreateCurriculumInput>;
 
+export type Subject = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateSubjectInput = {
+  code: string;
+  name: string;
+  description?: string;
+  status?: Subject['status'];
+};
+export type UpdateSubjectInput = Partial<CreateSubjectInput> & {
+  description?: string | null;
+};
+
+export type EducationBatch = {
+  id: string;
+  educationProgramId: string;
+  curriculumId: string;
+  code: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  capacity: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+export type CreateEducationBatchInput = {
+  educationProgramId: string;
+  curriculumId: string;
+  code: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status?: EducationBatch['status'];
+  capacity?: number | null;
+};
+export type UpdateEducationBatchInput = Partial<CreateEducationBatchInput>;
+
+export type AcademicClass = {
+  id: string;
+  educationBatchId: string;
+  code: string;
+  name: string;
+  capacity: number | null;
+  status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+  createdAt: string;
+  updatedAt: string;
+};
+export type CreateAcademicClassInput = {
+  educationBatchId: string;
+  code: string;
+  name: string;
+  capacity?: number;
+  status?: AcademicClass['status'];
+};
+export type UpdateAcademicClassInput = Partial<CreateAcademicClassInput>;
+
+export type AcademicEnrollmentStatus = 'ACTIVE' | 'WITHDRAWN' | 'COMPLETED';
+export type CreateEnrollmentInput = {
+  personId: string;
+  educationBatchId: string;
+  academicClassId?: string;
+  enrollmentNumber?: string;
+  enrolledAt?: string;
+  status?: AcademicEnrollmentStatus;
+  metadata?: Record<string, unknown>;
+};
+
 export type CreateEducationProgramInput = {
   organizationId: string;
   code: string;
@@ -1228,6 +1303,28 @@ export function createApiClient(
       get(id: string) {
         return request<Enrollment>(`/enrollments/${id}`);
       },
+      create(input: CreateEnrollmentInput) {
+        return mutate<Enrollment>('/enrollments', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      updateStatus(
+        id: string,
+        status: AcademicEnrollmentStatus,
+        reason?: string,
+      ) {
+        return mutate<Enrollment>(`/enrollments/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status, reason }),
+        });
+      },
+      transferClass(id: string, academicClassId: string) {
+        return mutate<Enrollment>(`/enrollments/${id}/class`, {
+          method: 'PATCH',
+          body: JSON.stringify({ academicClassId }),
+        });
+      },
     },
 
     files: {
@@ -1325,6 +1422,99 @@ export function createApiClient(
       },
       update(id: string, input: UpdateCurriculumInput) {
         return mutate<Curriculum>(`/curricula/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+
+    subjects: {
+      list(
+        params: {
+          search?: string;
+          status?: Subject['status'];
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiListResponse<Subject>>(
+          `/subjects${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<Subject>(`/subjects/${id}`);
+      },
+      create(input: CreateSubjectInput) {
+        return mutate<Subject>('/subjects', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateSubjectInput) {
+        return mutate<Subject>(`/subjects/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+
+    educationBatches: {
+      list(
+        params: {
+          educationProgramId?: string;
+          curriculumId?: string;
+          status?: EducationBatch['status'];
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiListResponse<EducationBatch>>(
+          `/education-batches${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<EducationBatch>(`/education-batches/${id}`);
+      },
+      create(input: CreateEducationBatchInput) {
+        return mutate<EducationBatch>('/education-batches', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateEducationBatchInput) {
+        return mutate<EducationBatch>(`/education-batches/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+
+    academicClasses: {
+      list(
+        params: {
+          educationBatchId?: string;
+          educationProgramId?: string;
+          status?: AcademicClass['status'];
+          search?: string;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiPagedResponse<AcademicClass>>(
+          `/academic-classes${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<AcademicClass>(`/academic-classes/${id}`);
+      },
+      create(input: CreateAcademicClassInput) {
+        return mutate<AcademicClass>('/academic-classes', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateAcademicClassInput) {
+        return mutate<AcademicClass>(`/academic-classes/${id}`, {
           method: 'PATCH',
           body: JSON.stringify(input),
         });
