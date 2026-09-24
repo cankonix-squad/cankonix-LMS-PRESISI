@@ -53,6 +53,27 @@ export type EducationProgram = {
   updatedAt: string;
 };
 
+export type Curriculum = {
+  id: string;
+  educationProgramId: string;
+  version: string;
+  name: string;
+  effectiveFrom: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateCurriculumInput = {
+  educationProgramId: string;
+  version: string;
+  name: string;
+  effectiveFrom?: string | null;
+  status?: Curriculum['status'];
+};
+
+export type UpdateCurriculumInput = Partial<CreateCurriculumInput>;
+
 export type CreateEducationProgramInput = {
   organizationId: string;
   code: string;
@@ -1274,6 +1295,36 @@ export function createApiClient(
       },
       update(id: string, input: UpdateEducationProgramInput) {
         return mutate<EducationProgram>(`/education-programs/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+
+    curricula: {
+      list(
+        params: {
+          educationProgramId?: string;
+          status?: Curriculum['status'];
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiListResponse<Curriculum>>(
+          `/curricula${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<Curriculum>(`/curricula/${id}`);
+      },
+      create(input: CreateCurriculumInput) {
+        return mutate<Curriculum>('/curricula', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateCurriculumInput) {
+        return mutate<Curriculum>(`/curricula/${id}`, {
           method: 'PATCH',
           body: JSON.stringify(input),
         });
