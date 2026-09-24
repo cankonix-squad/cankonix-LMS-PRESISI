@@ -140,6 +140,7 @@ jobs:
             local exit_code=$?
             if [ "$exit_code" -ne 0 ]; then
               echo "Deployment failed; restoring previous application images"
+              git reset --hard "$PREVIOUS_SHA" || true
               for service in "${SERVICES[@]}"; do
                 image="cankonix-lms-lemdiklat-$service"
                 rollback_image="$image:rollback-$PREVIOUS_SHA"
