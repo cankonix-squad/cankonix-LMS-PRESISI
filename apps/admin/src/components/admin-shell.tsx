@@ -32,9 +32,9 @@ const navigationGroups = [
   {
     label: 'Pembelajaran',
     items: [
-      { label: 'Materi', marker: 'M' },
-      { label: 'Aktivitas', marker: 'AK' },
-      { label: 'Tugas', marker: 'T' },
+      { href: '/materi', label: 'Materi', marker: 'M' },
+      { href: '/aktivitas', label: 'Aktivitas', marker: 'AK' },
+      { href: '/tugas', label: 'Tugas', marker: 'T' },
     ],
   },
   {

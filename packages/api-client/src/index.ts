@@ -331,10 +331,23 @@ export type LearningActivity = {
   meetingId: string;
   activityTypeId: string;
   title: string;
-  description: string | null;
-  sequenceNo: number;
-  isRequired: boolean;
+  instructions: string | null;
+  sequence: number;
+  required: boolean;
+  availableFrom: string | null;
+  availableUntil: string | null;
   status: LearningActivityStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type LearningActivityType = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  requiresContent: boolean;
+  status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
   updatedAt: string;
 };
@@ -344,12 +357,15 @@ export type LearningActivityContentType = 'TEXT' | 'LINK' | 'FILE' | 'VIDEO';
 export type LearningActivityContent = {
   id: string;
   activityId: string;
+  versionGroupId: string;
   contentType: LearningActivityContentType;
   title: string;
-  body: string | null;
+  objectKey: string | null;
   externalUrl: string | null;
-  storedFileId: string | null;
-  sequenceNo: number;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  version: number;
+  status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED' | 'ARCHIVED';
   createdAt: string;
   updatedAt: string;
 };
@@ -1689,11 +1705,27 @@ export function createApiClient(
       },
     },
 
+    learningActivityTypes: {
+      list(
+        params: {
+          status?: string;
+          search?: string;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiListResponse<LearningActivityType>>(
+          `/learning-activity-types${buildQuery({ page: 1, limit: 100, ...params })}`,
+        );
+      },
+    },
+
     learningActivities: {
       list(
         params: {
           meetingId?: string;
           status?: string;
+          search?: string;
           page?: number;
           limit?: number;
         } = {},
@@ -1702,13 +1734,49 @@ export function createApiClient(
           `/learning-activities${buildQuery({ page: 1, limit: 20, ...params })}`,
         );
       },
+      create(input: {
+        meetingId: string;
+        activityTypeId: string;
+        title: string;
+        instructions?: string | null;
+        required?: boolean;
+        availableFrom?: string | null;
+        availableUntil?: string | null;
+        sequence?: number;
+        status?: LearningActivityStatus;
+      }) {
+        return mutate<LearningActivity>('/learning-activities', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      createContent(
+        activityId: string,
+        input: {
+          contentType: LearningActivityContentType;
+          title: string;
+          objectKey?: string | null;
+          externalUrl?: string | null;
+          mimeType?: string | null;
+          sizeBytes?: number;
+        },
+      ) {
+        return mutate<LearningActivityContent>(
+          `/learning-activities/${activityId}/contents`,
+          { method: 'POST', body: JSON.stringify(input) },
+        );
+      },
       update(
         id: string,
         input: {
+          activityTypeId?: string;
+          sequence?: number;
           title?: string;
-          description?: string | null;
-          isRequired?: boolean;
-          sequenceNo?: number;
+          instructions?: string | null;
+          required?: boolean;
+          availableFrom?: string | null;
+          availableUntil?: string | null;
+          status?: LearningActivityStatus;
         },
       ) {
         return mutate<LearningActivity>(`/learning-activities/${id}`, {
@@ -1725,6 +1793,19 @@ export function createApiClient(
     },
 
     learningActivityContents: {
+      listByActivity(
+        activityId: string,
+        params: {
+          status?: string;
+          includeSuperseded?: boolean;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiListResponse<LearningActivityContent>>(
+          `/learning-activities/${activityId}/contents${buildQuery({ page: 1, limit: 50, ...params, includeSuperseded: params.includeSuperseded ? 'true' : undefined })}`,
+        );
+      },
       list(
         params: { activityId?: string; page?: number; limit?: number } = {},
       ) {
@@ -1743,6 +1824,22 @@ export function createApiClient(
       }) {
         return mutate<LearningActivityContent>('/learning-activity-contents', {
           method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(
+        id: string,
+        input: {
+          title?: string;
+          objectKey?: string | null;
+          externalUrl?: string | null;
+          mimeType?: string | null;
+          sizeBytes?: number | null;
+          status?: LearningActivityContent['status'];
+        },
+      ) {
+        return mutate<LearningActivityContent>(`/learning-contents/${id}`, {
+          method: 'PATCH',
           body: JSON.stringify(input),
         });
       },
@@ -1800,8 +1897,8 @@ export function createApiClient(
           classSubjectId?: string;
           activityId?: string;
           meetingId?: string;
-          status?: AssignmentLifecycleStatus;
           search?: string;
+          status?: AssignmentLifecycleStatus;
           page?: number;
           limit?: number;
         } = {},
@@ -1815,6 +1912,7 @@ export function createApiClient(
       },
       create(input: {
         activityId: string;
+        assessmentId?: string | null;
         title: string;
         instructions?: string | null;
         dueAt?: string | null;
