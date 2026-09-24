@@ -144,7 +144,7 @@ function PersonToolbar({ filters }: { filters: Filters }) {
       </div>
       <form
         action="/personel"
-        className="flex w-full flex-wrap gap-2 xl:w-auto"
+        className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
         <input type="hidden" name="status" value={filters.status ?? ''} />
         <input type="hidden" name="limit" value={filters.limit} />
@@ -153,14 +153,14 @@ function PersonToolbar({ filters }: { filters: Filters }) {
           name="search"
           defaultValue={filters.search}
           placeholder="Cari nama, NRP/NIP, atau email"
-          className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-80"
+          className="min-h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-80 xl:w-[28rem]"
         />
-        <button className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white">
+        <button className="min-h-10 flex-1 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white sm:flex-none">
           Cari
         </button>
         <Link
           href="/personel"
-          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700"
+          className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 sm:flex-none"
         >
           Reset
         </Link>
@@ -184,23 +184,29 @@ function PersonTable({
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[1180px] text-left text-sm">
+        <table className="w-full min-w-[1080px] table-fixed text-left text-sm">
+          <colgroup>
+            <col className="w-[190px]" />
+            <col className="w-[140px]" />
+            <col className="w-[210px]" />
+            <col className="w-[160px]" />
+            <col className="w-[170px]" />
+            <col className="w-[110px]" />
+            <col className="w-[120px]" />
+            <col className="w-[180px]" />
+          </colgroup>
           <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              {[
-                'Nama personel',
-                'NIP/NRP',
-                'Email',
-                'Organisasi/unit',
-                'Akun login',
-                'Status',
-                'Diubah',
-                'Aksi',
-              ].map((x) => (
-                <th key={x} className="px-4 py-3">
-                  {x}
-                </th>
-              ))}
+              <th className="px-4 py-3">Nama personel</th>
+              <th className="px-4 py-3">NIP/NRP</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Organisasi/unit</th>
+              <th className="px-4 py-3">Akun login</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Diubah</th>
+              <th className="sticky right-0 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_16px_rgba(15,23,42,0.05)]">
+                Aksi
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -243,28 +249,34 @@ function PersonRow({
   onAccount: (row: Row) => void;
 }) {
   return (
-    <tr className="hover:bg-slate-50/80">
-      <td className="px-4 py-3">
+    <tr className="group hover:bg-slate-50/80">
+      <td className="px-4 py-3 align-middle">
         <p className="font-semibold text-slate-950">{row.person.fullName}</p>
         <p className="text-xs text-slate-500">
           {row.person.rank || row.person.title || 'Identitas personel'}
         </p>
       </td>
-      <td className="px-4 py-3 text-slate-600">{row.person.personnelNumber}</td>
-      <td className="px-4 py-3 text-slate-600">{row.person.email || '-'}</td>
-      <td className="px-4 py-3 text-slate-600">
+      <td className="break-words px-4 py-3 align-middle text-slate-600">
+        {row.person.personnelNumber}
+      </td>
+      <td className="break-words px-4 py-3 align-middle text-slate-600">
+        {row.person.email || '-'}
+      </td>
+      <td className="px-4 py-3 align-middle text-slate-600">
         {placementLabel(row.placements, orgMap)}
       </td>
-      <td className="px-4 py-3">{accountLabel(row.account)}</td>
-      <td className="px-4 py-3">
+      <td className="break-words px-4 py-3 align-middle">
+        {accountLabel(row.account)}
+      </td>
+      <td className="px-4 py-3 align-middle">
         <Pill tone={row.person.status === 'ACTIVE' ? 'green' : 'red'}>
           {row.person.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}
         </Pill>
       </td>
-      <td className="px-4 py-3 text-slate-600">
+      <td className="px-4 py-3 align-middle text-slate-600">
         {formatDate(row.person.updatedAt)}
       </td>
-      <td className="px-4 py-3">
+      <td className="sticky right-0 bg-white px-4 py-3 align-middle shadow-[-8px_0_16px_rgba(15,23,42,0.05)] group-hover:bg-slate-50">
         <Actions row={row} onPerson={onPerson} onAccount={onAccount} />
       </td>
     </tr>
@@ -334,26 +346,26 @@ function Actions({
   onAccount: (row: Row) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid grid-cols-2 gap-2">
       <button
         type="button"
         disabled
         title="Detail personel belum memiliki panel kontrak khusus"
-        className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-400"
+        className="min-h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-400"
       >
         Detail
       </button>
       <button
         type="button"
         onClick={() => onPerson(row)}
-        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+        className="min-h-9 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700"
       >
         Edit
       </button>
       <button
         type="button"
         onClick={() => onAccount(row)}
-        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+        className="min-h-9 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700"
       >
         Kelola Akun
       </button>
@@ -361,7 +373,7 @@ function Actions({
         type="button"
         disabled
         title="Status personel diubah melalui Edit agar tidak ada mutation palsu"
-        className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-400"
+        className="min-h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-400"
       >
         {row.person.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
       </button>
