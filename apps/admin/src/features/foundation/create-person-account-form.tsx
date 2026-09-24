@@ -90,6 +90,14 @@ export function CreatePersonAccountForm() {
 
       {createAccount ? (
         <>
+          <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-3 text-xs leading-5 text-sky-900 md:col-span-2">
+            <p className="font-semibold">Akun login tetap dikelola SSO.</p>
+            <p className="mt-1">
+              Username dan email membuat UserAccount LMS. User Keycloak dapat
+              dihubungkan nanti; peran Admin, Pengajar, Pimpinan, atau Peserta
+              diberikan dari Assignment & Scope.
+            </p>
+          </div>
           <label className={labelClass}>
             Username akun
             <input
@@ -109,23 +117,31 @@ export function CreatePersonAccountForm() {
               className={inputClass}
             />
           </label>
-          <label className={`${labelClass} md:col-span-2`}>
-            Keycloak subject
-            <input
-              name="externalAuthId"
-              placeholder="UUID/sub dari akun Keycloak bila sudah ada"
-              maxLength={255}
-              className={inputClass}
-            />
-          </label>
+          <details className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 md:col-span-2">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-800">
+              Opsi lanjutan: hubungkan user Keycloak
+            </summary>
+            <label className={`${labelClass} mt-3 block`}>
+              ID User Keycloak
+              <input
+                name="externalAuthId"
+                placeholder="Kosongkan bila user Keycloak belum dibuat"
+                maxLength={255}
+                className={inputClass}
+              />
+            </label>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Isi hanya dengan nilai <code>sub</code> dari Keycloak. Ini bukan
+              email, username, atau pilihan role.
+            </p>
+          </details>
         </>
       ) : null}
 
       <div className="flex flex-col gap-3 md:col-span-2 md:flex-row md:items-center md:justify-between">
         <p className="text-xs leading-5 text-slate-500">
-          Password tidak dibuat di LMS. Kredensial tetap dikelola oleh SSO LMS
-          PRESISI; field Keycloak subject dipakai untuk menghubungkan token SSO
-          ke UserAccount.
+          Password tidak dibuat di LMS. Agar bisa login, user harus ada di
+          Keycloak dan aksesnya diberikan dari Assignment & Scope.
         </p>
         <button
           type="submit"

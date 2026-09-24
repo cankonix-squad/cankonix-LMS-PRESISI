@@ -195,7 +195,7 @@ export async function createPersonWithAccountAction(
     return {
       ok: true,
       message:
-        'Person berhasil dibuat. UserAccount dilewati karena username, email akun, dan Keycloak subject kosong.',
+        'Person berhasil dibuat. UserAccount dilewati karena username, email akun, dan ID User Keycloak kosong.',
     };
   }
 

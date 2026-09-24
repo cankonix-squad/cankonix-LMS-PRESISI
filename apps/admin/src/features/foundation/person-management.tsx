@@ -487,6 +487,14 @@ function PersonForm({
             <input name="createAccount" type="checkbox" defaultChecked /> Buat
             UserAccount untuk person ini
           </label>
+          <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-3 text-xs leading-5 text-sky-900">
+            <p className="font-semibold">Akun login tetap dikelola SSO.</p>
+            <p className="mt-1">
+              Isi username dan email untuk membuat akun LMS. User Keycloak dapat
+              dihubungkan nanti; peran seperti Admin, Pengajar, Pimpinan, atau
+              Peserta diatur dari halaman Assignment & Scope.
+            </p>
+          </div>
           <label className="text-sm font-medium text-slate-700">
             Username akun
             <input
@@ -502,13 +510,24 @@ function PersonForm({
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             />
           </label>
-          <label className="text-sm font-medium text-slate-700">
-            Keycloak subject
-            <input
-              name="externalAuthId"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </label>
+          <details className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-800">
+              Opsi lanjutan: hubungkan user Keycloak
+            </summary>
+            <label className="mt-3 block text-sm font-medium text-slate-700">
+              ID User Keycloak
+              <input
+                name="externalAuthId"
+                placeholder="Kosongkan bila user Keycloak belum dibuat"
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Field ini adalah nilai <code>sub</code> dari Keycloak, bukan
+              email, username, atau pilihan peran. Kosongkan dulu bila operator
+              belum memiliki ID dari Keycloak.
+            </p>
+          </details>
         </>
       ) : (
         <label className="text-sm font-medium text-slate-700">
@@ -523,9 +542,9 @@ function PersonForm({
           </select>
         </label>
       )}
-      <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
-        Password tidak dibuat di LMS. Kredensial tetap dikelola oleh SSO
-        Keycloak.
+      <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+        Password tidak dibuat di LMS. Agar personel bisa login, user harus ada
+        di Keycloak dan perannya diberikan melalui Assignment & Scope.
       </p>
       <div className="flex gap-2">
         <button

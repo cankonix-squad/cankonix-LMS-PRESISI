@@ -6,7 +6,7 @@ export function LoginForm() {
     >
       <span>Masuk ke LMS</span>
       <span aria-hidden="true" className="text-lg font-black">
-        →
+        -&gt;
       </span>
     </a>
   );
