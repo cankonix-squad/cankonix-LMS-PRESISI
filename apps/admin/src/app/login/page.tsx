@@ -32,21 +32,25 @@ const platformPoints = [
 const roles = [
   {
     title: 'Administrator',
+    portal: 'Portal Admin',
     text: 'Kelola data, pengguna, akses, dan monitoring operasional pendidikan.',
     href: '/api/auth/login',
   },
   {
     title: 'Pendidik',
+    portal: 'Portal Educator',
     text: 'Kelola kelas, materi, tugas, evaluasi, dan interaksi peserta didik.',
     href: 'https://educator.lms-presisi.digitallearningcenter.id',
   },
   {
     title: 'Peserta Didik',
+    portal: 'Portal Student',
     text: 'Akses materi, tugas, ujian, dan pantau progres belajar secara mandiri.',
     href: 'https://student.lms-presisi.digitallearningcenter.id',
   },
   {
     title: 'Pimpinan',
+    portal: 'Portal Executive',
     text: 'Pantau capaian, laporan, dan analitik pendidikan secara real-time.',
     href: 'https://executive.lms-presisi.digitallearningcenter.id',
   },
@@ -81,7 +85,7 @@ const features: Array<[string, string]> = [
 
 export default function LoginPage() {
   return (
-    <main className="bg-[#f6f8fb] text-[#0c1b33]">
+    <main className="bg-[#f6f8fb] font-[Helvetica,Arial,sans-serif] text-[#0c1b33]">
       <section
         id="beranda"
         className="relative isolate overflow-hidden bg-[#061b34] text-white"
@@ -91,10 +95,11 @@ export default function LoginPage() {
           alt="LMS PRESISI Lemdiklat Polri"
           fill
           priority
-          className="-z-30 object-cover object-[58%_center]"
+          className="-z-30 object-cover object-[62%_center]"
           sizes="100vw"
         />
-        <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(6,27,52,.98)_0%,rgba(6,27,52,.88)_42%,rgba(6,27,52,.28)_72%,rgba(6,27,52,.68)_100%)]" />
+        <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(6,27,52,1)_0%,rgba(6,27,52,.98)_38%,rgba(6,27,52,.52)_68%,rgba(6,27,52,.76)_100%)]" />
+        <div className="absolute inset-y-0 left-0 -z-10 w-[62%] bg-[radial-gradient(circle_at_28%_40%,rgba(8,31,58,.98)_0%,rgba(8,31,58,.9)_34%,rgba(8,31,58,.08)_78%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(6,27,52,.62)_0%,rgba(6,27,52,.18)_34%,rgba(6,27,52,.96)_100%)]" />
 
         <header className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-5 sm:px-8 lg:px-10">
@@ -108,7 +113,7 @@ export default function LoginPage() {
             />
             <span className="text-sm font-black uppercase leading-tight tracking-[0.14em]">
               LMS PRESISI
-              <span className="block text-[10px] font-semibold tracking-[0.22em] text-[#d9b768]">
+              <span className="block text-xs font-semibold tracking-[0.22em] text-[#d9b768]">
                 LEMDIKLAT POLRI
               </span>
             </span>
@@ -151,7 +156,7 @@ export default function LoginPage() {
             <p className="mb-5 text-xs font-black uppercase tracking-[0.34em] text-white/90">
               Lemdiklat Polri
             </p>
-            <h1 className="font-serif text-5xl font-black uppercase leading-[0.98] text-white sm:text-7xl lg:text-8xl">
+            <h1 className="text-5xl font-black uppercase leading-[0.98] text-white sm:text-6xl lg:text-7xl">
               LMS PRESISI
               <span className="block text-[#e8bd5d]">LEMDIKLAT POLRI</span>
             </h1>
@@ -182,8 +187,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 sm:px-8 lg:px-10">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 overflow-hidden rounded-2xl border border-white/18 bg-[#071d38]/82 shadow-2xl backdrop-blur-md sm:grid-cols-4">
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-7 sm:px-8 lg:px-10">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 overflow-hidden rounded-xl border border-white/16 bg-[#071d38]/88 shadow-2xl backdrop-blur-md sm:grid-cols-2 lg:grid-cols-4">
             {platformPoints.map((point) => (
               <PlatformPoint key={point.title} {...point} />
             ))}
@@ -197,7 +202,7 @@ export default function LoginPage() {
       >
         <div>
           <Eyebrow>Tentang LMS PRESISI</Eyebrow>
-          <h2 className="mt-4 font-serif text-4xl font-black leading-tight text-[#08172b] sm:text-5xl">
+          <h2 className="mt-4 text-4xl font-black leading-tight text-[#08172b] sm:text-5xl">
             Transformasi Digital Pendidikan POLRI
           </h2>
           <p className="mt-6 max-w-xl text-base leading-8 text-[#51647c]">
@@ -219,14 +224,14 @@ export default function LoginPage() {
 
         <div className="relative min-h-[330px] overflow-hidden rounded-xl bg-[#071d38] shadow-[0_24px_70px_rgba(8,23,43,.18)] sm:min-h-[420px]">
           <Image
-            src="/login/login-reference.png"
-            alt="Ilustrasi dashboard LMS PRESISI"
+            src="/login/login-hero-v3.png"
+            alt="Gedung Lemdiklat Polri"
             fill
-            className="object-cover object-top opacity-80"
+            className="object-cover object-[78%_center] opacity-90"
             sizes="(min-width: 1024px) 48vw, 100vw"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,29,56,.36),rgba(7,29,56,.08)_45%,rgba(7,29,56,.72))]" />
-          <div className="absolute right-8 top-8 max-w-xs text-right text-xl font-bold leading-8 text-white">
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,29,56,.12),rgba(7,29,56,.08)_45%,rgba(7,29,56,.74))]" />
+          <div className="absolute bottom-8 right-8 max-w-xs rounded-lg border border-white/16 bg-[#071d38]/78 p-5 text-right text-lg font-bold leading-7 text-white backdrop-blur-sm">
             Belajar hari ini untuk pengabdian esok yang lebih baik
           </div>
         </div>
@@ -238,7 +243,7 @@ export default function LoginPage() {
       >
         <div className="mx-auto max-w-7xl text-center">
           <Eyebrow>Akses sesuai peran</Eyebrow>
-          <h2 className="mt-4 font-serif text-4xl font-black text-[#08172b] sm:text-5xl">
+          <h2 className="mt-4 text-4xl font-black text-[#08172b] sm:text-5xl">
             Solusi untuk Setiap Peran
           </h2>
           <div className="mt-12 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-4">
@@ -254,7 +259,7 @@ export default function LoginPage() {
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
               <Eyebrow dark>Ruang lingkup platform</Eyebrow>
-              <h2 className="mt-4 font-serif text-4xl font-black text-white sm:text-5xl">
+              <h2 className="mt-4 text-4xl font-black text-white sm:text-5xl">
                 Modul inti LMS PRESISI
               </h2>
             </div>
@@ -272,7 +277,7 @@ export default function LoginPage() {
           <div className="grid gap-10 lg:grid-cols-[.85fr_1fr] lg:items-start">
             <div>
               <Eyebrow>Informasi operasional</Eyebrow>
-              <h2 className="mt-4 font-serif text-4xl font-black text-[#08172b] sm:text-5xl">
+              <h2 className="mt-4 text-4xl font-black text-[#08172b] sm:text-5xl">
                 Masuk sesuai kewenangan
               </h2>
               <p className="mt-5 max-w-xl text-base leading-8 text-[#51647c]">
@@ -301,18 +306,9 @@ export default function LoginPage() {
 
       <footer
         id="kontak"
-        className="relative overflow-hidden bg-[#061b34] px-5 py-12 text-white sm:px-8 lg:px-10"
+        className="bg-[#061b34] px-5 py-12 text-white sm:px-8 lg:px-10"
       >
-        <div className="absolute right-0 top-0 h-full w-1/2 opacity-10">
-          <Image
-            src="/login/login-hero-v3.png"
-            alt=""
-            fill
-            className="object-cover object-right"
-            sizes="50vw"
-          />
-        </div>
-        <div className="relative mx-auto grid max-w-7xl gap-8 border-b border-white/10 pb-10 md:grid-cols-[1.2fr_1fr_1fr]">
+        <div className="mx-auto grid max-w-7xl gap-8 border-b border-white/10 pb-10 md:grid-cols-[1.2fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">
               <Image
@@ -324,7 +320,7 @@ export default function LoginPage() {
               />
               <span className="text-sm font-black uppercase tracking-[0.16em]">
                 LMS PRESISI
-                <span className="block text-[10px] text-[#d9b768]">
+                <span className="block text-xs text-[#d9b768]">
                   LEMDIKLAT POLRI
                 </span>
               </span>
@@ -351,7 +347,7 @@ export default function LoginPage() {
             </a>
           </div>
         </div>
-        <div className="relative mx-auto mt-6 flex max-w-7xl flex-wrap justify-between gap-4 text-xs text-white/42">
+        <div className="mx-auto mt-6 flex max-w-7xl flex-wrap justify-between gap-4 text-xs text-white/42">
           <p>2026 Lemdiklat POLRI. All rights reserved.</p>
           <p>Kebijakan Privasi | Syarat & Ketentuan | Bantuan</p>
         </div>
@@ -389,7 +385,7 @@ function PlatformPoint({
   text: string;
 }) {
   return (
-    <div className="flex items-start gap-4 border-white/12 px-5 py-5 even:border-l sm:border-l first:sm:border-l-0 lg:px-7">
+    <div className="flex items-start gap-4 border-b border-white/10 px-5 py-5 last:border-b-0 sm:even:border-l lg:border-b-0 lg:border-l lg:first:border-l-0 lg:px-7">
       <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#e2b652]/50 text-xs font-black text-[#e2b652]">
         {number}
       </span>
@@ -404,17 +400,24 @@ function PlatformPoint({
 }
 
 function RoleCard({
+  portal,
   title,
   text,
   href,
 }: {
+  portal: string;
   title: string;
   text: string;
   href: string;
 }) {
   return (
     <article className="rounded-lg border border-[#dbe5ef] bg-white p-6 text-left shadow-[0_10px_32px_rgba(8,23,43,.06)]">
-      <span className="block h-1 w-12 bg-[#e2b652]" />
+      <div className="flex items-center justify-between gap-4">
+        <span className="block h-1 w-12 bg-[#e2b652]" />
+        <span className="rounded-full border border-[#dbe5ef] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#64748b]">
+          {portal}
+        </span>
+      </div>
       <h3 className="mt-5 text-lg font-black text-[#08172b]">{title}</h3>
       <p className="mt-3 min-h-20 text-sm leading-6 text-[#51647c]">{text}</p>
       <a
