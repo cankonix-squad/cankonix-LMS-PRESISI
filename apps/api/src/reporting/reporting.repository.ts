@@ -723,7 +723,16 @@ export class PrismaReportingRepository implements ReportingRepository {
     counts: ReportingSourceCounts,
     enrollmentWhere: Prisma.EnrollmentWhereInput,
   ): Promise<void> {
-    const [evaluations, eligible, approved, certified] = await Promise.all([
+    const [
+      evaluations,
+      eligible,
+      approved,
+      pass,
+      fail,
+      remedial,
+      withdrawn,
+      certified,
+    ] = await Promise.all([
       this.prisma.graduationEvaluation.count({
         where: { enrollment: enrollmentWhere },
       }),
@@ -733,6 +742,34 @@ export class PrismaReportingRepository implements ReportingRepository {
       this.prisma.graduationDecision.count({
         where: {
           status: 'APPROVED',
+          graduationEvaluation: { enrollment: enrollmentWhere },
+        },
+      }),
+      this.prisma.graduationDecision.count({
+        where: {
+          status: 'APPROVED',
+          decision: 'PASS',
+          graduationEvaluation: { enrollment: enrollmentWhere },
+        },
+      }),
+      this.prisma.graduationDecision.count({
+        where: {
+          status: 'APPROVED',
+          decision: 'FAIL',
+          graduationEvaluation: { enrollment: enrollmentWhere },
+        },
+      }),
+      this.prisma.graduationDecision.count({
+        where: {
+          status: 'APPROVED',
+          decision: 'REMEDIAL',
+          graduationEvaluation: { enrollment: enrollmentWhere },
+        },
+      }),
+      this.prisma.graduationDecision.count({
+        where: {
+          status: 'APPROVED',
+          decision: 'WITHDRAWN',
           graduationEvaluation: { enrollment: enrollmentWhere },
         },
       }),
@@ -747,6 +784,10 @@ export class PrismaReportingRepository implements ReportingRepository {
     counts.graduationEvaluationCount = evaluations;
     counts.graduationEligibleCount = eligible;
     counts.graduationApprovedCount = approved;
+    counts.graduationPassCount = pass;
+    counts.graduationFailCount = fail;
+    counts.graduationRemedialCount = remedial;
+    counts.graduationWithdrawnCount = withdrawn;
     counts.graduatedCount = certified;
   }
 
@@ -846,6 +887,10 @@ export class PrismaReportingRepository implements ReportingRepository {
           graduationEvaluationCount: true,
           graduationEligibleCount: true,
           graduationApprovedCount: true,
+          graduationPassCount: true,
+          graduationFailCount: true,
+          graduationRemedialCount: true,
+          graduationWithdrawnCount: true,
           graduatedCount: true,
         },
       }),
@@ -870,6 +915,10 @@ export class PrismaReportingRepository implements ReportingRepository {
       graduationEvaluationCount: aggregate._sum.graduationEvaluationCount ?? 0,
       graduationEligibleCount: aggregate._sum.graduationEligibleCount ?? 0,
       graduationApprovedCount: aggregate._sum.graduationApprovedCount ?? 0,
+      graduationPassCount: aggregate._sum.graduationPassCount ?? 0,
+      graduationFailCount: aggregate._sum.graduationFailCount ?? 0,
+      graduationRemedialCount: aggregate._sum.graduationRemedialCount ?? 0,
+      graduationWithdrawnCount: aggregate._sum.graduationWithdrawnCount ?? 0,
       graduatedCount: aggregate._sum.graduatedCount ?? 0,
     };
   }

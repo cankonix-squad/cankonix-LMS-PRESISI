@@ -75,6 +75,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009X | `tasks/TASK-009X-admin-frontend-enterprise-standardization.md` | REVIEW | TASK-009L = REVIEW |
 | TASK-009Y | `tasks/TASK-009Y-admin-frontend-structure-component-governance.md` | REVIEW | TASK-009X = REVIEW |
 | TASK-009Z | `tasks/TASK-009Z-admin-foundation-pattern-rollout.md` | REVIEW | TASK-009Y = REVIEW |
+| TASK-009AA | `tasks/TASK-009AA-admin-academic-pattern-standardization.md` | REVIEW | TASK-009Z = REVIEW |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |
@@ -114,7 +115,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-061 | `tasks/TASK-061-executive-overview-api.md` | DONE | TASK-060 dan TASK-005 = DONE |
 | TASK-062 | `tasks/TASK-062-organization-program-drill-down.md` | REVIEW | TASK-061 = DONE |
 | TASK-063 | `tasks/TASK-063-attendance-learning-performance-kpis.md` | REVIEW | TASK-060 = DONE |
-| TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | IN PROGRESS | TASK-060 dan TASK-053 = DONE |
+| TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | REVIEW | TASK-060 dan TASK-053 = DONE |
 | TASK-065 | `tasks/TASK-065-executive-ui.md` | NOT STARTED | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
 | TASK-066 | `tasks/TASK-066-educator-portal-alignment.md` | DONE | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE |
 | TASK-067 | `tasks/TASK-067-production-zero-downtime-deployment.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED |
@@ -354,3 +355,15 @@ Deferred: live PostgreSQL/Keycloak end-to-end runtime verification, because cont
 Review notes: the trend is cohort-period trend from `periodStart`/`periodEnd`, not historical snapshot trend; TASK-064 remains responsible for graduation/trend reporting depth. For `CLASS_SUBJECT`, bucket `participants` represent per-subject participant rows, while summary headline remains on disjoint levels to avoid duplicated roster rollups.
 
 Current checkpoint: TASK-063 awaits human review. TASK-064 and TASK-065 remain NOT STARTED. Per AGENTS.md rule 17, Codex must stop at REVIEW and not start TASK-064 until directed after review.
+
+## TASK-064 — REVIEW (2026-09-25)
+
+Implemented graduation/pass/fail/remedial trend reporting from the stored `reporting_metrics` read model. New endpoint: `GET /api/v1/reporting/executive/graduation-trends`, protected by `reporting.executive.read` and bounded by the same Permission + Scope executive resolver as prior reporting endpoints.
+
+Added stored outcome counters to `ReportingMetric` (`graduationPassCount`, `graduationFailCount`, `graduationRemedialCount`, `graduationWithdrawnCount`) with migration `apps/api/prisma/migrations/20261009000800_task_064_graduation_trend_reporting/migration.sql`. Reporting refresh now stores approved graduation decision outcomes separately; trend reads do not scan graduation/evaluation/certificate transactional tables.
+
+Trend grouping supports cohort, year, quarter, and month periods. Rates use explicit denominators and return `0` when the denominator is empty: pass/fail/remedial rates over approved decisions, certification rate over pass decisions.
+
+Verification: Prisma format PASS, Prisma validate PASS with dummy local PostgreSQL URL, Prisma generate PASS, API lint PASS, API typecheck PASS, API build PASS, targeted graduation trend tests PASS (5/5), full API tests PASS outside sandbox (446/446), and `git diff --check` PASS. The first sandboxed full test run failed only because HTTP tests could not bind `127.0.0.1` (`listen EPERM`), then passed with sandbox escalation.
+
+Deferred: live PostgreSQL migration deployment and live Keycloak/API runtime verification remain deferred because no runtime database/container was started here. TASK-065 was not started.

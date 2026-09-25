@@ -7,6 +7,8 @@ import { DrilldownService } from './drilldown.service';
 import { PrismaDrilldownRepository } from './drilldown.repository';
 import { ExecutiveReportingController } from './executive-reporting.controller';
 import { ExecutiveReportingService } from './executive-reporting.service';
+import { GraduationTrendController } from './graduation-trend.controller';
+import { GraduationTrendService } from './graduation-trend.service';
 import { KpiController } from './kpi.controller';
 import { KpiService } from './kpi.service';
 import {
@@ -75,6 +77,7 @@ export class ReportingModule {
     const providers: Provider[] = [
       ReportingService,
       ExecutiveReportingService,
+      GraduationTrendService,
       KpiService,
       DrilldownService,
       {
@@ -112,6 +115,7 @@ export class ReportingModule {
       controllers: [
         ReportingController,
         ExecutiveReportingController,
+        GraduationTrendController,
         KpiController,
         DrilldownController,
       ],
@@ -123,6 +127,7 @@ export class ReportingModule {
       exports: [
         ReportingService,
         ExecutiveReportingService,
+        GraduationTrendService,
         KpiService,
         DrilldownService,
       ],

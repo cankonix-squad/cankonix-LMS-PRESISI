@@ -1656,6 +1656,10 @@ model ReportingMetric {
   graduationEvaluationCount Int @default(0) @map("graduation_evaluation_count")
   graduationEligibleCount   Int @default(0) @map("graduation_eligible_count")
   graduationApprovedCount   Int @default(0) @map("graduation_approved_count")
+  graduationPassCount       Int @default(0) @map("graduation_pass_count")
+  graduationFailCount       Int @default(0) @map("graduation_fail_count")
+  graduationRemedialCount   Int @default(0) @map("graduation_remedial_count")
+  graduationWithdrawnCount  Int @default(0) @map("graduation_withdrawn_count")
   graduatedCount            Int @default(0) @map("graduated_count")
 
   /// Batch period this scope belongs to (TASK-061).

@@ -1,6 +1,6 @@
 # TASK-064 — Graduation & Trend Reporting
 
-**Status:** NOT STARTED
+**Status:** REVIEW
 
 ## Dependency
 TASK-060 dan TASK-053 = DONE.
@@ -21,7 +21,7 @@ Trend endpoints with period granularity and scope.
 Historical snapshots not silently rewritten by later master-data changes unless refresh policy explicit.
 
 ## Acceptance Criteria
-[ ] period aggregation; [ ] scope; [ ] historical consistency; [ ] checks green.
+[x] period aggregation; [x] scope; [x] historical consistency; [x] checks green.
 
 ## Aturan Implementasi Wajib
 - Baca `AGENTS.md`, `tasks/MASTER-CHECKLIST.md`, dan dokumen pada `docs/` yang relevan sebelum coding.
@@ -34,4 +34,49 @@ Historical snapshots not silently rewritten by later master-data changes unless 
 - Setelah implementasi dan verification yang tersedia berhasil, ubah status task menjadi `REVIEW`, update `MASTER-CHECKLIST`, lalu STOP. Codex tidak boleh menandai `DONE`.
 
 ## Laporan Akhir Codex
-Laporkan file dibuat/diubah, migration/schema, endpoint, test, hasil lint/typecheck/test/build, verification yang DEFERRED, issue/risiko, dan konfirmasi bahwa task berikutnya tidak dikerjakan.
+Implemented graduation trend reporting from the stored `reporting_metrics` read model.
+
+Endpoint:
+- `GET /api/v1/reporting/executive/graduation-trends`
+- Protected by `reporting.executive.read`.
+- Scope is resolved through the executive scope resolver before any reporting row is read.
+- Query supports `scope`, `scopeId`, `level`, `granularity` (`COHORT`, `YEAR`, `QUARTER`, `MONTH`), `periodFrom`, `periodTo`, and `limit`.
+
+Schema/migration:
+- Added four stored outcome counters to `ReportingMetric`: `graduationPassCount`, `graduationFailCount`, `graduationRemedialCount`, and `graduationWithdrawnCount`.
+- Added migration `apps/api/prisma/migrations/20261009000800_task_064_graduation_trend_reporting/migration.sql`.
+- Prisma schema validation PASS with a dummy local PostgreSQL URL.
+- Prisma client generation PASS.
+
+Business rules:
+- Trend reads consume only `reporting_metrics`; transactional graduation, evaluation, and certificate tables are read only during reporting refresh.
+- Approved graduation decisions are split into `PASS`, `FAIL`, `REMEDIAL`, and `WITHDRAWN`.
+- Trend periods are derived from the stored reporting row period and grouped by cohort, year, quarter, or month.
+- Rates use explicit denominators and return `0` for empty denominators: pass/fail/remedial rates over approved decisions, certification rate over pass decisions.
+- Scope filtering preserves the Permission + Scope model; no role-name branching was introduced.
+
+Files created/changed:
+- `apps/api/src/reporting/graduation-trend.controller.ts`
+- `apps/api/src/reporting/graduation-trend.service.ts`
+- `apps/api/src/reporting/graduation-trend-rules.ts`
+- `apps/api/src/reporting/dto/graduation-trend-query.dto.ts`
+- `apps/api/src/reporting/dto/graduation-trend-response.dto.ts`
+- `apps/api/test/reporting-graduation-trends.test.cjs`
+- Reporting schema/types/rules/repository/module/overview DTO updated to carry the new graduation outcome counters.
+
+Verification:
+- `apps/api/node_modules/.bin/prisma format --schema apps/api/prisma/schema.prisma` PASS
+- `DATABASE_URL=postgresql://user:pass@localhost:5432/lms apps/api/node_modules/.bin/prisma validate --schema apps/api/prisma/schema.prisma` PASS
+- `apps/api/node_modules/.bin/prisma generate --schema apps/api/prisma/schema.prisma` PASS
+- `../../node_modules/.bin/eslint src test` from `apps/api` PASS
+- `./node_modules/.bin/tsc --noEmit` from `apps/api` PASS
+- `./node_modules/.bin/tsc -p tsconfig.build.json` from `apps/api` PASS
+- `node --test test/reporting-graduation-trends.test.cjs` PASS (5/5)
+- `node --test test/*.test.cjs` PASS outside sandbox (446/446). The first sandboxed run failed only because HTTP tests could not bind `127.0.0.1` (`listen EPERM`).
+- `git diff --check` PASS
+
+Deferred:
+- Live PostgreSQL migration deployment and live Keycloak/API runtime verification remain DEFERRED because no runtime database/container was started in this environment. This does not block REVIEW because schema validation, generated Prisma client, build, lint, and full API tests pass.
+
+Task boundary:
+- TASK-065 was not started.

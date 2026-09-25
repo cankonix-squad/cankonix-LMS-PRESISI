@@ -109,6 +109,10 @@ export function emptySourceCounts(): ReportingSourceCounts {
     graduationEvaluationCount: 0,
     graduationEligibleCount: 0,
     graduationApprovedCount: 0,
+    graduationPassCount: 0,
+    graduationFailCount: 0,
+    graduationRemedialCount: 0,
+    graduationWithdrawnCount: 0,
     graduatedCount: 0,
     periodStart: null,
     periodEnd: null,
@@ -139,6 +143,10 @@ export interface DerivedMetricFields {
   graduationEvaluationCount: number;
   graduationEligibleCount: number;
   graduationApprovedCount: number;
+  graduationPassCount: number;
+  graduationFailCount: number;
+  graduationRemedialCount: number;
+  graduationWithdrawnCount: number;
   graduatedCount: number;
   periodStart: Date | null;
   periodEnd: Date | null;
@@ -166,6 +174,10 @@ export function deriveMetricFields(
     graduationEvaluationCount: counts.graduationEvaluationCount,
     graduationEligibleCount: counts.graduationEligibleCount,
     graduationApprovedCount: counts.graduationApprovedCount,
+    graduationPassCount: counts.graduationPassCount,
+    graduationFailCount: counts.graduationFailCount,
+    graduationRemedialCount: counts.graduationRemedialCount,
+    graduationWithdrawnCount: counts.graduationWithdrawnCount,
     graduatedCount: counts.graduatedCount,
     periodStart: counts.periodStart,
     periodEnd: counts.periodEnd,

@@ -3,15 +3,31 @@
 import Link from 'next/link';
 import { useActionState, useState } from 'react';
 import {
+  ActionButton,
+  ActionGroup,
+  ActionMessage,
+  AdminPage,
   EmptyState,
+  EnterpriseDrawer,
+  EnterpriseTable,
   ErrorState,
+  FilterTabs,
+  FilterToolbar,
+  FormActions,
+  FormField,
+  PageHeader,
+  PaginationBar,
+  PrimaryActionButton,
   StatusBadge,
-} from '@/components/admin-design-system';
+  StickyActionCell,
+  enterpriseInputClass,
+} from '@/components/admin';
 import {
   saveAcademicRecord,
   type AcademicActionState,
 } from './academic-actions';
 
+type StatusTone = 'slate' | 'green' | 'red' | 'blue' | 'amber';
 type Row = Record<string, unknown> & {
   id: string;
   status?: string;
@@ -159,29 +175,24 @@ export function AcademicWorkspace({
   const rows = result?.data ?? [];
   const total = result?.total ?? 0;
   return (
-    <div className="space-y-4">
-      <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-5 py-5 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
-            {config.eyebrow}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-            {config.title}
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            {total} data ditemukan. Gunakan pencarian dan filter untuk
-            mempersempit daftar.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setEditing(null)}
-          className="inline-flex min-h-10 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white"
-        >
-          + Tambah {config.singular}
-        </button>
-      </header>
-      <Toolbar kind={kind} filters={filters} />
+    <AdminPage>
+      <PageHeader
+        eyebrow={config.eyebrow}
+        title={config.title}
+        description={
+          result
+            ? `${total} data ditemukan. Gunakan pencarian dan filter untuk mempersempit daftar.`
+            : 'Data belum dapat dimuat dari API.'
+        }
+        actions={
+          <PrimaryActionButton onClick={() => setEditing(null)}>
+            + Tambah {config.singular}
+          </PrimaryActionButton>
+        }
+      />
+      <section className="px-5">
+        <Toolbar kind={kind} filters={filters} />
+      </section>
       <div className="px-5 pb-5">
         {!result ? (
           <ErrorState message="Data belum dapat dimuat dari API." />
@@ -219,7 +230,7 @@ export function AcademicWorkspace({
           onClose={() => setEditing(undefined)}
         />
       ) : null}
-    </div>
+    </AdminPage>
   );
 }
 
@@ -230,40 +241,62 @@ function Toolbar({
   kind: Kind;
   filters: Record<string, string | number | undefined>;
 }) {
+  const statuses = [
+    { label: 'Semua', value: undefined },
+    { label: 'Aktif', value: 'ACTIVE' },
+    { label: 'Nonaktif', value: 'INACTIVE' },
+    { label: 'Arsip', value: 'ARCHIVED' },
+    { label: 'Withdrawn', value: 'WITHDRAWN' },
+    { label: 'Selesai', value: 'COMPLETED' },
+  ];
+
   return (
-    <form
-      action={basePath(kind)}
-      className="mx-5 flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:flex-wrap"
+    <FilterToolbar
+      label="Filter daftar"
+      filters={
+        <FilterTabs
+          tabs={statuses.map((status) => ({
+            label: status.label,
+            href: academicHref(kind, {
+              ...filters,
+              status: status.value,
+              page: 1,
+            }),
+            active:
+              filters.status === status.value ||
+              (!filters.status && !status.value),
+          }))}
+        />
+      }
     >
-      <input
-        type="search"
-        name="search"
-        defaultValue={String(filters.search ?? '')}
-        placeholder="Cari kode atau nama"
-        className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-72"
-      />
-      <select
-        name="status"
-        defaultValue={String(filters.status ?? '')}
-        className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
+      <form
+        action={basePath(kind)}
+        className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <option value="">Semua status</option>
-        <option value="ACTIVE">Aktif</option>
-        <option value="INACTIVE">Nonaktif</option>
-        <option value="ARCHIVED">Arsip</option>
-        <option value="WITHDRAWN">Withdrawn</option>
-        <option value="COMPLETED">Selesai</option>
-      </select>
-      <button className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white">
-        Terapkan
-      </button>
-      <Link
-        href={basePath(kind)}
-        className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm"
-      >
-        Reset
-      </Link>
-    </form>
+        <input
+          type="hidden"
+          name="status"
+          value={String(filters.status ?? '')}
+        />
+        <input type="hidden" name="limit" value={String(filters.limit ?? 25)} />
+        <input
+          type="search"
+          name="search"
+          defaultValue={String(filters.search ?? '')}
+          placeholder="Cari kode atau nama"
+          className={`${enterpriseInputClass} sm:w-72`}
+        />
+        <button className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white">
+          Cari
+        </button>
+        <Link
+          href={basePath(kind)}
+          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
+        >
+          Reset
+        </Link>
+      </form>
+    </FilterToolbar>
   );
 }
 
@@ -277,94 +310,81 @@ function Table({
   onEdit: (row: Row) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[980px] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr>
-              {config.columns.map(([, label]) => (
-                <th key={label} className="px-4 py-3">
-                  {label}
-                </th>
-              ))}
-              <th className="px-4 py-3">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.map((row) => (
-              <tr key={row.id}>
-                {config.columns.map(([key]) => (
-                  <Cell key={key} value={row[key]} status={key === 'status'} />
+    <EnterpriseTable
+      columns={[
+        ...config.columns.map(([, label]) => ({ label })),
+        { label: 'Aksi', sticky: true },
+      ]}
+      minWidth={980}
+      mobile={
+        <>
+          {rows.map((row) => (
+            <article key={row.id} className="space-y-3 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <strong className="text-sm text-slate-950">
+                  {String(row.name ?? row.code ?? row.id)}
+                </strong>
+                <ValueContent value={row.status} status />
+              </div>
+              {config.columns
+                .filter(([key]) => !['name', 'code', 'status'].includes(key))
+                .map(([key, label]) => (
+                  <p key={key} className="text-sm text-slate-600">
+                    <span className="font-medium text-slate-900">
+                      {label}:{' '}
+                    </span>
+                    {formatValue(row[key])}
+                  </p>
                 ))}
-                <td className="px-4 py-3">
-                  <Actions row={row} onEdit={onEdit} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="divide-y divide-slate-100 md:hidden">
-        {rows.map((row) => (
-          <article key={row.id} className="space-y-3 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <strong>{String(row.name ?? row.code ?? row.id)}</strong>
-              <Cell value={row.status} status />
-            </div>
-            {config.columns
-              .filter(([key]) => !['name', 'code', 'status'].includes(key))
-              .map(([key, label]) => (
-                <p key={key} className="text-sm text-slate-600">
-                  <span className="font-medium text-slate-900">{label}: </span>
-                  {String(row[key] ?? '—')}
-                </p>
-              ))}
+              <Actions row={row} onEdit={onEdit} />
+            </article>
+          ))}
+        </>
+      }
+    >
+      {rows.map((row) => (
+        <tr key={row.id} className="group hover:bg-slate-50/80">
+          {config.columns.map(([key]) => (
+            <Cell key={key} value={row[key]} status={key === 'status'} />
+          ))}
+          <StickyActionCell>
             <Actions row={row} onEdit={onEdit} />
-          </article>
-        ))}
-      </div>
-    </div>
+          </StickyActionCell>
+        </tr>
+      ))}
+    </EnterpriseTable>
   );
 }
 
 function Cell({ value, status }: { value: unknown; status?: boolean }) {
-  if (status)
-    return (
-      <td className="px-4 py-3">
-        <StatusBadge
-          tone={
-            value === 'ACTIVE'
-              ? 'green'
-              : value === 'INACTIVE'
-                ? 'amber'
-                : 'slate'
-          }
-        >
-          {String(value ?? '—')}
-        </StatusBadge>
-      </td>
-    );
-  return <td className="px-4 py-3 text-slate-700">{String(value ?? '—')}</td>;
+  return (
+    <td className="px-4 py-3 align-middle">
+      <ValueContent value={value} status={status} />
+    </td>
+  );
 }
+
+function ValueContent({ value, status }: { value: unknown; status?: boolean }) {
+  if (status) {
+    return (
+      <StatusBadge tone={statusTone(value)}>{statusLabel(value)}</StatusBadge>
+    );
+  }
+
+  return <span className="text-slate-700">{formatValue(value)}</span>;
+}
+
 function Actions({ row, onEdit }: { row: Row; onEdit: (row: Row) => void }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
+    <ActionGroup>
+      <ActionButton
         disabled
         title="Detail belum dihubungkan pada workspace ini"
-        className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-400"
       >
         Detail
-      </button>
-      <button
-        type="button"
-        onClick={() => onEdit(row)}
-        className="rounded-md border border-sky-200 px-2.5 py-1.5 text-xs font-semibold text-sky-700"
-      >
-        Edit
-      </button>
-    </div>
+      </ActionButton>
+      <ActionButton onClick={() => onEdit(row)}>Edit</ActionButton>
+    </ActionGroup>
   );
 }
 
@@ -386,60 +406,29 @@ function Panel({
     { ok: false, message: null },
   );
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/40">
-      <aside className="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white shadow-2xl">
-        <form action={action} className="space-y-5 p-6">
-          <input type="hidden" name="entity" value={kind} />
-          <input type="hidden" name="id" value={row?.id ?? ''} />
-          <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                {row ? 'Edit' : 'Tambah'}
-              </p>
-              <h2 className="text-xl font-semibold text-slate-950">
-                {config.singular}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-sm text-slate-500"
-            >
-              Tutup
-            </button>
-          </div>
-          {config.fields.map((field) => (
-            <Field
-              key={field.name}
-              field={field}
-              value={row?.[field.name]}
-              options={options[field.name] ?? []}
-            />
-          ))}
-          {state.message ? (
-            <p
-              className={
-                state.ok ? 'text-sm text-emerald-700' : 'text-sm text-rose-700'
-              }
-            >
-              {state.message}
-            </p>
-          ) : null}
-          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm"
-            >
-              Batal
-            </button>
-            <button className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white">
-              Simpan
-            </button>
-          </div>
-        </form>
-      </aside>
-    </div>
+    <EnterpriseDrawer
+      eyebrow={row ? 'Edit data' : 'Tambah data'}
+      title={config.singular}
+      description="Kolom bertanda wajib harus diisi. Validasi final tetap dilakukan API."
+      onClose={onClose}
+    >
+      <form action={action} className="space-y-5">
+        <input type="hidden" name="entity" value={kind} />
+        <input type="hidden" name="id" value={row?.id ?? ''} />
+        {config.fields.map((field) => (
+          <Field
+            key={field.name}
+            field={field}
+            value={row?.[field.name]}
+            options={options[field.name] ?? []}
+          />
+        ))}
+        <ActionMessage state={state} />
+        <div className="border-t border-slate-200 pt-4">
+          <FormActions onCancel={onClose} submitLabel="Simpan" />
+        </div>
+      </form>
+    </EnterpriseDrawer>
   );
 }
 
@@ -456,20 +445,17 @@ function Field({
     name: field.name,
     required: field.required,
     defaultValue: value == null ? '' : String(value),
-    className:
-      'mt-1 min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm',
+    className: enterpriseInputClass,
   };
   if (field.type === 'textarea')
     return (
-      <label className="block text-sm font-medium">
-        {field.label}
+      <FormField label={field.label} required={field.required}>
         <textarea {...common} rows={4} />
-      </label>
+      </FormField>
     );
   if (field.type === 'status')
     return (
-      <label className="block text-sm font-medium">
-        {field.label}
+      <FormField label={field.label} required={field.required}>
         <select {...common}>
           <option value="ACTIVE">Aktif</option>
           <option value="INACTIVE">Nonaktif</option>
@@ -477,12 +463,11 @@ function Field({
           <option value="WITHDRAWN">Withdrawn</option>
           <option value="COMPLETED">Selesai</option>
         </select>
-      </label>
+      </FormField>
     );
   if (field.type === 'select')
     return (
-      <label className="block text-sm font-medium">
-        {field.label}
+      <FormField label={field.label} required={field.required}>
         <select {...common}>
           <option value="">Pilih {field.label.toLowerCase()}</option>
           {options.map((option) => (
@@ -491,13 +476,12 @@ function Field({
             </option>
           ))}
         </select>
-      </label>
+      </FormField>
     );
   return (
-    <label className="block text-sm font-medium">
-      {field.label}
+    <FormField label={field.label} required={field.required}>
       <input {...common} type={field.type ?? 'text'} />
-    </label>
+    </FormField>
   );
 }
 
@@ -515,27 +499,17 @@ function Pagination({
   const page = Number(filters.page ?? 1);
   const pages = Math.max(1, Math.ceil(total / limit));
   return (
-    <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
-      <span>
-        Halaman {page} dari {pages}
-      </span>
-      <div className="flex gap-2">
-        <Link
-          className="rounded-md border px-3 py-2"
-          href={`${basePath(kind)}?page=${Math.max(1, page - 1)}&limit=${limit}`}
-        >
-          Sebelumnya
-        </Link>
-        <Link
-          className="rounded-md border px-3 py-2"
-          href={`${basePath(kind)}?page=${Math.min(pages, page + 1)}&limit=${limit}`}
-        >
-          Berikutnya
-        </Link>
-      </div>
-    </div>
+    <PaginationBar
+      page={Math.min(page, pages)}
+      limit={limit}
+      total={total}
+      totalPages={pages}
+      itemLabel={configs[kind].singular}
+      hrefFor={(next) => academicHref(kind, { ...filters, ...next })}
+    />
   );
 }
+
 function basePath(kind: Kind) {
   return {
     subject: '/mata-pelajaran',
@@ -543,4 +517,41 @@ function basePath(kind: Kind) {
     class: '/kelas',
     enrollment: '/enrollment',
   }[kind];
+}
+
+function academicHref(
+  kind: Kind,
+  params: Record<string, string | number | undefined>,
+) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') search.set(key, String(value));
+  });
+  const query = search.toString();
+  return query ? `${basePath(kind)}?${query}` : basePath(kind);
+}
+
+function formatValue(value: unknown) {
+  if (value instanceof Date) return value.toLocaleDateString('id-ID');
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return new Date(value).toLocaleDateString('id-ID');
+  }
+  return String(value ?? '—');
+}
+
+function statusTone(value: unknown): StatusTone {
+  if (value === 'ACTIVE' || value === 'COMPLETED') return 'green';
+  if (value === 'INACTIVE' || value === 'WITHDRAWN') return 'amber';
+  return 'slate';
+}
+
+function statusLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    ACTIVE: 'Aktif',
+    INACTIVE: 'Nonaktif',
+    ARCHIVED: 'Arsip',
+    WITHDRAWN: 'Withdrawn',
+    COMPLETED: 'Selesai',
+  };
+  return typeof value === 'string' ? (labels[value] ?? value) : '—';
 }

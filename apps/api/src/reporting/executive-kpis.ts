@@ -48,6 +48,10 @@ export function emptyExecutiveSums(): ExecutiveSums {
     graduationEvaluationCount: 0,
     graduationEligibleCount: 0,
     graduationApprovedCount: 0,
+    graduationPassCount: 0,
+    graduationFailCount: 0,
+    graduationRemedialCount: 0,
+    graduationWithdrawnCount: 0,
     graduatedCount: 0,
   };
 }
@@ -65,6 +69,10 @@ export interface ExecutiveKpis {
   graduationEvaluationCount: number;
   graduationEligibleCount: number;
   graduationApprovedCount: number;
+  graduationPassCount: number;
+  graduationFailCount: number;
+  graduationRemedialCount: number;
+  graduationWithdrawnCount: number;
   graduatedCount: number;
   /** Share of in-force decisions that produced a certificate, 0-100. */
   certificationRate: number;
@@ -105,6 +113,10 @@ export function toExecutiveKpis(sums: ExecutiveSums): ExecutiveKpis {
     graduationEvaluationCount: sums.graduationEvaluationCount,
     graduationEligibleCount: sums.graduationEligibleCount,
     graduationApprovedCount: sums.graduationApprovedCount,
+    graduationPassCount: sums.graduationPassCount,
+    graduationFailCount: sums.graduationFailCount,
+    graduationRemedialCount: sums.graduationRemedialCount,
+    graduationWithdrawnCount: sums.graduationWithdrawnCount,
     graduatedCount: sums.graduatedCount,
     certificationRate:
       sums.graduationApprovedCount > 0
@@ -141,6 +153,14 @@ export function addMetricToSums(
       sums.graduationEligibleCount + row.graduationEligibleCount,
     graduationApprovedCount:
       sums.graduationApprovedCount + row.graduationApprovedCount,
+    graduationPassCount:
+      sums.graduationPassCount + (row.graduationPassCount ?? 0),
+    graduationFailCount:
+      sums.graduationFailCount + (row.graduationFailCount ?? 0),
+    graduationRemedialCount:
+      sums.graduationRemedialCount + (row.graduationRemedialCount ?? 0),
+    graduationWithdrawnCount:
+      sums.graduationWithdrawnCount + (row.graduationWithdrawnCount ?? 0),
     graduatedCount: sums.graduatedCount + row.graduatedCount,
   };
 }

@@ -68,6 +68,26 @@ export class ExecutiveKpiResponseDto {
   @ApiProperty({ description: 'Decisions in force (APPROVED)' })
   graduationApprovedCount!: number;
 
+  @ApiProperty({
+    description: 'APPROVED graduation decisions with PASS outcome',
+  })
+  graduationPassCount!: number;
+
+  @ApiProperty({
+    description: 'APPROVED graduation decisions with FAIL outcome',
+  })
+  graduationFailCount!: number;
+
+  @ApiProperty({
+    description: 'APPROVED graduation decisions with REMEDIAL outcome',
+  })
+  graduationRemedialCount!: number;
+
+  @ApiProperty({
+    description: 'APPROVED graduation decisions with WITHDRAWN outcome',
+  })
+  graduationWithdrawnCount!: number;
+
   @ApiProperty({ description: 'Certificates issued' })
   graduatedCount!: number;
 

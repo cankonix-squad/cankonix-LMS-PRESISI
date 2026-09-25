@@ -1,6 +1,6 @@
 # TASK-009K — Admin Organization Operator UX Polish
 
-**Status:** REVIEW
+**Status:** DONE
 
 ## Dependency
 
@@ -44,7 +44,7 @@ Memoles halaman Admin `/organisasi` agar nyaman dipakai operator awam dan tetap 
 - Added native browser validation hints for organization code and name.
 - Added explicit `Batal` action in the drawer and kept existing create/update/status server actions and API contracts unchanged.
 
-Task is ready for human review. It must remain `REVIEW`, not `DONE`.
+Approved by the user on 2026-09-23. Task is complete.
 
 ## Review Notes
 

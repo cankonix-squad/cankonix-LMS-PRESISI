@@ -52,6 +52,10 @@ export interface ReportingMetricRecord {
   graduationEvaluationCount: number;
   graduationEligibleCount: number;
   graduationApprovedCount: number;
+  graduationPassCount: number;
+  graduationFailCount: number;
+  graduationRemedialCount: number;
+  graduationWithdrawnCount: number;
   graduatedCount: number;
   periodStart: Date | null;
   periodEnd: Date | null;
@@ -94,6 +98,10 @@ export interface ReportingMetricUpsertData extends ReportingMetrics {
   graduationEvaluationCount: number;
   graduationEligibleCount: number;
   graduationApprovedCount: number;
+  graduationPassCount: number;
+  graduationFailCount: number;
+  graduationRemedialCount: number;
+  graduationWithdrawnCount: number;
   graduatedCount: number;
   periodStart: Date | null;
   periodEnd: Date | null;
@@ -144,6 +152,10 @@ export interface ReportingSourceCounts {
   graduationEvaluationCount: number;
   graduationEligibleCount: number;
   graduationApprovedCount: number;
+  graduationPassCount: number;
+  graduationFailCount: number;
+  graduationRemedialCount: number;
+  graduationWithdrawnCount: number;
   graduatedCount: number;
   periodStart: Date | null;
   periodEnd: Date | null;
@@ -190,6 +202,10 @@ export interface ExecutiveSums {
   graduationEvaluationCount: number;
   graduationEligibleCount: number;
   graduationApprovedCount: number;
+  graduationPassCount: number;
+  graduationFailCount: number;
+  graduationRemedialCount: number;
+  graduationWithdrawnCount: number;
   graduatedCount: number;
 }
 
