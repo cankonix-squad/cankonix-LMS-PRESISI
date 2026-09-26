@@ -13,7 +13,7 @@ export default async function MaterialPage({
   const api = createAdminApiClient();
   const page = positive(params.page, 1);
   const limit = clamp(positive(params.limit, 25), 10, 50);
-  const [activitiesResult, typesResult, meetingsResult] = await Promise.all([
+  const [activitiesResult] = await Promise.all([
     getOrEmpty(() =>
       api.learningActivities.list({
         search: value(params.search),
@@ -22,10 +22,6 @@ export default async function MaterialPage({
         limit: 100,
       }),
     ),
-    getOrEmpty(() =>
-      api.learningActivityTypes.list({ status: 'ACTIVE', limit: 100 }),
-    ),
-    getOrEmpty(() => api.learningMeetings.list({ limit: 100 })),
   ]);
   const activities = activitiesResult.data?.data ?? [];
   const contentResults = await Promise.all(
@@ -57,8 +53,6 @@ export default async function MaterialPage({
       <MaterialWorkspace
         result={{ data: error ? null : rows, error, total: filtered.length }}
         activities={activities}
-        activityTypes={typesResult.data?.data ?? []}
-        meetings={meetingsResult.data?.data ?? []}
         filters={{
           search: value(params.search),
           status: value(params.status),

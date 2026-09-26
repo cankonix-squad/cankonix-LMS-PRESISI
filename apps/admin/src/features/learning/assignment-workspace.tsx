@@ -3,10 +3,24 @@ import type { Assignment, LearningActivity } from '@lms/api-client';
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import {
+  ActionButton,
+  ActionMessage,
+  AdminPage,
   EmptyState,
+  EnterpriseDrawer,
+  EnterpriseTable,
   ErrorState,
+  FilterTabs,
+  FilterToolbar,
+  FormActions,
+  FormField,
+  PageHeader,
+  PaginationBar,
+  PrimaryActionButton,
   StatusBadge,
-} from '@/components/admin-design-system';
+  StickyActionCell,
+  enterpriseInputClass,
+} from '@/components/admin';
 import {
   createAdminAssignmentAction,
   updateAdminAssignmentAction,
@@ -16,7 +30,6 @@ import {
 type Filters = {
   search?: string;
   status?: string;
-  classSubjectId?: string;
   page: number;
   limit: number;
 };
@@ -37,72 +50,29 @@ export function AssignmentWorkspace({
 }) {
   const [drawer, setDrawer] = useState<Drawer>(null);
   const rows = result.data ?? [];
-  const totalPages = Math.max(1, Math.ceil(result.total / filters.limit));
+  const total = result.total;
+  const totalPages = Math.max(1, Math.ceil(total / filters.limit));
   return (
-    <div className="space-y-4">
-      <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-5 py-5 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">
-            Pembelajaran / Tugas
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-            Kelola tugas pembelajaran
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            {result.error
-              ? 'Data tugas belum dapat dimuat.'
-              : `${result.total} tugas ditemukan.`}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setDrawer({ mode: 'create' })}
-          className="inline-flex min-h-10 items-center justify-center rounded-md bg-sky-600 px-4 text-sm font-semibold text-white"
-        >
-          + Tambah tugas
-        </button>
-      </header>
-      <form
-        action="/tugas"
-        className="mx-5 flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:flex-wrap"
-      >
-        <input
-          type="search"
-          name="search"
-          defaultValue={filters.search}
-          placeholder="Cari judul tugas"
-          className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-72"
-        />
-        <select
-          name="status"
-          defaultValue={filters.status ?? ''}
-          className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
-        >
-          <option value="">Semua status</option>
-          <option>DRAFT</option>
-          <option>PUBLISHED</option>
-          <option>CLOSED</option>
-          <option>ARCHIVED</option>
-        </select>
-        <select
-          name="limit"
-          defaultValue={String(filters.limit)}
-          className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
-        >
-          <option value="10">10 / halaman</option>
-          <option value="25">25 / halaman</option>
-          <option value="50">50 / halaman</option>
-        </select>
-        <button className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white">
-          Terapkan
-        </button>
-        <Link
-          href="/tugas"
-          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm"
-        >
-          Reset
-        </Link>
-      </form>
+    <AdminPage>
+      <PageHeader
+        eyebrow="Pembelajaran / Tugas"
+        title="Kelola tugas pembelajaran"
+        description={
+          result.error
+            ? 'Data tugas belum dapat dimuat.'
+            : `${total} tugas ditemukan. Gunakan filter untuk mempersempit daftar.`
+        }
+        actions={
+          <PrimaryActionButton onClick={() => setDrawer({ mode: 'create' })}>
+            + Tambah tugas
+          </PrimaryActionButton>
+        }
+      />
+
+      <div className="px-5 pt-1">
+        <AssignmentToolbar filters={filters} />
+      </div>
+
       <div className="px-5 pb-5">
         {result.error ? (
           <ErrorState message={result.error} />
@@ -112,6 +82,12 @@ export function AssignmentWorkspace({
               Belum ada tugas yang cocok.
             </p>
             <p className="mt-2">Coba ubah pencarian atau filter status.</p>
+            <Link
+              href="/tugas"
+              className="mt-4 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-4 font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
+            >
+              Tampilkan semua
+            </Link>
           </EmptyState>
         ) : (
           <AssignmentTable
@@ -120,10 +96,20 @@ export function AssignmentWorkspace({
             onEdit={(item) => setDrawer({ mode: 'edit', item })}
           />
         )}
-        {!result.error && result.total > 0 ? (
-          <Pagination filters={filters} totalPages={totalPages} />
+        {!result.error ? (
+          <PaginationBar
+            page={filters.page}
+            limit={filters.limit}
+            total={total}
+            totalPages={totalPages}
+            itemLabel="tugas"
+            hrefFor={({ page, limit }) =>
+              assignmentHref({ ...filters, page, limit })
+            }
+          />
         ) : null}
       </div>
+
       {drawer ? (
         <AssignmentDrawer
           drawer={drawer}
@@ -131,7 +117,62 @@ export function AssignmentWorkspace({
           onClose={() => setDrawer(null)}
         />
       ) : null}
-    </div>
+    </AdminPage>
+  );
+}
+
+function AssignmentToolbar({ filters }: { filters: Filters }) {
+  return (
+    <FilterToolbar
+      label="Filter daftar"
+      filters={
+        <FilterTabs
+          tabs={[
+            { label: 'Semua', value: undefined },
+            { label: 'Draft', value: 'DRAFT' },
+            { label: 'Tayang', value: 'PUBLISHED' },
+            { label: 'Ditutup', value: 'CLOSED' },
+            { label: 'Arsip', value: 'ARCHIVED' },
+          ].map((s) => ({
+            label: s.label,
+            href: assignmentHref({
+              ...filters,
+              status: s.value as Filters['status'],
+              page: 1,
+            }),
+            active:
+              filters.status === s.value || (!filters.status && !s.value),
+          }))}
+        />
+      }
+    >
+      <form
+        action="/tugas"
+        className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
+      >
+        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <input type="hidden" name="limit" value={filters.limit} />
+        <input
+          type="search"
+          name="search"
+          defaultValue={filters.search}
+          placeholder="Cari judul tugas"
+          className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 sm:w-72"
+        />
+        <button
+          type="submit"
+          className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
+        >
+          Cari
+        </button>
+        <Link
+          href="/tugas"
+          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
+        >
+          Reset
+        </Link>
+      </form>
+    </FilterToolbar>
   );
 }
 function AssignmentTable({
@@ -145,92 +186,77 @@ function AssignmentTable({
 }) {
   const names = new Map(activities.map((item) => [item.id, item.title]));
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[900px] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr>
-              {[
-                'Tugas',
-                'Aktivitas / relasi',
-                'Deadline',
-                'Submission',
-                'Status',
-                'Terakhir diubah',
-                'Aksi',
-              ].map((x) => (
-                <th key={x} className="px-4 py-3">
-                  {x}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.map((item) => (
-              <tr key={item.id} className="hover:bg-slate-50/80">
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-slate-950">{item.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Nilai maksimal {item.maxScore} · {item.attemptsAllowed}{' '}
-                    percobaan
+    <EnterpriseTable
+      columns={[
+        { label: 'Tugas' },
+        { label: 'Aktivitas / relasi' },
+        { label: 'Deadline' },
+        { label: 'Submission' },
+        { label: 'Status' },
+        { label: 'Terakhir diubah' },
+        { label: 'Aksi', sticky: true },
+      ]}
+      minWidth={920}
+      mobile={
+        <>
+          {rows.map((item) => (
+            <article key={item.id} className="space-y-3 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-slate-950">
+                    {item.title}
                   </p>
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {names.get(item.activityId) ?? 'Aktivitas tidak terbaca'}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {item.dueAt ? formatDate(item.dueAt) : 'Tidak ditentukan'}
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-400">
-                  Belum tersedia di kontrak daftar
-                </td>
-                <td className="px-4 py-3">
-                  <AssignmentStatus status={item.status} />
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {formatDate(item.updatedAt)}
-                </td>
-                <td className="px-4 py-3">
-                  <button
-                    type="button"
-                    onClick={() => onEdit(item)}
-                    className="font-semibold text-sky-700"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="divide-y divide-slate-100 md:hidden">
-        {rows.map((item) => (
-          <article key={item.id} className="space-y-3 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-semibold text-slate-950">{item.title}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {names.get(item.activityId) ?? 'Aktivitas tidak terbaca'}
-                </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {names.get(item.activityId) ?? 'Aktivitas tidak terbaca'}
+                  </p>
+                </div>
+                <AssignmentStatus status={item.status} />
               </div>
-              <AssignmentStatus status={item.status} />
-            </div>
-            <p className="text-xs text-slate-500">
-              Deadline:{' '}
-              {item.dueAt ? formatDate(item.dueAt) : 'Tidak ditentukan'}
+              <p className="text-xs text-slate-500">
+                Deadline:{' '}
+                {item.dueAt ? formatDate(item.dueAt) : 'Tidak ditentukan'}
+              </p>
+              <button
+                type="button"
+                onClick={() => onEdit(item)}
+                className="text-sm font-semibold text-sky-700"
+              >
+                Edit tugas
+              </button>
+            </article>
+          ))}
+        </>
+      }
+    >
+      {rows.map((item) => (
+        <tr key={item.id} className="group hover:bg-slate-50/80">
+          <td className="px-4 py-3">
+            <p className="font-semibold text-slate-950">{item.title}</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Nilai maksimal {item.maxScore} · {item.attemptsAllowed} percobaan
             </p>
-            <button
-              type="button"
-              onClick={() => onEdit(item)}
-              className="text-sm font-semibold text-sky-700"
-            >
-              Edit tugas
-            </button>
-          </article>
-        ))}
-      </div>
-    </div>
+          </td>
+          <td className="px-4 py-3 text-slate-600">
+            {names.get(item.activityId) ?? 'Aktivitas tidak terbaca'}
+          </td>
+          <td className="px-4 py-3 text-slate-600">
+            {item.dueAt ? formatDate(item.dueAt) : 'Tidak ditentukan'}
+          </td>
+          <td className="px-4 py-3 text-xs text-slate-400">
+            Belum tersedia di kontrak daftar
+          </td>
+          <td className="px-4 py-3">
+            <AssignmentStatus status={item.status} />
+          </td>
+          <td className="px-4 py-3 text-slate-600">
+            {formatDate(item.updatedAt)}
+          </td>
+          <StickyActionCell>
+            <ActionButton onClick={() => onEdit(item)}>Edit</ActionButton>
+          </StickyActionCell>
+        </tr>
+      ))}
+    </EnterpriseTable>
   );
 }
 function AssignmentStatus({ status }: { status: string }) {
@@ -250,37 +276,6 @@ function AssignmentStatus({ status }: { status: string }) {
     </StatusBadge>
   );
 }
-function Pagination({
-  filters,
-  totalPages,
-}: {
-  filters: Filters;
-  totalPages: number;
-}) {
-  const qs = (page: number) =>
-    `/tugas?search=${encodeURIComponent(filters.search ?? '')}&status=${encodeURIComponent(filters.status ?? '')}&limit=${filters.limit}&page=${page}`;
-  return (
-    <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
-      <span>
-        Halaman {filters.page} dari {totalPages}
-      </span>
-      <div className="flex gap-2">
-        <Link
-          href={qs(Math.max(1, filters.page - 1))}
-          className="rounded-md border border-slate-300 bg-white px-3 py-2"
-        >
-          Sebelumnya
-        </Link>
-        <Link
-          href={qs(Math.min(totalPages, filters.page + 1))}
-          className="rounded-md border border-slate-300 bg-white px-3 py-2"
-        >
-          Berikutnya
-        </Link>
-      </div>
-    </div>
-  );
-}
 function AssignmentDrawer({
   drawer,
   activities,
@@ -290,164 +285,136 @@ function AssignmentDrawer({
   activities: LearningActivity[];
   onClose: () => void;
 }) {
-  const item = drawer.mode === 'edit' ? drawer.item : null;
+  const isEdit = drawer.mode === 'edit';
+  const item = isEdit ? drawer.item : null;
   const [state, action, pending] = useActionState<
     AssignmentActionState,
     FormData
-  >(
-    drawer.mode === 'edit'
-      ? updateAdminAssignmentAction
-      : createAdminAssignmentAction,
-    { ok: false, message: null },
-  );
+  >(isEdit ? updateAdminAssignmentAction : createAdminAssignmentAction, {
+    ok: false,
+    message: null,
+  });
   const [statusState, statusAction, statusPending] = useActionState<
     AssignmentActionState,
     FormData
   >(updateAdminAssignmentStatusAction, { ok: false, message: null });
   return (
-    <div className="fixed inset-0 z-30 bg-slate-950/35 p-4 sm:p-8">
-      <div className="ml-auto flex h-full w-full max-w-xl flex-col overflow-y-auto rounded-xl bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-              Tugas
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-950">
-              {item ? 'Edit tugas' : 'Tambah tugas'}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm text-slate-500"
+    <EnterpriseDrawer
+      eyebrow={isEdit ? 'Ubah data' : 'Tambah data'}
+      title={isEdit ? 'Ubah tugas' : 'Tambah tugas'}
+      onClose={onClose}
+    >
+      <form action={action} className="space-y-4">
+        {item ? <input type="hidden" name="id" value={item.id} /> : null}
+        <FormField label="Aktivitas" required>
+          <select
+            name="activityId"
+            required
+            defaultValue={item?.activityId ?? activities[0]?.id ?? ''}
+            disabled={Boolean(item)}
+            className={enterpriseInputClass}
           >
-            Tutup
-          </button>
+            {activities.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.title}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="Judul" required>
+          <input
+            name="title"
+            required
+            defaultValue={item?.title ?? ''}
+            placeholder="Contoh: Tugas esai bab 1"
+            className={enterpriseInputClass}
+          />
+        </FormField>
+        <FormField label="Deskripsi / instruksi">
+          <textarea
+            name="instructions"
+            defaultValue={item?.instructions ?? ''}
+            rows={5}
+            className={enterpriseInputClass}
+          />
+        </FormField>
+        <FormField label="Deadline">
+          <input
+            name="dueAt"
+            type="datetime-local"
+            defaultValue={item?.dueAt?.slice(0, 16) ?? ''}
+            className={enterpriseInputClass}
+          />
+        </FormField>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField label="Nilai maksimal">
+            <input
+              name="maxScore"
+              type="number"
+              min="1"
+              defaultValue={item?.maxScore ?? 100}
+              className={enterpriseInputClass}
+            />
+          </FormField>
+          <FormField label="Jumlah percobaan">
+            <input
+              name="attemptsAllowed"
+              type="number"
+              min="1"
+              defaultValue={item?.attemptsAllowed ?? 1}
+              className={enterpriseInputClass}
+            />
+          </FormField>
         </div>
-        <form action={action} className="space-y-4 p-5">
-          <input type="hidden" name="id" value={item?.id ?? ''} />
-          <label className="block text-sm font-medium">
-            Aktivitas
+        <ActionMessage state={state} />
+        <div className="border-t border-slate-200 pt-4">
+          <FormActions
+            onCancel={onClose}
+            pending={pending}
+            submitLabel="Simpan"
+          />
+        </div>
+      </form>
+      {item && item.status !== 'ARCHIVED' ? (
+        <form action={statusAction} className="border-t border-slate-200 pt-4">
+          <input type="hidden" name="id" value={item.id} />
+          <FormField label="Ubah status">
             <select
-              name="activityId"
-              required
-              defaultValue={item?.activityId ?? activities[0]?.id ?? ''}
-              disabled={Boolean(item)}
-              className="mt-1 min-h-10 w-full rounded-md border border-slate-300 px-3"
+              name="status"
+              defaultValue={item.status}
+              className={enterpriseInputClass}
             >
-              {activities.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.title}
-                </option>
-              ))}
+              <option>DRAFT</option>
+              <option>PUBLISHED</option>
+              <option>CLOSED</option>
+              <option>ARCHIVED</option>
             </select>
-          </label>
-          <label className="block text-sm font-medium">
-            Judul
-            <input
-              name="title"
-              required
-              defaultValue={item?.title ?? ''}
-              className="mt-1 min-h-10 w-full rounded-md border border-slate-300 px-3"
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            Deskripsi / instruksi
-            <textarea
-              name="instructions"
-              defaultValue={item?.instructions ?? ''}
-              rows={5}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            Deadline
-            <input
-              name="dueAt"
-              type="datetime-local"
-              defaultValue={item?.dueAt?.slice(0, 16) ?? ''}
-              className="mt-1 min-h-10 w-full rounded-md border border-slate-300 px-3"
-            />
-          </label>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-medium">
-              Nilai maksimal
-              <input
-                name="maxScore"
-                type="number"
-                min="1"
-                defaultValue={item?.maxScore ?? 100}
-                className="mt-1 min-h-10 w-full rounded-md border border-slate-300 px-3"
-              />
-            </label>
-            <label className="block text-sm font-medium">
-              Jumlah percobaan
-              <input
-                name="attemptsAllowed"
-                type="number"
-                min="1"
-                defaultValue={item?.attemptsAllowed ?? 1}
-                className="mt-1 min-h-10 w-full rounded-md border border-slate-300 px-3"
-              />
-            </label>
-          </div>
-          {state.message ? (
-            <p
-              className={
-                state.ok ? 'text-sm text-emerald-700' : 'text-sm text-rose-700'
-              }
-            >
-              {state.message}
-            </p>
+          </FormField>
+          {statusState.message ? (
+            <p className="mt-2 text-sm text-rose-700">{statusState.message}</p>
           ) : null}
-          <div className="flex justify-end gap-2">
+          <div className="mt-3">
             <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm"
-            >
-              Batal
-            </button>
-            <button
-              disabled={pending}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            >
-              {pending ? 'Menyimpan…' : 'Simpan'}
-            </button>
-          </div>
-        </form>
-        {item && item.status !== 'ARCHIVED' ? (
-          <form action={statusAction} className="border-t border-slate-200 p-5">
-            <input type="hidden" name="id" value={item.id} />
-            <label className="block text-sm font-medium">
-              Ubah status
-              <select
-                name="status"
-                defaultValue={item.status}
-                className="mt-1 min-h-10 w-full rounded-md border border-slate-300 px-3"
-              >
-                <option>DRAFT</option>
-                <option>PUBLISHED</option>
-                <option>CLOSED</option>
-                <option>ARCHIVED</option>
-              </select>
-            </label>
-            {statusState.message ? (
-              <p className="mt-2 text-sm text-rose-700">
-                {statusState.message}
-              </p>
-            ) : null}
-            <button
+              type="submit"
               disabled={statusPending}
-              className="mt-3 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold"
+              className="inline-flex min-h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {statusPending ? 'Memproses…' : 'Simpan status'}
             </button>
-          </form>
-        ) : null}
-      </div>
-    </div>
+          </div>
+        </form>
+      ) : null}
+    </EnterpriseDrawer>
   );
+}
+function assignmentHref(filters: Filters) {
+  const params = new URLSearchParams();
+  if (filters.search) params.set('search', filters.search);
+  if (filters.status) params.set('status', filters.status);
+  if (filters.page > 1) params.set('page', String(filters.page));
+  if (filters.limit !== 25) params.set('limit', String(filters.limit));
+  const query = params.toString();
+  return query ? `/tugas?${query}` : '/tugas';
 }
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(
