@@ -103,6 +103,14 @@ jobs:
             esac
           }
 
+          add_all_app_services() {
+            add_service admin
+            add_service educator
+            add_service student
+            add_service executive
+            add_service api
+          }
+
           if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^themes/keycloak/'; then
             INFRA_CHANGED=true
             THEME_CHANGED=true
@@ -110,17 +118,11 @@ jobs:
 
           if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^docker-compose\.production\.yml$'; then
             INFRA_CHANGED=true
-            add_service admin
-            add_service educator
-            add_service student
-            add_service executive
-            add_service api
+            add_all_app_services
+          elif printf '%s\n' "$CHANGED_FILES" | grep -Eq '^\.github/workflows/deploy-production\.yml$'; then
+            add_all_app_services
           elif printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|turbo\.json|packages/ui/|packages/api-client/|packages/types/|packages/tsconfig/|packages/eslint-config/)'; then
-            add_service admin
-            add_service educator
-            add_service student
-            add_service executive
-            add_service api
+            add_all_app_services
           else
             printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/admin/' && add_service admin || true
             printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/educator/' && add_service educator || true
