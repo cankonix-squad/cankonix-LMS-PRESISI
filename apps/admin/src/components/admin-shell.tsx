@@ -49,9 +49,11 @@ const navigationGroups = [
   {
     label: 'Kelulusan & Sertifikat',
     items: [
-      { label: 'Final Grade', marker: 'FG' },
-      { label: 'Graduation', marker: 'GR' },
-      { label: 'Certificate', marker: 'C' },
+      { href: '/kelulusan', label: 'Kelulusan', marker: 'GR' },
+      { href: '/keputusan-kelulusan', label: 'Keputusan Kelulusan', marker: 'KK' },
+      { href: '/nilai-akhir', label: 'Nilai Akhir', marker: 'NA' },
+      { href: '/sertifikat', label: 'Sertifikat', marker: 'SE' },
+      { href: '/template-sertifikat', label: 'Template Sertifikat', marker: 'TS' },
     ],
   },
   {

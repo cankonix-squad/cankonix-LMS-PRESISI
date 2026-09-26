@@ -943,6 +943,233 @@ export type CalculateFinalGradeInput = {
 };
 
 // ---------------------------------------------------------------------------
+// Graduation domain (TASK-052 / TASK-053 / TASK-054 / TASK-055)
+//
+// Mirrors the API response DTOs one-for-one. The UI only displays and drives
+// these workflows; every lifecycle guard (rule freezing, no decision without
+// evaluation, certificate issue only from an approved PASS decision) is the
+// backend's job.
+
+export type GraduationComponentTypeDto =
+  | 'ATTENDANCE_PERCENTAGE'
+  | 'FINAL_SCORE'
+  | 'REQUIRED_SUBJECT'
+  | 'FINAL_EXAM';
+
+export type GraduationRuleStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export type GraduationRuleComponentDto = {
+  id: string;
+  graduationRuleId: string;
+  componentType: GraduationComponentTypeDto;
+  label: string;
+  thresholdValue?: number | null;
+  subjectId?: string | null;
+  assessmentId?: string | null;
+  required: boolean;
+  sortOrder: number;
+};
+
+export type GraduationRule = {
+  id: string;
+  educationBatchId: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  version: number;
+  status: GraduationRuleStatus;
+  publishedAt?: string | null;
+  publishedByUserId?: string | null;
+  components: GraduationRuleComponentDto[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GraduationRuleList = {
+  data: GraduationRule[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type GraduationEvaluationOutcome =
+  | 'PENDING'
+  | 'ELIGIBLE'
+  | 'NOT_ELIGIBLE'
+  | 'SUPERSEDED';
+
+export type GraduationEvaluationDetail = {
+  id: string;
+  componentType: GraduationComponentTypeDto;
+  label: string;
+  observedValue?: number | null;
+  thresholdValue?: number | null;
+  passed: boolean;
+  note?: string | null;
+};
+
+export type GraduationEvaluation = {
+  id: string;
+  enrollmentId: string;
+  graduationRuleId: string;
+  outcome: GraduationEvaluationOutcome;
+  evaluatedAt: string;
+  evaluatedByUserId?: string | null;
+  snapshot: Record<string, unknown>;
+  details: GraduationEvaluationDetail[];
+};
+
+export type BatchEvaluationSummary = {
+  educationBatchId: string;
+  graduationRuleId: string;
+  total: number;
+  eligible: number;
+  notEligible: number;
+  results: GraduationEvaluation[];
+};
+
+export type CreateGraduationRuleComponentInput = {
+  componentType: GraduationComponentTypeDto;
+  label: string;
+  thresholdValue?: number | null;
+  subjectId?: string | null;
+  assessmentId?: string | null;
+  required?: boolean;
+  sortOrder?: number;
+};
+
+export type CreateGraduationRuleInput = {
+  educationBatchId: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  components: CreateGraduationRuleComponentInput[];
+};
+
+export type UpdateGraduationRuleInput = {
+  name?: string;
+  description?: string | null;
+  components?: CreateGraduationRuleComponentInput[];
+};
+
+export type GraduationDecisionOutcome =
+  | 'PASS'
+  | 'FAIL'
+  | 'REMEDIAL'
+  | 'WITHDRAWN';
+
+export type GraduationDecisionStatus = 'DRAFT' | 'APPROVED' | 'REVOKED';
+
+export type GraduationDecisionEvaluation = {
+  id: string;
+  enrollmentId: string;
+  graduationRuleId: string;
+  outcome: GraduationEvaluationOutcome;
+  evaluatedAt: string;
+  snapshot: Record<string, unknown>;
+};
+
+export type GraduationDecision = {
+  id: string;
+  graduationEvaluationId: string;
+  decision: GraduationDecisionOutcome;
+  status: GraduationDecisionStatus;
+  decidedByUserId?: string | null;
+  decidedAt?: string | null;
+  approvedByUserId?: string | null;
+  approvedAt?: string | null;
+  revokedByUserId?: string | null;
+  revokedAt?: string | null;
+  revokedReason?: string | null;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  evaluation?: GraduationDecisionEvaluation;
+};
+
+export type GraduationDecisionList = {
+  data: GraduationDecision[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type CreateGraduationDecisionInput = {
+  graduationEvaluationId: string;
+  decision: GraduationDecisionOutcome;
+  note?: string | null;
+};
+
+export type CertificateTemplateStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export type CertificateTemplate = {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  version: number;
+  status: CertificateTemplateStatus;
+  templateObjectKey?: string | null;
+  config?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CertificateTemplateList = {
+  data: CertificateTemplate[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type CreateCertificateTemplateInput = {
+  code: string;
+  name: string;
+  description?: string | null;
+  templateObjectKey?: string | null;
+  config?: Record<string, unknown> | null;
+};
+
+export type UpdateCertificateTemplateInput = {
+  name?: string;
+  description?: string | null;
+  templateObjectKey?: string | null;
+  config?: Record<string, unknown> | null;
+};
+
+export type CertificateStatus = 'ISSUED' | 'REVOKED';
+
+export type Certificate = {
+  id: string;
+  decisionId: string;
+  templateId: string;
+  certificateNumber: string;
+  status: CertificateStatus;
+  issuedAt: string;
+  issuedByUserId?: string | null;
+  fileId?: string | null;
+  holderName: string;
+  programName: string;
+  batchName: string;
+  templateName: string;
+  templateVersion: number;
+  createdAt: string;
+};
+
+export type CertificateList = {
+  data: Certificate[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type IssueCertificateInput = {
+  decisionId: string;
+  templateId: string;
+  fileId?: string | null;
+};
+
+// ---------------------------------------------------------------------------
 // Question bank domain (TASK-041 / TASK-047)
 //
 // The educator contract includes the answer key (`isCorrect`, `scoringRule`,
@@ -2580,6 +2807,168 @@ export function createApiClient(
         return mutate<FinalGrade>(`/final-grades/${id}/reopen`, {
           method: 'POST',
           body: JSON.stringify({ reopenedByUserId, note }),
+        });
+      },
+    },
+
+    /**
+     * Graduation rules and evaluation (TASK-052).
+     */
+    graduation: {
+      listRules(
+        params: {
+          educationBatchId?: string;
+          status?: GraduationRuleStatus;
+          code?: string;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<GraduationRuleList>(
+          `/graduation/rules${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      getRule(id: string) {
+        return request<GraduationRule>(`/graduation/rules/${id}`);
+      },
+      createRule(input: CreateGraduationRuleInput) {
+        return mutate<GraduationRule>('/graduation/rules', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      updateRule(id: string, input: UpdateGraduationRuleInput) {
+        return mutate<GraduationRule>(`/graduation/rules/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+      changeRuleStatus(id: string, status: GraduationRuleStatus) {
+        return mutate<GraduationRule>(`/graduation/rules/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        });
+      },
+      evaluateBatch(input: { educationBatchId: string; graduationRuleId: string }) {
+        return mutate<BatchEvaluationSummary>('/graduation/evaluations/batch', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      listEvaluations(enrollmentId: string) {
+        return request<GraduationEvaluation[]>(
+          `/graduation/enrollments/${enrollmentId}/evaluations`,
+        );
+      },
+    },
+
+    /**
+     * Formal graduation decisions (TASK-053).
+     */
+    graduationDecisions: {
+      list(
+        params: {
+          status?: GraduationDecisionStatus;
+          decision?: GraduationDecisionOutcome;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<GraduationDecisionList>(
+          `/graduation/decisions${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<GraduationDecision>(`/graduation/decisions/${id}`);
+      },
+      create(input: CreateGraduationDecisionInput) {
+        return mutate<GraduationDecision>('/graduation/decisions', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      approve(id: string) {
+        return mutate<GraduationDecision>(`/graduation/decisions/${id}/approve`, {
+          method: 'PATCH',
+          body: JSON.stringify({}),
+        });
+      },
+      revoke(id: string, revokedReason: string) {
+        return mutate<GraduationDecision>(`/graduation/decisions/${id}/revoke`, {
+          method: 'PATCH',
+          body: JSON.stringify({ revokedReason }),
+        });
+      },
+    },
+
+    /**
+     * Certificate templates (TASK-054).
+     */
+    certificateTemplates: {
+      list(
+        params: {
+          code?: string;
+          status?: CertificateTemplateStatus;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<CertificateTemplateList>(
+          `/certificate-templates${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<CertificateTemplate>(`/certificate-templates/${id}`);
+      },
+      create(input: CreateCertificateTemplateInput) {
+        return mutate<CertificateTemplate>('/certificate-templates', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      update(id: string, input: UpdateCertificateTemplateInput) {
+        return mutate<CertificateTemplate>(`/certificate-templates/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+      changeStatus(id: string, status: CertificateTemplateStatus) {
+        return mutate<CertificateTemplate>(`/certificate-templates/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        });
+      },
+    },
+
+    /**
+     * Issued certificates (TASK-055).
+     */
+    certificates: {
+      list(
+        params: {
+          templateId?: string;
+          status?: CertificateStatus;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<CertificateList>(
+          `/certificates${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<Certificate>(`/certificates/${id}`);
+      },
+      issue(input: IssueCertificateInput) {
+        return mutate<Certificate>('/certificates', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      revoke(id: string, revokedReason: string) {
+        return mutate<Certificate>(`/certificates/${id}/revoke`, {
+          method: 'PATCH',
+          body: JSON.stringify({ revokedReason }),
         });
       },
     },
