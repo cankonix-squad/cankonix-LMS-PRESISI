@@ -304,7 +304,7 @@ export type RoleAssignmentStatus = RoleAssignment['status'];
 export type ClassSubject = {
   id: string;
   academicClassId: string;
-  subjectId?: string;
+  subjectId: string;
   curriculumSubjectId?: string;
   code?: string | null;
   displayName?: string | null;
@@ -336,9 +336,12 @@ export type LearningActivity = {
   meetingId: string;
   activityTypeId: string;
   title: string;
+  description: string | null;
   instructions: string | null;
   sequence: number;
+  sequenceNo: number;
   required: boolean;
+  isRequired: boolean;
   availableFrom: string | null;
   availableUntil: string | null;
   status: LearningActivityStatus;
@@ -365,11 +368,14 @@ export type LearningActivityContent = {
   versionGroupId: string;
   contentType: LearningActivityContentType;
   title: string;
+  body: string | null;
   objectKey: string | null;
+  storedFileId: string | null;
   externalUrl: string | null;
   mimeType: string | null;
   sizeBytes: number | null;
   version: number;
+  sequenceNo: number;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED' | 'ARCHIVED';
   createdAt: string;
   updatedAt: string;
@@ -2510,14 +2516,14 @@ export function createApiClient(
      */
     gradingSchemes: {
       list(
-        _params: {
+        params: {
           classSubjectId?: string;
           page?: number;
           limit?: number;
         } = {},
       ) {
         return request<GradingScheme[]>(
-          `/grading-schemes`,
+          `/grading-schemes${buildQuery(params)}`,
         );
       },
       get(id: string) {

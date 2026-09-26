@@ -11,6 +11,7 @@ const statusTones: Record<
   ACTIVE: 'green',
   COMPLETED: 'blue',
   CANCELLED: 'red',
+  INACTIVE: 'slate',
 };
 
 /**
