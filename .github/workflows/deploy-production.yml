@@ -208,6 +208,12 @@ jobs:
           fi
 
           wait_for_healthy cankonix-lms-lemdiklat-keycloak-1
+          if ! docker compose -f docker-compose.production.yml exec -T keycloak \
+            test -f /opt/keycloak/themes/lms-presisi/login/theme.properties; then
+            echo "Keycloak LMS PRESISI theme is not mounted; recreating Keycloak"
+            docker compose -f docker-compose.production.yml up -d --no-build --force-recreate keycloak
+            wait_for_healthy cankonix-lms-lemdiklat-keycloak-1
+          fi
           for attempt in $(seq 1 30); do
             if docker compose -f docker-compose.production.yml exec -T keycloak sh -c \
               '/opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user "$KEYCLOAK_ADMIN" --password "$KEYCLOAK_ADMIN_PASSWORD"' >/dev/null 2>&1; then
@@ -222,6 +228,13 @@ jobs:
           docker compose -f docker-compose.production.yml exec -T keycloak \
             /opt/keycloak/bin/kcadm.sh update realms/lemdiklat \
             -s loginTheme=lms-presisi
+          LOGIN_THEME=$(docker compose -f docker-compose.production.yml exec -T keycloak \
+            /opt/keycloak/bin/kcadm.sh get realms/lemdiklat \
+            --fields loginTheme --format csv | tail -n 1 | tr -d '\r"')
+          if [ "$LOGIN_THEME" != "lms-presisi" ]; then
+            echo "Expected Keycloak loginTheme=lms-presisi, got '$LOGIN_THEME'" >&2
+            exit 1
+          fi
           docker compose -f docker-compose.production.yml exec -T keycloak \
             /opt/keycloak/bin/kcadm.sh get realms/lemdiklat \
             --fields loginTheme
