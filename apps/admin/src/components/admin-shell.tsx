@@ -50,15 +50,31 @@ const navigationGroups = [
     label: 'Kelulusan & Sertifikat',
     items: [
       { href: '/kelulusan', label: 'Kelulusan', marker: 'GR' },
-      { href: '/keputusan-kelulusan', label: 'Keputusan Kelulusan', marker: 'KK' },
+      {
+        href: '/keputusan-kelulusan',
+        label: 'Keputusan Kelulusan',
+        marker: 'KK',
+      },
       { href: '/nilai-akhir', label: 'Nilai Akhir', marker: 'NA' },
       { href: '/sertifikat', label: 'Sertifikat', marker: 'SE' },
-      { href: '/template-sertifikat', label: 'Template Sertifikat', marker: 'TS' },
+      {
+        href: '/template-sertifikat',
+        label: 'Template Sertifikat',
+        marker: 'TS',
+      },
     ],
   },
   {
     label: 'Reporting',
-    items: [{ label: 'Report Center', marker: 'R' }],
+    items: [
+      { href: '/laporan', label: 'Report Center', marker: 'R' },
+      { href: '/laporan/metrics', label: 'Metrics', marker: 'RM' },
+      {
+        href: '/laporan/trend-kelulusan',
+        label: 'Tren Kelulusan',
+        marker: 'RT',
+      },
+    ],
   },
   {
     label: 'Audit & System',

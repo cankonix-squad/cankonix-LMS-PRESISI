@@ -951,10 +951,7 @@ export type CalculateFinalGradeInput = {
 // backend's job.
 
 export type GraduationComponentTypeDto =
-  | 'ATTENDANCE_PERCENTAGE'
-  | 'FINAL_SCORE'
-  | 'REQUIRED_SUBJECT'
-  | 'FINAL_EXAM';
+  'ATTENDANCE_PERCENTAGE' | 'FINAL_SCORE' | 'REQUIRED_SUBJECT' | 'FINAL_EXAM';
 
 export type GraduationRuleStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
@@ -993,10 +990,7 @@ export type GraduationRuleList = {
 };
 
 export type GraduationEvaluationOutcome =
-  | 'PENDING'
-  | 'ELIGIBLE'
-  | 'NOT_ELIGIBLE'
-  | 'SUPERSEDED';
+  'PENDING' | 'ELIGIBLE' | 'NOT_ELIGIBLE' | 'SUPERSEDED';
 
 export type GraduationEvaluationDetail = {
   id: string;
@@ -1053,10 +1047,7 @@ export type UpdateGraduationRuleInput = {
 };
 
 export type GraduationDecisionOutcome =
-  | 'PASS'
-  | 'FAIL'
-  | 'REMEDIAL'
-  | 'WITHDRAWN';
+  'PASS' | 'FAIL' | 'REMEDIAL' | 'WITHDRAWN';
 
 export type GraduationDecisionStatus = 'DRAFT' | 'APPROVED' | 'REVOKED';
 
@@ -1517,6 +1508,272 @@ export type SaveAttemptAnswerInput = {
   answerPayload: Record<string, unknown>;
   /** The revision the client last observed; the server rejects a stale write. */
   revision: number;
+};
+
+// ---------------------------------------------------------------------------
+// Reporting domain (TASK-060 / TASK-061 / TASK-062 / TASK-063 / TASK-064)
+//
+// Read-heavy contracts. Every figure is served from the stored reporting read
+// model; the admin UI only displays these, it never computes them. Average
+// numbers here are already the backend's weighted/summed values — the client
+// must not re-derive them.
+
+export type ReportingScopeType =
+  | 'ORGANIZATION'
+  | 'PROGRAM'
+  | 'BATCH'
+  | 'CLASS'
+  | 'CLASS_SUBJECT'
+  | 'ENROLLMENT';
+
+/** Reported metrics for one scope (TASK-060). */
+export type ReportingMetrics = {
+  participants: number;
+  activeParticipants: number;
+  averageProgressPercent: number;
+  attendancePercentage: number;
+  totalSessions: number;
+  averageFinalScore: number;
+  gradedCount: number;
+  unapprovedGradeCount: number;
+};
+
+export type ReportingScopeMetric = {
+  id: string;
+  scopeType: ReportingScopeType;
+  scopeId: string;
+  scopeName: string | null;
+  organizationId: string | null;
+  educationProgramId: string | null;
+  educationBatchId: string | null;
+  academicClassId: string | null;
+  classSubjectId: string | null;
+  metrics: ReportingMetrics;
+  generatedAt: string;
+  recalculatedAt: string;
+};
+
+export type ReportingMetricsList = {
+  data: ReportingScopeMetric[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type RefreshReportingInput = {
+  scopeType?: ReportingScopeType;
+  scopeId?: string;
+  organizationId?: string;
+};
+
+export type RefreshReportingResult = {
+  refreshed: number;
+  scopes: string[];
+  refreshedAt: string;
+};
+
+/** Executive KPI roll-up grain (TASK-061). */
+export type ExecutiveOverviewScope =
+  'NATIONAL' | 'ORGANIZATION' | 'PROGRAM' | 'BATCH';
+
+export type ExecutiveKpiBlock = {
+  participants: number;
+  activeParticipants: number;
+  institutions: number;
+  programs: number;
+  batches: number;
+  classes: number;
+  averageProgressPercent: number;
+  attendancePercentage: number;
+  totalSessions: number;
+  averageFinalScore: number;
+  gradedCount: number;
+  unapprovedGradeCount: number;
+  graduationEvaluationCount: number;
+  graduationEligibleCount: number;
+  graduationApprovedCount: number;
+  graduationPassCount: number;
+  graduationFailCount: number;
+  graduationRemedialCount: number;
+  graduationWithdrawnCount: number;
+  graduatedCount: number;
+  certificationRate: number;
+};
+
+export type ExecutiveScope = {
+  scope: ExecutiveOverviewScope;
+  scopeId: string | null;
+  accessLevel: 'NATIONAL' | 'SCOPED';
+  institutionCount: number;
+  periodFrom: string | null;
+  periodTo: string | null;
+};
+
+export type ExecutiveBreakdownItem = {
+  scopeType: ReportingScopeType;
+  scopeId: string;
+  scopeName: string | null;
+  metrics: ReportingMetrics;
+  recalculatedAt: string;
+};
+
+export type ExecutiveBreakdownList = {
+  data: ExecutiveBreakdownItem[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type ExecutiveOverview = {
+  scope: ExecutiveScope;
+  kpis: ExecutiveKpiBlock;
+  breakdown: ExecutiveBreakdownList;
+  generatedAt: string;
+};
+
+export type ExecutiveOverviewQuery = {
+  scope?: ExecutiveOverviewScope;
+  scopeId?: string;
+  periodFrom?: string;
+  periodTo?: string;
+  page?: number;
+  limit?: number;
+};
+
+/** KPI detail level (TASK-063). */
+export type KpiDetailLevel =
+  'PROGRAM' | 'BATCH' | 'CLASS' | 'CLASS_SUBJECT' | 'ENROLLMENT';
+
+export type KpiDistributionBucket = {
+  label: string;
+  min: number;
+  max: number;
+  count: number;
+  participants: number;
+};
+
+export type KpiDistributions = {
+  attendance: KpiDistributionBucket[];
+  learningProgress: KpiDistributionBucket[];
+  finalScore: KpiDistributionBucket[];
+  remedialRisk: KpiDistributionBucket[];
+};
+
+export type KpiAttentionItem = {
+  scopeType: ReportingScopeType;
+  scopeId: string;
+  scopeName: string | null;
+  severity: number;
+  reasons: string[];
+  metrics: ReportingMetrics;
+  recalculatedAt: string;
+};
+
+export type KpiTrendPoint = {
+  period: string;
+  scopeCount: number;
+  kpis: ExecutiveKpiBlock;
+};
+
+export type ExecutiveKpiDetail = {
+  scope: ExecutiveScope;
+  level: ReportingScopeType;
+  summary: ExecutiveKpiBlock;
+  distributions: KpiDistributions;
+  attention: KpiAttentionItem[];
+  trends: KpiTrendPoint[];
+  total: number;
+  page: number;
+  limit: number;
+  generatedAt: string;
+};
+
+export type ExecutiveKpiQuery = {
+  scope?: ExecutiveOverviewScope;
+  scopeId?: string;
+  level?: KpiDetailLevel;
+  periodFrom?: string;
+  periodTo?: string;
+  page?: number;
+  limit?: number;
+  attentionLimit?: number;
+  trendLimit?: number;
+};
+
+/** Drill-down walk (TASK-062). */
+export type DrilldownChild = {
+  level: ReportingScopeType;
+  id: string;
+  name: string | null;
+  code: string | null;
+  parentId: string | null;
+  childCount: number;
+  hasChildren: boolean;
+  metrics: ReportingMetrics | null;
+  recalculatedAt: string | null;
+};
+
+export type DrilldownTrailEntry = {
+  level: ReportingScopeType;
+  id: string | null;
+};
+
+export type DrilldownList = {
+  level: ReportingScopeType;
+  parentId: string | null;
+  parentLevel: ReportingScopeType | null;
+  trail: DrilldownTrailEntry[];
+  openableLevels: ReportingScopeType[];
+  data: DrilldownChild[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type DrilldownQuery = {
+  level: ReportingScopeType;
+  parentId?: string;
+  page?: number;
+  limit?: number;
+};
+
+/** Graduation trend (TASK-064). */
+export type GraduationTrendGranularity =
+  'COHORT' | 'YEAR' | 'QUARTER' | 'MONTH';
+
+export type GraduationTrendPoint = {
+  period: string;
+  scopeCount: number;
+  evaluationCount: number;
+  eligibleCount: number;
+  approvedCount: number;
+  passCount: number;
+  failCount: number;
+  remedialCount: number;
+  withdrawnCount: number;
+  certificateIssuedCount: number;
+  passRate: number;
+  failRate: number;
+  remedialRate: number;
+  certificationRate: number;
+};
+
+export type GraduationTrend = {
+  scope: ExecutiveScope;
+  level: ReportingScopeType;
+  granularity: GraduationTrendGranularity;
+  trends: GraduationTrendPoint[];
+  generatedAt: string;
+};
+
+export type GraduationTrendQuery = {
+  scope?: ExecutiveOverviewScope;
+  scopeId?: string;
+  level?: KpiDetailLevel;
+  granularity?: GraduationTrendGranularity;
+  periodFrom?: string;
+  periodTo?: string;
+  limit?: number;
 };
 
 function isHealthResponse(body: unknown): body is HealthResponse {
@@ -2762,10 +3019,7 @@ export function createApiClient(
           body: JSON.stringify(input),
         });
       },
-      addComponent(
-        schemeId: string,
-        input: CreateGradingComponentInput,
-      ) {
+      addComponent(schemeId: string, input: CreateGradingComponentInput) {
         return mutate<GradingComponent>(
           `/grading-schemes/${schemeId}/components`,
           {
@@ -2849,7 +3103,10 @@ export function createApiClient(
           body: JSON.stringify({ status }),
         });
       },
-      evaluateBatch(input: { educationBatchId: string; graduationRuleId: string }) {
+      evaluateBatch(input: {
+        educationBatchId: string;
+        graduationRuleId: string;
+      }) {
         return mutate<BatchEvaluationSummary>('/graduation/evaluations/batch', {
           method: 'POST',
           body: JSON.stringify(input),
@@ -2888,16 +3145,22 @@ export function createApiClient(
         });
       },
       approve(id: string) {
-        return mutate<GraduationDecision>(`/graduation/decisions/${id}/approve`, {
-          method: 'PATCH',
-          body: JSON.stringify({}),
-        });
+        return mutate<GraduationDecision>(
+          `/graduation/decisions/${id}/approve`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({}),
+          },
+        );
       },
       revoke(id: string, revokedReason: string) {
-        return mutate<GraduationDecision>(`/graduation/decisions/${id}/revoke`, {
-          method: 'PATCH',
-          body: JSON.stringify({ revokedReason }),
-        });
+        return mutate<GraduationDecision>(
+          `/graduation/decisions/${id}/revoke`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ revokedReason }),
+          },
+        );
       },
     },
 
@@ -2933,10 +3196,13 @@ export function createApiClient(
         });
       },
       changeStatus(id: string, status: CertificateTemplateStatus) {
-        return mutate<CertificateTemplate>(`/certificate-templates/${id}/status`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status }),
-        });
+        return mutate<CertificateTemplate>(
+          `/certificate-templates/${id}/status`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+          },
+        );
       },
     },
 
@@ -2970,6 +3236,66 @@ export function createApiClient(
           method: 'PATCH',
           body: JSON.stringify({ revokedReason }),
         });
+      },
+    },
+
+    /**
+     * Reporting read model (TASK-060 through TASK-064).
+     *
+     * Read-heavy contracts only. The admin UI consumes these; nothing here
+     * re-derives figures the backend already computed. Permission checks
+     * (`reporting.metric.read`, `reporting.metric.refresh`,
+     * `reporting.executive.read`) are enforced server-side.
+     */
+    reporting: {
+      listMetrics(
+        params: {
+          scopeType?: ReportingScopeType;
+          scopeId?: string;
+          organizationId?: string;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ReportingMetricsList>(
+          `/reporting/metrics${buildQuery({ page: 1, limit: 50, ...params })}`,
+        );
+      },
+      getMetric(scopeType: ReportingScopeType, scopeId: string) {
+        return request<ReportingScopeMetric>(
+          `/reporting/metrics/${scopeType}/${scopeId}`,
+        );
+      },
+      refreshMetrics(input: RefreshReportingInput) {
+        return mutate<RefreshReportingResult>('/reporting/metrics/refresh', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      executiveOverview(params: ExecutiveOverviewQuery = {}) {
+        return request<ExecutiveOverview>(
+          `/reporting/executive/overview${buildQuery({ ...params })}`,
+        );
+      },
+      executiveInstitution(organizationId: string) {
+        return request<ExecutiveBreakdownItem>(
+          `/reporting/executive/institutions/${organizationId}`,
+        );
+      },
+      executiveKpis(params: ExecutiveKpiQuery = {}) {
+        return request<ExecutiveKpiDetail>(
+          `/reporting/executive/kpis${buildQuery({ page: 1, limit: 25, ...params })}`,
+        );
+      },
+      executiveDrilldown(params: DrilldownQuery) {
+        return request<DrilldownList>(
+          `/reporting/executive/drilldown${buildQuery({ page: 1, limit: 25, ...params })}`,
+        );
+      },
+      graduationTrends(params: GraduationTrendQuery = {}) {
+        return request<GraduationTrend>(
+          `/reporting/executive/graduation-trends${buildQuery({ ...params })}`,
+        );
       },
     },
   };
