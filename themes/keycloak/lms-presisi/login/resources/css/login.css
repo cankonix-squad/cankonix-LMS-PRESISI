@@ -42,6 +42,108 @@ a {
   outline-offset: 3px;
 }
 
+.login-pf body,
+body#keycloak-bg {
+  min-height: 100svh;
+  background:
+    linear-gradient(90deg, rgba(6, 27, 52, 0.98), rgba(6, 27, 52, 0.66)),
+    url('../img/login-hero-v3.png') center / contain no-repeat,
+    #061b35;
+}
+
+.pf-v5-c-login {
+  min-height: 100svh;
+  background: transparent;
+}
+
+.pf-v5-c-login__container {
+  min-height: 100svh;
+  padding: clamp(20px, 4vw, 52px);
+}
+
+#kc-header-wrapper {
+  color: #fff;
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-shadow: 0 16px 36px rgba(0, 0, 0, 0.34);
+}
+
+#kc-header-wrapper::after {
+  display: block;
+  width: fit-content;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 4px solid var(--login-gold);
+  color: rgba(255, 255, 255, 0.82);
+  content: 'LMS PRESISI LEMDIKLAT POLRI';
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.pf-v5-c-login__main {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 20px;
+  background: rgba(251, 251, 252, 0.94);
+  box-shadow: 0 18px 42px rgba(3, 17, 36, 0.32);
+  backdrop-filter: blur(10px);
+}
+
+.pf-v5-c-login__main-header,
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer {
+  background: transparent;
+}
+
+#kc-page-title {
+  color: var(--login-ink);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+#kc-page-title::after {
+  display: block;
+  margin-top: 8px;
+  color: var(--login-muted);
+  content: 'Gunakan akun resmi pusat identitas LMS PRESISI.';
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pf-v5-c-form__label-text {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pf-v5-c-form-control,
+.pf-v5-c-input-group {
+  border-radius: 12px;
+}
+
+.pf-v5-c-form-control input {
+  min-height: 44px;
+  color: #25344d;
+  font-size: 13px;
+}
+
+#kc-login {
+  min-height: 46px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--login-gold);
+  color: #071d38;
+  font-weight: 900;
+}
+
+#kc-login:hover {
+  background: #e0b963;
+}
+
 .login-page {
   min-width: 320px;
   overflow-x: hidden;
