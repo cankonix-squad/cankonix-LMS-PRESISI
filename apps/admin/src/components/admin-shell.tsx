@@ -79,8 +79,8 @@ const navigationGroups = [
   {
     label: 'Audit & System',
     items: [
-      { label: 'Audit Log', marker: 'AL' },
-      { label: 'System Health', marker: 'SH' },
+      { href: '/audit', label: 'Audit Log', marker: 'AL' },
+      { href: '/system-health', label: 'System Health', marker: 'SH' },
     ],
   },
 ];

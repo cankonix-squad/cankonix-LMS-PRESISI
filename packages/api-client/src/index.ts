@@ -1776,6 +1776,49 @@ export type GraduationTrendQuery = {
   limit?: number;
 };
 
+// ---------------------------------------------------------------------------
+// Audit Trail (TASK-006, TASK-009AG)
+// ---------------------------------------------------------------------------
+
+/** One audit trail entry as returned by `GET /audit-logs`. */
+export type AuditLogEntry = {
+  id: string;
+  actorUserAccountId: string | null;
+  action: string;
+  resourceType: string;
+  resourceId: string | null;
+  organizationId: string | null;
+  /** State before the mutation (already redacted server-side). */
+  before: unknown;
+  /** State after the mutation (already redacted server-side). */
+  after: unknown;
+  /** Supplementary redacted context. */
+  metadata: unknown;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+};
+
+export type AuditLogList = {
+  data: AuditLogEntry[];
+  page: number;
+  limit: number;
+  total: number;
+};
+
+export type AuditLogQuery = {
+  actorUserAccountId?: string;
+  action?: string;
+  resourceType?: string;
+  resourceId?: string;
+  organizationId?: string;
+  from?: string;
+  to?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+};
+
 function isHealthResponse(body: unknown): body is HealthResponse {
   return (
     typeof body === 'object' &&
@@ -3236,6 +3279,24 @@ export function createApiClient(
           method: 'PATCH',
           body: JSON.stringify({ revokedReason }),
         });
+      },
+    },
+
+    /**
+     * Read-only audit trail (TASK-006, TASK-009AG).
+     *
+     * There is deliberately no create/update/delete here: entries are written by
+     * the application services that perform the audited mutation, and the trail
+     * is immutable. Reading requires the `audit.log.read` permission server-side.
+     */
+    audit: {
+      list(params: AuditLogQuery = {}) {
+        return request<AuditLogList>(
+          `/audit-logs${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      get(id: string) {
+        return request<AuditLogEntry>(`/audit-logs/${id}`);
       },
     },
 
