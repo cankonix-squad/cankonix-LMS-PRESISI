@@ -78,6 +78,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009AA | `tasks/TASK-009AA-admin-academic-pattern-standardization.md` | REVIEW | TASK-009Z = REVIEW |
 | TASK-009AB | `tasks/TASK-009AB-admin-program-curriculum-pattern-standardization.md` | REVIEW | TASK-009AA = REVIEW |
 | TASK-009AC | `tasks/TASK-009AC-admin-learning-pattern-standardization.md` | REVIEW | TASK-009AB = REVIEW |
+| TASK-009AD | `tasks/TASK-009AD-admin-assessment-pages-pattern-standardization.md` | REVIEW | TASK-009AC = REVIEW |
 | TASK-010 | `tasks/TASK-010-academic-program.md` | DONE-WITH-DEFERRED | TASK-005 = DONE |
 | TASK-011 | `tasks/TASK-011-curriculum-subject.md` | DONE-WITH-DEFERRED | TASK-010 = DONE |
 | TASK-012 | `tasks/TASK-012-batch.md` | DONE-WITH-DEFERRED | TASK-011 = DONE |

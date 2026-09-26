@@ -304,9 +304,14 @@ export type RoleAssignmentStatus = RoleAssignment['status'];
 export type ClassSubject = {
   id: string;
   academicClassId: string;
-  subjectId: string;
-  educatorPersonId: string | null;
-  status: 'PLANNED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  subjectId?: string;
+  curriculumSubjectId?: string;
+  code?: string | null;
+  displayName?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: 'PLANNED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'INACTIVE';
+  educatorPersonId?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -848,6 +853,87 @@ export type UpdateAssessmentInput = {
 export type ChangeAssessmentStatusInput = {
   status: AssessmentStatus;
   reason?: string;
+};
+
+// ---------------------------------------------------------------------------
+// Grading domain (TASK-050)
+//
+// A grading scheme groups assessments under a class subject and assigns
+// percentage weights, so a weighted final grade can be computed automatically.
+// A scheme is a curriculum decision, so its routes carry a different permission
+// from marking one individual answer.
+// ---------------------------------------------------------------------------
+
+export type GradingSchemeStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export type GradingScheme = {
+  id: string;
+  classSubjectId: string;
+  name: string;
+  status: GradingSchemeStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GradingSchemeList = {
+  data: GradingScheme[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type GradingComponent = {
+  id: string;
+  schemeId: string;
+  assessmentId: string;
+  name: string;
+  weight: number;
+  required: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateGradingSchemeInput = {
+  classSubjectId: string;
+  name: string;
+  status?: GradingSchemeStatus;
+};
+
+export type CreateGradingComponentInput = {
+  assessmentId: string;
+  name: string;
+  weight: number;
+  required?: boolean;
+};
+
+export type FinalGradeStatus = 'CALCULATED' | 'APPROVED' | 'REOPENED';
+
+export type FinalGrade = {
+  id: string;
+  enrollmentId: string;
+  classSubjectId: string;
+  gradingSchemeId: string;
+  numericScore: number;
+  gradeCode: string | null;
+  status: FinalGradeStatus;
+  calculatedAt: string;
+  approvedAt: string | null;
+  approvedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FinalGradeList = {
+  data: FinalGrade[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type CalculateFinalGradeInput = {
+  enrollmentId: string;
+  classSubjectId: string;
+  gradingSchemeId: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -2411,6 +2497,83 @@ export function createApiClient(
         return mutate<unknown>(`/exam-grading/answers/${answerId}`, {
           method: 'PUT',
           body: JSON.stringify(input),
+        });
+      },
+    },
+
+    /**
+     * Grading schemes and their components (TASK-050).
+     *
+     * A scheme groups assessments under a class subject and assigns percentage
+     * weights so the final grade can be computed automatically. The backend
+     * returns a plain array (no pagination wrapper yet).
+     */
+    gradingSchemes: {
+      list(
+        _params: {
+          classSubjectId?: string;
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<GradingScheme[]>(
+          `/grading-schemes`,
+        );
+      },
+      get(id: string) {
+        return request<GradingScheme>(`/grading-schemes/${id}`);
+      },
+      create(input: CreateGradingSchemeInput) {
+        return mutate<GradingScheme>('/grading-schemes', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      addComponent(
+        schemeId: string,
+        input: CreateGradingComponentInput,
+      ) {
+        return mutate<GradingComponent>(
+          `/grading-schemes/${schemeId}/components`,
+          {
+            method: 'POST',
+            body: JSON.stringify(input),
+          },
+        );
+      },
+    },
+
+    /**
+     * Final grades per enrollment per class subject (TASK-050). There is no
+     * list endpoint yet: a final grade is produced on demand by
+     * `calculate`/`recalculate` and read back by id.
+     */
+    finalGrades: {
+      get(id: string) {
+        return request<FinalGrade>(`/final-grades/${id}`);
+      },
+      calculate(input: CalculateFinalGradeInput) {
+        return mutate<FinalGrade>('/final-grades/calculate', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      recalculate(input: CalculateFinalGradeInput) {
+        return mutate<FinalGrade>('/final-grades/recalculate', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      approve(id: string, approvedByUserId: string) {
+        return mutate<FinalGrade>(`/final-grades/${id}/approve`, {
+          method: 'POST',
+          body: JSON.stringify({ approvedByUserId }),
+        });
+      },
+      reopen(id: string, reopenedByUserId: string, note?: string) {
+        return mutate<FinalGrade>(`/final-grades/${id}/reopen`, {
+          method: 'POST',
+          body: JSON.stringify({ reopenedByUserId, note }),
         });
       },
     },

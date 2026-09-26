@@ -40,10 +40,10 @@ const navigationGroups = [
   {
     label: 'Ujian & Penilaian',
     items: [
-      { label: 'Assessment', marker: 'AS' },
-      { label: 'Bank Soal', marker: 'BS' },
-      { label: 'Exam', marker: 'EX' },
-      { label: 'Grading', marker: 'G' },
+      { href: '/assessment', label: 'Assessment', marker: 'AS' },
+      { href: '/bank-soal', label: 'Bank Soal', marker: 'BS' },
+      { href: '/exam', label: 'Exam', marker: 'EX' },
+      { href: '/grading', label: 'Grading', marker: 'G' },
     ],
   },
   {
