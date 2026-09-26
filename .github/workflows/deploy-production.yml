@@ -247,11 +247,14 @@ jobs:
           fi
           docker compose -f docker-compose.production.yml exec -T keycloak \
             /opt/keycloak/bin/kcadm.sh update "clients/$ADMIN_CLIENT_ID" -r lemdiklat \
+            -s attributes.login_theme=lms-presisi
+          docker compose -f docker-compose.production.yml exec -T keycloak \
+            /opt/keycloak/bin/kcadm.sh update "clients/$ADMIN_CLIENT_ID" -r lemdiklat \
             -s 'redirectUris=["https://lms-presisi.digitallearningcenter.id/api/auth/callback","https://admin.lms-presisi.digitallearningcenter.id/api/auth/callback","http://localhost:3000/api/auth/callback"]' \
             -s 'webOrigins=["https://lms-presisi.digitallearningcenter.id","https://admin.lms-presisi.digitallearningcenter.id","http://localhost:3000"]'
           docker compose -f docker-compose.production.yml exec -T keycloak \
             /opt/keycloak/bin/kcadm.sh get "clients/$ADMIN_CLIENT_ID" -r lemdiklat \
-            --fields clientId,redirectUris,webOrigins
+            --fields clientId,attributes,redirectUris,webOrigins
 
           for service in "${SERVICES[@]}"; do
             case "$service" in
