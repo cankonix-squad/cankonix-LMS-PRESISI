@@ -145,9 +145,7 @@ export default function LoginPage() {
             className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#e2b652] px-6 text-sm font-black text-[#071d38] shadow-[0_18px_40px_rgba(0,0,0,.24)] transition hover:-translate-y-0.5 hover:bg-[#f1cc73] focus:outline-none focus:ring-4 focus:ring-[#e2b652]/35"
           >
             Masuk
-            <span className="ml-3 text-base" aria-hidden="true">
-              -&gt;
-            </span>
+            <ArrowRightIcon className="ml-3 h-4 w-4" />
           </a>
         </header>
 
@@ -216,9 +214,7 @@ export default function LoginPage() {
             className="mt-8 inline-flex min-h-12 items-center rounded-lg bg-[#e2b652] px-6 text-sm font-black text-[#071d38] transition hover:bg-[#f1cc73]"
           >
             Pelajari lebih lanjut
-            <span className="ml-3" aria-hidden="true">
-              -&gt;
-            </span>
+            <ArrowRightIcon className="ml-3 h-4 w-4" />
           </a>
         </div>
 
@@ -343,7 +339,8 @@ export default function LoginPage() {
               href="/api/auth/login"
               className="mt-4 inline-flex font-black text-[#e2b652]"
             >
-              Masuk ke LMS -&gt;
+              Masuk ke LMS
+              <ArrowRightIcon className="ml-2 h-4 w-4" />
             </a>
           </div>
         </div>
@@ -424,9 +421,28 @@ function RoleCard({
         href={href}
         className="mt-5 inline-flex text-sm font-black text-[#1263b0]"
       >
-        Masuk sebagai {title} -&gt;
+        Masuk sebagai {title}
+        <ArrowRightIcon className="ml-2 h-4 w-4" />
       </a>
     </article>
+  );
+}
+
+function ArrowRightIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2.5"
+    >
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
   );
 }
 
