@@ -84,6 +84,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
     volumes:
       - ./themes/keycloak/lms-presisi:/opt/keycloak/themes/lms-presisi:ro
+      - ./themes/keycloak/lms-presisi:/opt/keycloak/themes/keycloak.v2:ro
     depends_on:
       keycloak-db:
         condition: service_healthy
