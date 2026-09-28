@@ -5,12 +5,15 @@ import type {
   CreateOrganizationInput,
   CreatePersonInput,
   CreateRoleAssignmentInput,
+  CreateRoleInput,
   CreateUserAccountInput,
   Organization,
+  Role,
   RoleAssignmentStatus,
   ScopeInput,
   UpdateOrganizationInput,
   UpdatePersonInput,
+  UpdateRoleInput,
   UpdateUserAccountInput,
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
@@ -408,6 +411,175 @@ export async function removeAssignmentScopeAction(
   revalidatePath('/');
   revalidatePath('/assignments');
   return { ok: true, message: 'Scope assignment berhasil dihapus.' };
+}
+
+export async function createRoleAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const code = getText(formData, 'code').toUpperCase();
+  const name = getText(formData, 'name');
+  const description = getText(formData, 'description');
+
+  if (!code || !name) {
+    return {
+      ok: false,
+      message: 'Kode role dan nama role wajib diisi.',
+    };
+  }
+
+  const input: CreateRoleInput = { code, name };
+  if (description) input.description = description;
+
+  const result = await createAdminApiClient().authorization.createRole(input);
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Role gagal dibuat.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/roles');
+  return {
+    ok: true,
+    message: `Role ${result.data.name} berhasil dibuat.`,
+  };
+}
+
+export async function updateRoleAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const id = getText(formData, 'id');
+  const code = getText(formData, 'code').toUpperCase();
+  const name = getText(formData, 'name');
+  const description = getText(formData, 'description');
+
+  if (!id || !code || !name) {
+    return {
+      ok: false,
+      message: 'ID, kode role, dan nama role wajib diisi.',
+    };
+  }
+
+  const input: UpdateRoleInput = { code, name };
+  if (description) {
+    input.description = description;
+  } else {
+    input.description = null;
+  }
+
+  const result = await createAdminApiClient().authorization.updateRole(
+    id,
+    input,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Role gagal diperbarui.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/roles');
+  return {
+    ok: true,
+    message: `Role ${result.data.name} berhasil diperbarui.`,
+  };
+}
+
+export async function updateRoleStatusAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const id = getText(formData, 'id');
+  const name = getText(formData, 'name');
+  const status = getText(formData, 'status') as Role['status'];
+
+  if (!id || !['ACTIVE', 'INACTIVE'].includes(status)) {
+    return {
+      ok: false,
+      message: 'Role dan status target wajib valid.',
+    };
+  }
+
+  const result = await createAdminApiClient().authorization.updateRole(id, {
+    status,
+  });
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Status role gagal diperbarui.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/roles');
+  return {
+    ok: true,
+    message: `${name || result.data.name} berhasil ${status === 'ACTIVE' ? 'diaktifkan' : 'dinonaktifkan'}.`,
+  };
+}
+
+export async function grantPermissionAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const roleId = getText(formData, 'roleId');
+  const permissionId = getText(formData, 'permissionId');
+
+  if (!roleId || !permissionId) {
+    return {
+      ok: false,
+      message: 'Role dan permission wajib dipilih.',
+    };
+  }
+
+  const result = await createAdminApiClient().authorization.grantPermission(
+    roleId,
+    permissionId,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Permission gagal ditambahkan ke role.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/roles');
+  return { ok: true, message: 'Permission berhasil ditambahkan ke role.' };
+}
+
+export async function revokePermissionAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const roleId = getText(formData, 'roleId');
+  const permissionId = getText(formData, 'permissionId');
+
+  if (!roleId || !permissionId) {
+    return {
+      ok: false,
+      message: 'Role dan permission wajib dipilih.',
+    };
+  }
+
+  const result = await createAdminApiClient().authorization.revokePermission(
+    roleId,
+    permissionId,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || 'Permission gagal dilepas dari role.',
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/roles');
+  return { ok: true, message: 'Permission berhasil dilepas dari role.' };
 }
 
 function getText(formData: FormData, key: string) {

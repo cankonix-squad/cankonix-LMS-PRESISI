@@ -293,6 +293,41 @@ export type AddRoleAssignmentScopesInput = {
 
 export type RoleAssignmentStatus = RoleAssignment['status'];
 
+export type CreateRoleInput = {
+  code: string;
+  name: string;
+  description?: string;
+  status?: Role['status'];
+  permissionIds?: string[];
+};
+
+export type UpdateRoleInput = Partial<
+  Omit<CreateRoleInput, 'permissionIds' | 'description'>
+> & {
+  description?: string | null;
+};
+
+export type RolePermissionOutcome =
+  | 'granted'
+  | 'already_granted'
+  | 'removed'
+  | 'already_removed';
+
+export type RolePermissionMutationResult = {
+  roleId: string;
+  permissionId: string;
+  outcome: RolePermissionOutcome;
+};
+
+export type RoleDetail = Role & { permissions: Permission[] };
+
+export type CreatePermissionInput = {
+  code: string;
+  name: string;
+  description?: string;
+  grantToRoleCodes?: string[];
+};
+
 // ---------------------------------------------------------------------------
 // Learning domain (TASK-020 .. TASK-024)
 //
@@ -2217,12 +2252,51 @@ export function createApiClient(
         );
       },
       role(id: string) {
-        return request<Role & { permissions: Permission[] }>(
+        return request<RoleDetail>(
           `/authorization/roles/${id}`,
         );
       },
       rolePermissions(id: string) {
         return request<Permission[]>(`/authorization/roles/${id}/permissions`);
+      },
+      createRole(input: CreateRoleInput) {
+        return mutate<RoleDetail>('/authorization/roles', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      updateRole(id: string, input: UpdateRoleInput) {
+        return mutate<RoleDetail>(`/authorization/roles/${id}`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+      },
+      async deleteRole(id: string) {
+        try {
+          await request<undefined>(`/authorization/roles/${id}`, {
+            method: 'DELETE',
+          });
+          return { ok: true as const, data: undefined };
+        } catch (error) {
+          return {
+            ok: false as const,
+            status: 0,
+            message:
+              error instanceof Error ? error.message : 'Unknown API error',
+          };
+        }
+      },
+      grantPermission(roleId: string, permissionId: string) {
+        return mutate<RolePermissionMutationResult>(
+          `/authorization/roles/${roleId}/permissions/${permissionId}`,
+          { method: 'POST' },
+        );
+      },
+      revokePermission(roleId: string, permissionId: string) {
+        return mutate<RolePermissionMutationResult>(
+          `/authorization/roles/${roleId}/permissions/${permissionId}`,
+          { method: 'DELETE' },
+        );
       },
       permissions(
         params: { search?: string; page?: number; limit?: number } = {},
@@ -2230,6 +2304,12 @@ export function createApiClient(
         return request<ApiListResponse<Permission>>(
           `/authorization/permissions${buildQuery({ page: 1, limit: 20, ...params })}`,
         );
+      },
+      createPermission(input: CreatePermissionInput) {
+        return mutate<Permission>('/authorization/permissions', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
       },
       assignments(
         params: {
