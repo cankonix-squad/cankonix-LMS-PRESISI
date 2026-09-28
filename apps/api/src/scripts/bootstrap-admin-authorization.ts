@@ -23,11 +23,13 @@
  *
  * Exit codes: 0 on success, 1 on failure so a pipeline can fail loudly.
  */
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const BOOTSTRAP_PERSONNEL_NUMBER = 'BOOTSTRAP-ADMIN';
 const BOOTSTRAP_USERNAME = 'bootstrap-admin';
 const BOOTSTRAP_ROLE_CODE = 'SUPER_ADMIN';
+const BOOTSTRAP_EXTERNAL_AUTH_ID =
+  process.env.BOOTSTRAP_EXTERNAL_AUTH_ID?.trim() || '';
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient();
@@ -41,30 +43,37 @@ async function main(): Promise<void> {
       );
     }
 
+    const identityCandidates: Prisma.UserAccountWhereInput[] = [
+      { username: BOOTSTRAP_USERNAME },
+      { username: BOOTSTRAP_USERNAME.toUpperCase() },
+      {
+        person: {
+          personnelNumber: BOOTSTRAP_PERSONNEL_NUMBER,
+        },
+      },
+      {
+        person: {
+          personnelNumber: BOOTSTRAP_USERNAME,
+        },
+      },
+    ];
+    if (BOOTSTRAP_EXTERNAL_AUTH_ID) {
+      identityCandidates.unshift({
+        externalAuthId: BOOTSTRAP_EXTERNAL_AUTH_ID,
+      });
+    }
+
     const accounts = await prisma.userAccount.findMany({
       where: {
-        OR: [
-          { username: BOOTSTRAP_USERNAME },
-          { username: BOOTSTRAP_USERNAME.toUpperCase() },
-          {
-            person: {
-              personnelNumber: BOOTSTRAP_PERSONNEL_NUMBER,
-            },
-          },
-          {
-            person: {
-              personnelNumber: BOOTSTRAP_USERNAME,
-            },
-          },
-        ],
+        OR: identityCandidates,
       },
       include: { person: true },
     });
 
     if (accounts.length === 0) {
       throw new Error(
-        `No bootstrap user account found by username "${BOOTSTRAP_USERNAME}" ` +
-          `or person personnel number "${BOOTSTRAP_PERSONNEL_NUMBER}".`,
+        `No bootstrap user account found by Keycloak subject "${BOOTSTRAP_EXTERNAL_AUTH_ID || '(not provided)'}", ` +
+          `username "${BOOTSTRAP_USERNAME}", or person personnel number "${BOOTSTRAP_PERSONNEL_NUMBER}".`,
       );
     }
 
@@ -147,6 +156,7 @@ async function main(): Promise<void> {
         {
           status: 'ok',
           matchedAccounts: accounts.length,
+          keycloakSubjectProvided: Boolean(BOOTSTRAP_EXTERNAL_AUTH_ID),
           roleId: role.id,
           roleCode: role.code,
           permissionCount,

@@ -44,7 +44,8 @@ Tidak ada perubahan schema. Hanya seed data:
 
 2. **Bootstrap script** (`apps/api/src/scripts/bootstrap-admin-authorization.ts`):
    - Mencari `bootstrap-admin` UserAccount melalui kandidat kuat:
-     `UserAccount.username = 'bootstrap-admin'` dan/atau
+     `UserAccount.externalAuthId` dari Keycloak subject deployment,
+     `UserAccount.username = 'bootstrap-admin'`, dan/atau
      `Person.personnelNumber = 'BOOTSTRAP-ADMIN'`.
    - Mencari role `SUPER_ADMIN` melalui `Role.code`.
    - Membuat atau mengaktifkan kembali `UserRoleAssignment` dengan status
@@ -101,10 +102,12 @@ adalah akun yang dipakai login production dipetakan oleh Keycloak `sub` ke
 `UserAccount` yang tidak sama dengan record yang ditemukan hanya melalui
 `Person.personnelNumber = 'BOOTSTRAP-ADMIN'`.
 
-Script diperkuat agar mencari kandidat bootstrap melalui username dan personnel
-number, lalu memberi/mengaktifkan grant `SUPER_ADMIN` untuk seluruh kandidat
-yang match kuat. Ini menjaga idempotency sekaligus menutup kasus production
-yang memiliki lebih dari satu record bootstrap/mapping historis.
+Script diperkuat agar deployment mengambil Keycloak subject `bootstrap-admin`
+dan meneruskannya sebagai `BOOTSTRAP_EXTERNAL_AUTH_ID`; script lalu mencari
+kandidat bootstrap melalui subject tersebut, username, dan personnel number,
+lalu memberi/mengaktifkan grant `SUPER_ADMIN` untuk seluruh kandidat yang match
+kuat. Ini menjaga idempotency sekaligus menutup kasus production yang memiliki
+lebih dari satu record bootstrap/mapping historis.
 
 ## Files Changed
 

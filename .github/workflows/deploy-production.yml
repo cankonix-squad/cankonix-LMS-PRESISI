@@ -262,6 +262,14 @@ jobs:
             /opt/keycloak/bin/kcadm.sh get "clients/$ADMIN_CLIENT_ID" -r lemdiklat \
             --fields clientId,attributes,redirectUris,webOrigins
 
+          BOOTSTRAP_EXTERNAL_AUTH_ID=$(docker compose -f docker-compose.production.yml exec -T keycloak \
+            /opt/keycloak/bin/kcadm.sh get users -r lemdiklat \
+            -q username=bootstrap-admin --fields id --format csv | tail -n 1 | tr -d '\r"')
+          if [ -z "$BOOTSTRAP_EXTERNAL_AUTH_ID" ] || [ "$BOOTSTRAP_EXTERNAL_AUTH_ID" = "id" ]; then
+            echo "Keycloak user bootstrap-admin was not found; cannot grant bootstrap authorization" >&2
+            exit 1
+          fi
+
           for service in "${SERVICES[@]}"; do
             case "$service" in
               admin) container=cankonix-lms-lemdiklat ;;
@@ -279,7 +287,8 @@ jobs:
               --schema=/app/prisma/schema.prisma
             # TASK-009AI — idempotent: ensure bootstrap-admin holds the
             # authorization SUPER_ADMIN role so /roles and /assignments open.
-            docker exec cankonix-lms-lemdiklat-api \
+            docker exec -e BOOTSTRAP_EXTERNAL_AUTH_ID="$BOOTSTRAP_EXTERNAL_AUTH_ID" \
+              cankonix-lms-lemdiklat-api \
               node dist/scripts/bootstrap-admin-authorization.js
           fi
 
