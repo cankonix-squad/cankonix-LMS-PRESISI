@@ -25,12 +25,19 @@ import {
   enterpriseInputClass,
 } from '@/components/admin';
 import {
+  applyTemplateAction,
   createRoleAction,
   grantPermissionAction,
   revokePermissionAction,
   updateRoleAction,
   updateRoleStatusAction,
 } from './actions';
+import {
+  ROLE_TEMPLATES,
+  categoryForPermission,
+  groupPermissionsByCategory,
+  humanLabel,
+} from '@/lib/admin-permission-labels';
 
 type DataResult<T> = { data: T | null; error: string | null };
 
@@ -91,10 +98,7 @@ export function RolePermissionWorkspace({
           <div className="flex flex-wrap items-center gap-3">
             <div className="grid grid-cols-2 gap-2 text-center sm:flex sm:text-left">
               <Metric label="Role" value={roles.data?.total ?? 0} />
-              <Metric
-                label="Permission"
-                value={permissions.data?.total ?? 0}
-              />
+              <Metric label="Permission" value={permissions.data?.total ?? 0} />
             </div>
             <PrimaryActionButton onClick={() => setDrawer({ mode: 'create' })}>
               + Buat role
@@ -477,20 +481,14 @@ function RoleRow({
       <td className="max-w-xs px-4 py-3 text-slate-600">
         {role.description || '-'}
       </td>
-      <td className="px-4 py-3 text-slate-600">
-        {permissionLabel(count)}
-      </td>
+      <td className="px-4 py-3 text-slate-600">{permissionLabel(count)}</td>
       <td className="px-4 py-3">
         <StatusBadge tone={role.status === 'ACTIVE' ? 'green' : 'red'}>
           {role.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}
         </StatusBadge>
       </td>
       <StickyActionCell>
-        <RoleRowActions
-          role={role}
-          onDetail={onDetail}
-          onEdit={onEdit}
-        />
+        <RoleRowActions role={role} onDetail={onDetail} onEdit={onEdit} />
       </StickyActionCell>
     </tr>
   );
@@ -525,14 +523,8 @@ function RoleMobileRow({
       {role.description ? (
         <p className="text-sm text-slate-600">{role.description}</p>
       ) : null}
-      <p className="text-xs text-slate-500">
-        {permissionLabel(count)}
-      </p>
-      <RoleRowActions
-        role={role}
-        onDetail={onDetail}
-        onEdit={onEdit}
-      />
+      <p className="text-xs text-slate-500">{permissionLabel(count)}</p>
+      <RoleRowActions role={role} onDetail={onDetail} onEdit={onEdit} />
     </article>
   );
 }
@@ -601,22 +593,24 @@ function PermissionTable({ permissions }: { permissions: Permission[] }) {
       columns={[
         { label: 'Permission' },
         { label: 'Kategori' },
-        { label: 'Nama' },
+        { label: 'Kode Teknis' },
         { label: 'Deskripsi' },
       ]}
-      colWidths={['28%', '16%', '24%', '32%']}
+      colWidths={['26%', '18%', '24%', '32%']}
       minWidth={860}
       mobile={permissions.map((permission) => (
         <article key={permission.id} className="space-y-2 p-4">
           <div className="flex items-start justify-between gap-3">
-            <p className="font-mono text-xs font-semibold text-slate-950">
-              {permission.code}
+            <p className="font-semibold text-slate-950">
+              {humanLabel(permission.code)}
             </p>
             <StatusBadge tone="blue">
-              {permission.code.split('.')[0] || 'lainnya'}
+              {categoryForPermission(permission.code)}
             </StatusBadge>
           </div>
-          <p className="font-semibold text-slate-900">{permission.name}</p>
+          <p className="font-mono text-[11px] text-slate-500">
+            {permission.code}
+          </p>
           <p className="text-sm text-slate-600">
             {permission.description || '-'}
           </p>
@@ -625,15 +619,17 @@ function PermissionTable({ permissions }: { permissions: Permission[] }) {
     >
       {permissions.map((permission) => (
         <tr key={permission.id} className="hover:bg-slate-50/80">
-          <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-950">
-            {permission.code}
+          <td className="px-4 py-3 font-semibold text-slate-950">
+            {humanLabel(permission.code)}
           </td>
           <td className="px-4 py-3">
             <StatusBadge tone="blue">
-              {permission.code.split('.')[0] || 'lainnya'}
+              {categoryForPermission(permission.code)}
             </StatusBadge>
           </td>
-          <td className="px-4 py-3 text-slate-700">{permission.name}</td>
+          <td className="px-4 py-3 font-mono text-[11px] text-slate-500">
+            {permission.code}
+          </td>
           <td className="px-4 py-3 text-slate-600">
             {permission.description || '-'}
           </td>
@@ -732,10 +728,7 @@ function RoleForm({
         />
       </FormField>
 
-      <FormField
-        label="Deskripsi"
-        helper="Opsional. Jelaskan tujuan role ini."
-      >
+      <FormField label="Deskripsi" helper="Opsional. Jelaskan tujuan role ini.">
         <textarea
           name="description"
           defaultValue={role?.description ?? ''}
@@ -760,9 +753,7 @@ function RoleForm({
       <FormActions
         onCancel={onClose}
         pending={isPending}
-        submitLabel={
-          mode === 'create' ? 'Simpan Role' : 'Simpan Perubahan'
-        }
+        submitLabel={mode === 'create' ? 'Simpan Role' : 'Simpan Perubahan'}
       />
 
       {state.message ? <ActionMessage state={state} /> : null}
@@ -783,9 +774,7 @@ function RoleDetailDrawer({
   onClose: () => void;
   onEdit: (role: Role) => void;
 }) {
-  const attachedIds = new Set(
-    (permissions?.data ?? []).map((p) => p.id),
-  );
+  const attachedIds = new Set((permissions?.data ?? []).map((p) => p.id));
   const unattachedPermissions = availablePermissions.filter(
     (p) => !attachedIds.has(p.id),
   );
@@ -797,6 +786,11 @@ function RoleDetailDrawer({
 
   const [revokeState, revokeAction, revokePending] = useActionState(
     revokePermissionAction,
+    { ok: true, message: null },
+  );
+
+  const [templateState, templateAction, templatePending] = useActionState(
+    applyTemplateAction,
     { ok: true, message: null },
   );
 
@@ -817,6 +811,68 @@ function RoleDetailDrawer({
             Edit role
           </button>
         </div>
+
+        {!role.isSystem ? (
+          <DetailField label="Template role">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {ROLE_TEMPLATES.map((template) => (
+                <form
+                  key={template.id}
+                  action={templateAction}
+                  className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                >
+                  <p className="text-sm font-semibold text-slate-900">
+                    {template.name}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                    {template.description}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {template.permissionCodes.slice(0, 4).map((code) => (
+                      <span
+                        key={code}
+                        className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2 py-0.5 font-mono text-[10px] text-slate-600"
+                      >
+                        {humanLabel(code)}
+                      </span>
+                    ))}
+                    {template.permissionCodes.length > 4 ? (
+                      <span className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[10px] text-slate-500">
+                        +{template.permissionCodes.length - 4}
+                      </span>
+                    ) : null}
+                  </div>
+                  <input type="hidden" name="roleId" value={role.id} />
+                  <input type="hidden" name="templateId" value={template.id} />
+                  <button
+                    type="submit"
+                    disabled={
+                      templatePending || !template.enabled || role.isSystem
+                    }
+                    title={
+                      !template.enabled
+                        ? (template.disabledReason ??
+                          'Template belum tersedia.')
+                        : 'Terapkan semua permission dari template ini ke role'
+                    }
+                    className={
+                      !template.enabled
+                        ? 'mt-2 inline-flex min-h-7 items-center rounded-md border border-slate-200 bg-slate-100 px-2.5 text-[11px] font-semibold text-slate-400 cursor-not-allowed'
+                        : 'mt-2 inline-flex min-h-7 items-center rounded-md border border-sky-200 bg-white px-2.5 text-[11px] font-semibold text-sky-600 transition hover:border-sky-300 hover:bg-sky-50 disabled:opacity-60'
+                    }
+                  >
+                    {!template.enabled
+                      ? 'Segera'
+                      : `Terapkan (${template.permissionCodes.length})`}
+                  </button>
+                </form>
+              ))}
+            </div>
+            {templateState.message ? (
+              <ActionMessage state={templateState} />
+            ) : null}
+          </DetailField>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <DetailField label="Status">
@@ -849,19 +905,15 @@ function RoleDetailDrawer({
                     className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-mono text-xs font-semibold text-slate-900">
-                        {permission.code}
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {humanLabel(permission.code)}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {permission.name}
+                      <p className="mt-1 font-mono text-[11px] text-slate-500">
+                        {permission.code}
                       </p>
                     </div>
                     <form action={revokeAction}>
-                      <input
-                        type="hidden"
-                        name="roleId"
-                        value={role.id}
-                      />
+                      <input type="hidden" name="roleId" value={role.id} />
                       <input
                         type="hidden"
                         name="permissionId"
@@ -895,60 +947,70 @@ function RoleDetailDrawer({
               Permission role sedang dimuat.
             </p>
           )}
-          {revokeState.message ? (
-            <ActionMessage state={revokeState} />
-          ) : null}
+          {revokeState.message ? <ActionMessage state={revokeState} /> : null}
         </DetailField>
 
         {unattachedPermissions.length > 0 ? (
           <DetailField label="Tambah permission">
-            <div className="max-h-64 space-y-2 overflow-y-auto">
-              {unattachedPermissions.map((permission) => (
-                <form
-                  key={permission.id}
-                  action={grantAction}
-                  className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-xs font-semibold text-slate-900">
-                      {permission.code}
+            <div className="max-h-80 space-y-5 overflow-y-auto">
+              {[
+                ...groupPermissionsByCategory(
+                  unattachedPermissions.map((p) => p.code),
+                ),
+              ].map(([category, codes]) => {
+                const categoryPerms = unattachedPermissions.filter((p) =>
+                  codes.includes(p.code),
+                );
+                return (
+                  <div key={category}>
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      {category}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {permission.name}
-                    </p>
+                    <div className="space-y-1.5">
+                      {categoryPerms.map((permission) => (
+                        <form
+                          key={permission.id}
+                          action={grantAction}
+                          className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-slate-900">
+                              {humanLabel(permission.code)}
+                            </p>
+                            <p className="mt-0.5 font-mono text-[11px] text-slate-500">
+                              {permission.code}
+                            </p>
+                          </div>
+                          <input type="hidden" name="roleId" value={role.id} />
+                          <input
+                            type="hidden"
+                            name="permissionId"
+                            value={permission.id}
+                          />
+                          <button
+                            type="submit"
+                            disabled={grantPending || role.isSystem}
+                            title={
+                              role.isSystem
+                                ? 'Role sistem tidak dapat diubah permission-nya'
+                                : 'Tambahkan permission ke role'
+                            }
+                            className={
+                              role.isSystem
+                                ? 'shrink-0 rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-400 cursor-not-allowed'
+                                : 'shrink-0 rounded-md border border-emerald-200 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-600 transition hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-60'
+                            }
+                          >
+                            + Tambah
+                          </button>
+                        </form>
+                      ))}
+                    </div>
                   </div>
-                  <input
-                    type="hidden"
-                    name="roleId"
-                    value={role.id}
-                  />
-                  <input
-                    type="hidden"
-                    name="permissionId"
-                    value={permission.id}
-                  />
-                  <button
-                    type="submit"
-                    disabled={grantPending || role.isSystem}
-                    title={
-                      role.isSystem
-                        ? 'Role sistem tidak dapat diubah permission-nya'
-                        : 'Tambahkan permission ke role'
-                    }
-                    className={
-                      role.isSystem
-                        ? 'shrink-0 rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-400 cursor-not-allowed'
-                        : 'shrink-0 rounded-md border border-emerald-200 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-600 transition hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-60'
-                    }
-                  >
-                    + Tambah
-                  </button>
-                </form>
-              ))}
+                );
+              })}
             </div>
-            {grantState.message ? (
-              <ActionMessage state={grantState} />
-            ) : null}
+            {grantState.message ? <ActionMessage state={grantState} /> : null}
           </DetailField>
         ) : permissions?.data ? (
           <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">

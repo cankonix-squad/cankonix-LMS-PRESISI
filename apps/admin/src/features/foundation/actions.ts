@@ -18,6 +18,10 @@ import type {
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
 import { createAdminApiClient } from '@/lib/api';
+import {
+  ROLE_TEMPLATES,
+  type RoleTemplate,
+} from '@/lib/admin-permission-labels';
 
 export type FoundationActionState = {
   ok: boolean;
@@ -580,6 +584,85 @@ export async function revokePermissionAction(
   revalidatePath('/');
   revalidatePath('/roles');
   return { ok: true, message: 'Permission berhasil dilepas dari role.' };
+}
+
+/**
+ * Apply a role template: grant every recommended permission of the template
+ * to the target role. This is a UI convenience that reuses the ordinary
+ * `grantPermission` endpoint — it does not introduce a new authorization
+ * branch, nor does it hardcode any role. Permission codes stay the source of
+ * truth. Idempotent: already-granted permissions are simply skipped by the API.
+ */
+export async function applyTemplateAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const roleId = getText(formData, 'roleId');
+  const templateId = getText(formData, 'templateId');
+
+  if (!roleId || !templateId) {
+    return {
+      ok: false,
+      message: 'Role dan template wajib dipilih.',
+    };
+  }
+
+  const template: RoleTemplate | undefined = ROLE_TEMPLATES.find(
+    (item) => item.id === templateId,
+  );
+  if (!template) {
+    return { ok: false, message: 'Template role tidak ditemukan.' };
+  }
+  if (!template.enabled) {
+    return {
+      ok: false,
+      message: 'Template ini belum tersedia untuk dipakai.',
+    };
+  }
+
+  const authorization = createAdminApiClient().authorization;
+  const failed: string[] = [];
+
+  for (const permissionCode of template.permissionCodes) {
+    // Resolve the permission id by code through the catalogue. We query with
+    // an exact search and match on `code` to keep this idempotent and robust
+    // against id changes between environments.
+    let permission: { id: string; code: string } | undefined;
+    try {
+      const lookup = await authorization.permissions({
+        search: permissionCode,
+        page: 1,
+        limit: 20,
+      });
+      permission = lookup.data.find((p) => p.code === permissionCode);
+    } catch {
+      permission = undefined;
+    }
+    if (!permission) {
+      failed.push(permissionCode);
+      continue;
+    }
+
+    const result = await authorization.grantPermission(roleId, permission.id);
+    if (!result.ok) {
+      failed.push(permissionCode);
+    }
+  }
+
+  revalidatePath('/');
+  revalidatePath('/roles');
+
+  if (failed.length > 0) {
+    return {
+      ok: false,
+      message: `Sebagian permission template gagal dipasang: ${failed.join(', ')}.`,
+    };
+  }
+
+  return {
+    ok: true,
+    message: `Template ${template.name} berhasil dipasang (${template.permissionCodes.length} permission).`,
+  };
 }
 
 function getText(formData: FormData, key: string) {
