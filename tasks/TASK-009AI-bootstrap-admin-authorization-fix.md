@@ -43,10 +43,12 @@ Tidak ada perubahan schema. Hanya seed data:
      `ON CONFLICT (role_id, permission_id) DO NOTHING`.
 
 2. **Bootstrap script** (`apps/api/src/scripts/bootstrap-admin-authorization.ts`):
-   - Mencari `bootstrap-admin` UserAccount melalui `Person.personnelNumber = 'BOOTSTRAP-ADMIN'`.
+   - Mencari `bootstrap-admin` UserAccount melalui kandidat kuat:
+     `UserAccount.username = 'bootstrap-admin'` dan/atau
+     `Person.personnelNumber = 'BOOTSTRAP-ADMIN'`.
    - Mencari role `SUPER_ADMIN` melalui `Role.code`.
-   - Membuat `UserRoleAssignment` dengan status `ACTIVE`, tanpa scope
-     (unrestricted), idempotent (tidak duplikasi).
+   - Membuat atau mengaktifkan kembali `UserRoleAssignment` dengan status
+     `ACTIVE`, tanpa scope (unrestricted), idempotent (tidak duplikasi).
    - Output: account ID, role ID, assignment ID, dan status operasi.
 
 3. **Tidak ada hardcode role di guard/controller/business logic.**
@@ -90,6 +92,19 @@ Script `bootstrap-admin-authorization` perlu dijalankan setelah deployment:
 ```bash
 docker compose -f docker-compose.production.yml exec api node dist/scripts/bootstrap-admin-authorization.js
 ```
+
+## Runtime Fix Note
+
+Setelah deploy pertama, `/roles` masih dapat menolak mutation dengan
+`authorization.role.manage` meskipun workflow sukses. Penyebab paling mungkin
+adalah akun yang dipakai login production dipetakan oleh Keycloak `sub` ke
+`UserAccount` yang tidak sama dengan record yang ditemukan hanya melalui
+`Person.personnelNumber = 'BOOTSTRAP-ADMIN'`.
+
+Script diperkuat agar mencari kandidat bootstrap melalui username dan personnel
+number, lalu memberi/mengaktifkan grant `SUPER_ADMIN` untuk seluruh kandidat
+yang match kuat. Ini menjaga idempotency sekaligus menutup kasus production
+yang memiliki lebih dari satu record bootstrap/mapping historis.
 
 ## Files Changed
 

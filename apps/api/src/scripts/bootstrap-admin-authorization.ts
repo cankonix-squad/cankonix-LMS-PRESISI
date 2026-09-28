@@ -26,30 +26,12 @@
 import { PrismaClient } from '@prisma/client';
 
 const BOOTSTRAP_PERSONNEL_NUMBER = 'BOOTSTRAP-ADMIN';
+const BOOTSTRAP_USERNAME = 'bootstrap-admin';
 const BOOTSTRAP_ROLE_CODE = 'SUPER_ADMIN';
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient();
   try {
-    const person = await prisma.person.findUnique({
-      where: { personnelNumber: BOOTSTRAP_PERSONNEL_NUMBER },
-    });
-    if (!person) {
-      throw new Error(
-        `Bootstrap person "${BOOTSTRAP_PERSONNEL_NUMBER}" not found; ` +
-          'provision the person/user account first, then re-run this script.',
-      );
-    }
-
-    const account = await prisma.userAccount.findUnique({
-      where: { personId: person.id },
-    });
-    if (!account) {
-      throw new Error(
-        `No user account for person "${BOOTSTRAP_PERSONNEL_NUMBER}" (personId=${person.id}).`,
-      );
-    }
-
     const role = await prisma.role.findUnique({
       where: { code: BOOTSTRAP_ROLE_CODE },
     });
@@ -59,51 +41,116 @@ async function main(): Promise<void> {
       );
     }
 
-    const existing = await prisma.userRoleAssignment.findFirst({
+    const accounts = await prisma.userAccount.findMany({
       where: {
-        userAccountId: account.id,
-        roleId: role.id,
-        status: 'ACTIVE',
-      },
-    });
-    if (existing) {
-      // Idempotent: the bootstrap account already holds this role.
-      console.log(
-        JSON.stringify(
+        OR: [
+          { username: BOOTSTRAP_USERNAME },
+          { username: BOOTSTRAP_USERNAME.toUpperCase() },
           {
-            status: 'already_assigned',
-            userAccountId: account.id,
-            roleId: role.id,
-            roleCode: role.code,
-            assignmentId: existing.id,
+            person: {
+              personnelNumber: BOOTSTRAP_PERSONNEL_NUMBER,
+            },
           },
-          null,
-          2,
-        ),
+          {
+            person: {
+              personnelNumber: BOOTSTRAP_USERNAME,
+            },
+          },
+        ],
+      },
+      include: { person: true },
+    });
+
+    if (accounts.length === 0) {
+      throw new Error(
+        `No bootstrap user account found by username "${BOOTSTRAP_USERNAME}" ` +
+          `or person personnel number "${BOOTSTRAP_PERSONNEL_NUMBER}".`,
       );
-      return;
     }
 
-    // Unrestricted (national) access: no scopes attached, which
-    // RoleAssignmentsService resolves as `isUnrestricted = true`.
-    const assignment = await prisma.userRoleAssignment.create({
-      data: {
+    const results = [];
+    for (const account of accounts) {
+      const existing = await prisma.userRoleAssignment.findFirst({
+        where: {
+          userAccountId: account.id,
+          roleId: role.id,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (existing?.status === 'ACTIVE' && existing.validUntil === null) {
+        results.push({
+          status: 'already_assigned',
+          userAccountId: account.id,
+          username: account.username,
+          externalAuthId: account.externalAuthId,
+          personnelNumber: account.person.personnelNumber,
+          roleId: role.id,
+          roleCode: role.code,
+          assignmentId: existing.id,
+        });
+        continue;
+      }
+
+      if (existing) {
+        const assignment = await prisma.userRoleAssignment.update({
+          where: { id: existing.id },
+          data: {
+            status: 'ACTIVE',
+            validUntil: null,
+          },
+        });
+        results.push({
+          status: 'reactivated',
+          userAccountId: account.id,
+          username: account.username,
+          externalAuthId: account.externalAuthId,
+          personnelNumber: account.person.personnelNumber,
+          roleId: role.id,
+          roleCode: role.code,
+          assignmentId: assignment.id,
+          previousStatus: existing.status,
+        });
+        continue;
+      }
+
+      // Unrestricted (national) access: no scopes attached, which
+      // RoleAssignmentsService resolves as `isUnrestricted = true`.
+      const assignment = await prisma.userRoleAssignment.create({
+        data: {
+          userAccountId: account.id,
+          roleId: role.id,
+          status: 'ACTIVE',
+          validFrom: new Date(),
+        },
+      });
+
+      results.push({
+        status: 'assigned',
         userAccountId: account.id,
+        username: account.username,
+        externalAuthId: account.externalAuthId,
+        personnelNumber: account.person.personnelNumber,
         roleId: role.id,
-        status: 'ACTIVE',
-        validFrom: new Date(),
-      },
+        roleCode: role.code,
+        assignmentId: assignment.id,
+        scopes: [],
+      });
+    }
+
+    const permissionCount = await prisma.rolePermission.count({
+      where: { roleId: role.id },
     });
 
     console.log(
       JSON.stringify(
         {
-          status: 'assigned',
-          userAccountId: account.id,
+          status: 'ok',
+          matchedAccounts: accounts.length,
           roleId: role.id,
           roleCode: role.code,
-          assignmentId: assignment.id,
-          scopes: [],
+          permissionCount,
+          results,
         },
         null,
         2,
