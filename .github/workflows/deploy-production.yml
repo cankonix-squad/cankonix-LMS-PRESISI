@@ -277,6 +277,10 @@ jobs:
             docker exec cankonix-lms-lemdiklat-api \
               /app/node_modules/.bin/prisma migrate deploy \
               --schema=/app/prisma/schema.prisma
+            # TASK-009AI — idempotent: ensure bootstrap-admin holds the
+            # authorization SUPER_ADMIN role so /roles and /assignments open.
+            docker exec cankonix-lms-lemdiklat-api \
+              node dist/scripts/bootstrap-admin-authorization.js
           fi
 
           wait_for_url() {
