@@ -515,8 +515,13 @@ function PersonAccountCell({
   account: DataResult<UserAccount> | undefined;
 }) {
   if (!account) return <Pill tone="slate">Belum dicek</Pill>;
-  if (account.error) return <Pill tone="red">Belum ada akun</Pill>;
-  if (!account.data) return <Pill tone="red">Belum ada akun</Pill>;
+  if (account.error)
+    return (
+      <Pill tone={account.status === 403 ? 'amber' : 'red'}>
+        {account.status === 403 ? 'Akses akun ditolak' : 'Akun gagal dibaca'}
+      </Pill>
+    );
+  if (!account.data) return <Pill tone="slate">Belum ada akun</Pill>;
   return (
     <div className="flex flex-col gap-1">
       <Pill tone={account.data.status === 'ACTIVE' ? 'green' : 'red'}>
@@ -641,6 +646,7 @@ function AssignmentList({
 type DataResult<T> = {
   data: T | null;
   error: string | null;
+  status: number;
 };
 
 function totalOf<T>(result: DataResult<ApiListResponse<T>>) {

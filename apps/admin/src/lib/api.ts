@@ -1,7 +1,21 @@
-import { createApiClient } from '@lms/api-client';
+import { apiErrorStatus, createApiClient } from '@lms/api-client';
 import { cookies } from 'next/headers';
 
 export type AdminApiClient = ReturnType<typeof createAdminApiClient>;
+
+/**
+ * Outcome of a server-side API read.
+ *
+ * `status` is the HTTP status of the failed call (`0` for a transport error) or
+ * `200` on success. Server components pass it down so a client component can
+ * tell a missing record apart from a denied or failed read — the difference
+ * between "there is no account" and "I am not allowed to see whether there is".
+ */
+export type LoadResult<T> = {
+  data: T | null;
+  error: string | null;
+  status: number;
+};
 
 export function createAdminApiClient() {
   return createApiClient(getApiBaseUrl(), {
@@ -69,17 +83,34 @@ export async function hasAdminSession() {
   return Boolean((await cookies()).get('lms_access_token')?.value);
 }
 
-export async function getOrEmpty<T>(loader: () => Promise<T>): Promise<{
-  data: T | null;
-  error: string | null;
-}> {
+export async function getOrEmpty<T>(
+  loader: () => Promise<T>,
+): Promise<LoadResult<T>> {
   try {
-    return { data: await loader(), error: null };
+    return { data: await loader(), error: null, status: 200 };
   } catch (error) {
     return {
       data: null,
       error:
         error instanceof Error ? error.message : 'Tidak dapat memuat data API',
+      status: apiErrorStatus(error),
     };
   }
+}
+
+/**
+ * Why a read failed, derived from the HTTP status.
+ *
+ * `FORBIDDEN` is the important one: an operator who lacks `user_account.read`
+ * must see "akses ditolak", never an empty state that looks like "no account".
+ */
+export type LoadFailureKind =
+  'FORBIDDEN' | 'SESSION' | 'NOT_FOUND' | 'SERVER' | 'ERROR';
+
+export function classifyLoadFailure(status: number): LoadFailureKind {
+  if (status === 401) return 'SESSION';
+  if (status === 403) return 'FORBIDDEN';
+  if (status === 404) return 'NOT_FOUND';
+  if (status >= 500) return 'SERVER';
+  return 'ERROR';
 }

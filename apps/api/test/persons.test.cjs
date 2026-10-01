@@ -798,3 +798,96 @@ test('person and user account endpoints are exposed in OpenAPI under api v1', as
     await app.close();
   }
 });
+
+test('reading a user account without user_account.read is refused with 403', async () => {
+  // Regression for the production incident: the Admin UI rendered a 403 on the
+  // account read as "Belum ada akun" (no account). The API contract is that a
+  // missing permission is an explicit denial, never an empty result, so the UI
+  // has something honest to render.
+  const { app, base } = await startAuthenticatedApp([]);
+  try {
+    const response = await fetch(
+      `${base}/api/v1/persons/${UNKNOWN_ID}/account`,
+      { headers: { authorization: AUTHORIZATION } },
+    );
+    assert.equal(response.status, 403);
+    const body = JSON.stringify(await response.json());
+    assert.match(body, /user_account\.read/);
+  } finally {
+    await app.close();
+  }
+});
+
+test('granting user_account.read authorizes the account read', async () => {
+  const denied = await startAuthenticatedApp([]);
+  const granted = await startAuthenticatedApp(['user_account.read']);
+  try {
+    const withoutPermission = await fetch(
+      `${denied.base}/api/v1/persons/${UNKNOWN_ID}/account`,
+      { headers: { authorization: AUTHORIZATION } },
+    );
+    assert.equal(withoutPermission.status, 403);
+
+    // With the permission the guard no longer rejects the caller. The request
+    // then reaches the repository, which cannot answer without a PostgreSQL
+    // runtime here; the point is that authorization no longer denies it.
+    const withPermission = await fetch(
+      `${granted.base}/api/v1/persons/${UNKNOWN_ID}/account`,
+      { headers: { authorization: AUTHORIZATION } },
+    );
+    assert.notEqual(withPermission.status, 403);
+  } finally {
+    await denied.app.close();
+    await granted.app.close();
+  }
+});
+
+test('UserAccount permission catalogue exposes both provisioning codes', () => {
+  const {
+    USER_ACCOUNT_PERMISSIONS,
+    USER_ACCOUNT_PERMISSION_CODES,
+  } = require('../dist/user-accounts/user-account-permissions');
+  assert.equal(USER_ACCOUNT_PERMISSIONS.READ, 'user_account.read');
+  assert.equal(USER_ACCOUNT_PERMISSIONS.MANAGE, 'user_account.manage');
+  assert.deepEqual(Array.from(USER_ACCOUNT_PERMISSION_CODES), [
+    'user_account.read',
+    'user_account.manage',
+  ]);
+});
+
+test('TASK-009AM and TASK-009AN seed migrations exist and stay idempotent', () => {
+  // Regression for the production incident: the migrations were present in the
+  // repo but never applied, so PENGAJAR held 0 permissions and SUPER_ADMIN
+  // lacked user_account.*. These assertions keep the seed contract explicit so a
+  // future change cannot silently drop a permission code or the idempotent
+  // guards that let `migrate deploy` re-run safely.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const migrationsDir = path.join(__dirname, '..', 'prisma', 'migrations');
+
+  const amPath = path.join(
+    migrationsDir,
+    '20261009001000_task_009AM_seed_educator_role_permissions',
+    'migration.sql',
+  );
+  const anPath = path.join(
+    migrationsDir,
+    '20261009001100_task_009AN_keycloak_provisioning_permissions',
+    'migration.sql',
+  );
+  assert.ok(fs.existsSync(amPath), 'TASK-009AM seed migration must exist');
+  assert.ok(fs.existsSync(anPath), 'TASK-009AN seed migration must exist');
+
+  const am = fs.readFileSync(amPath, 'utf8');
+  assert.match(am, /'PENGAJAR'/);
+  assert.match(am, /'assessment\.manage'/);
+  assert.match(am, /ON CONFLICT \("code"\) DO NOTHING/);
+  assert.match(am, /ON CONFLICT \("role_id", "permission_id"\) DO NOTHING/);
+
+  const an = fs.readFileSync(anPath, 'utf8');
+  assert.match(an, /'user_account\.read'/);
+  assert.match(an, /'user_account\.manage'/);
+  assert.match(an, /r\.code = 'SUPER_ADMIN'/);
+  assert.match(an, /ON CONFLICT \("code"\) DO NOTHING/);
+  assert.match(an, /ON CONFLICT \("role_id", "permission_id"\) DO NOTHING/);
+});

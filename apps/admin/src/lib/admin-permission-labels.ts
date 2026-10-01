@@ -23,6 +23,10 @@ export const PERMISSION_LABELS: Record<string, string> = {
   'authorization.assignment.manage': 'Kelola Penugasan Role',
   'authorization.effective_permission.read': 'Lihat Permission Efektif',
 
+  // user account + Keycloak provisioning (TASK-002, TASK-009AN)
+  'user_account.read': 'Lihat Akun Pengguna',
+  'user_account.manage': 'Kelola Akun Pengguna',
+
   // attendance (TASK-030, TASK-031)
   'attendance.record.read': 'Lihat Data Kehadiran',
   'attendance.record.manage': 'Kelola Absensi Peserta',

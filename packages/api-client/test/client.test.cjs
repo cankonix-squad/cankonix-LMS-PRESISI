@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { createServer } = require('node:http');
-const { createApiClient } = require('../dist');
+const { createApiClient, apiErrorStatus, ApiRequestError } = require('../dist');
 
 function listen(handler) {
   const server = createServer(handler);
@@ -369,4 +369,57 @@ test('attempt client targets the participant runtime endpoints', async () => {
   } finally {
     server.close();
   }
+});
+
+test('request() exposes the HTTP status on a 403 response', async () => {
+  const { server, url } = await listen((_request, response) => {
+    response.statusCode = 403;
+    response.setHeader('content-type', 'application/json');
+    response.end(
+      JSON.stringify({
+        message: 'Access denied: missing required permission user_account.read',
+        statusCode: 403,
+      }),
+    );
+  });
+
+  const client = createApiClient(url);
+  try {
+    await assert.rejects(client.persons.getAccount('person-1'), (error) => {
+      assert.ok(error instanceof Error);
+      assert.equal(error.status, 403);
+      assert.match(error.message, /user_account\.read/);
+      return true;
+    });
+  } finally {
+    server.close();
+  }
+});
+
+test('mutate() reports the real HTTP status instead of collapsing it to 0', async () => {
+  const { server, url } = await listen((_request, response) => {
+    response.statusCode = 409;
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ message: 'Conflict', statusCode: 409 }));
+  });
+
+  const client = createApiClient(url);
+  try {
+    const result = await client.persons.create({
+      personnelNumber: '1',
+      fullName: 'Test',
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.status, 409);
+    assert.match(result.message, /Conflict/);
+  } finally {
+    server.close();
+  }
+});
+
+test('apiErrorStatus() maps non-API failures to 0 and carries real status otherwise', () => {
+  assert.equal(apiErrorStatus(new ApiRequestError('denied', 403)), 403);
+  assert.equal(apiErrorStatus(new Error('transport down')), 0);
+  assert.equal(apiErrorStatus('not an error'), 0);
+  assert.equal(apiErrorStatus({ status: 403 }), 0);
 });

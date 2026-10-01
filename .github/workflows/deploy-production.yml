@@ -85,15 +85,20 @@ jobs:
           git fetch origin main
           TARGET_SHA=$(git rev-parse origin/main)
 
+          # Prisma migrations live under apps/api and are shipped inside the API
+          # image, so an api change is what the migration step keys off. Deploys
+          # only reset the working tree when the revision actually changes.
+          DEPLOY_REVISION_CHANGED=1
           if [ "$PREVIOUS_SHA" = "$TARGET_SHA" ]; then
             echo "Production is already at $TARGET_SHA"
-            exit 0
+            DEPLOY_REVISION_CHANGED=0
           fi
 
           CHANGED_FILES=$(git diff --name-only "$PREVIOUS_SHA" "$TARGET_SHA")
           SERVICES=()
           INFRA_CHANGED=false
           THEME_CHANGED=false
+          MIGRATION_CHANGED=false
 
           add_service() {
             local service="$1"
@@ -131,11 +136,23 @@ jobs:
             printf '%s\n' "$CHANGED_FILES" | grep -q '^apps/api/' && add_service api || true
           fi
 
-          if [ "${#SERVICES[@]}" -eq 0 ] && [ "$INFRA_CHANGED" = false ]; then
-            echo "No deployable application service changed. Updating revision and verifying shared services."
+          # A Prisma migration is applied by the API image, so a migration-only
+          # change (e.g. a seed migration) must always force an API rebuild and
+          # the migrate step. Without this, a commit that only adds
+          # apps/api/prisma/migrations/... left the migration unapplied while the
+          # workflow still reported success.
+          if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^apps/api/prisma/migrations/'; then
+            MIGRATION_CHANGED=true
+            add_service api
+          fi
+
+          if [ "$DEPLOY_REVISION_CHANGED" = "1" ]; then
+            if [ "${#SERVICES[@]}" -eq 0 ] && [ "$INFRA_CHANGED" = false ]; then
+              echo "No deployable application service changed. Updating revision and verifying shared services."
+            fi
             git reset --hard "$TARGET_SHA"
           else
-            git reset --hard "$TARGET_SHA"
+            echo "Working tree already at $TARGET_SHA; applying pending migrations only."
           fi
 
           rollback() {
@@ -281,7 +298,12 @@ jobs:
             wait_for_healthy "$container"
           done
 
-          if printf '%s\n' "${SERVICES[@]}" | grep -qx api; then
+          # `prisma migrate deploy` is idempotent and a no-op when every
+          # migration is already recorded, so it is always safe to run. The
+          # failure mode being fixed here is a migration that was SKIPPED, not
+          # one that ran twice.
+          run_api_migrations() {
+            echo "Applying Prisma migrations (idempotent)."
             docker exec cankonix-lms-lemdiklat-api \
               /app/node_modules/.bin/prisma migrate deploy \
               --schema=/app/prisma/schema.prisma
@@ -290,6 +312,36 @@ jobs:
             docker exec -e BOOTSTRAP_EXTERNAL_AUTH_ID="$BOOTSTRAP_EXTERNAL_AUTH_ID" \
               cankonix-lms-lemdiklat-api \
               node dist/scripts/bootstrap-admin-authorization.js
+
+            # Fail the deploy if the database still reports unapplied
+            # migrations, so a skipped migration can never masquerade as a
+            # successful deploy again.
+            MIGRATE_STATUS=$(docker exec cankonix-lms-lemdiklat-api \
+              /app/node_modules/.bin/prisma migrate status \
+              --schema=/app/prisma/schema.prisma 2>&1 || true)
+            printf '%s\n' "$MIGRATE_STATUS" | tail -n 6
+            if printf '%s\n' "$MIGRATE_STATUS" | grep -q 'have not yet been applied'; then
+              echo "Pending Prisma migrations remain after migrate deploy" >&2
+              exit 1
+            fi
+          }
+
+          api_container_running() {
+            [ "$(docker inspect -f '{{.State.Running}}' cankonix-lms-lemdiklat-api 2>/dev/null)" = "true" ]
+          }
+
+          # Run migrations when the API was (re)built, when a migration file
+          # changed, or when this deploy has no service change at all. The last
+          # case is what let a migration-only commit leave a migration
+          # unapplied while the workflow still reported success.
+          if printf '%s\n' "${SERVICES[@]}" | grep -qx api \
+            || [ "$MIGRATION_CHANGED" = true ] \
+            || [ "$DEPLOY_REVISION_CHANGED" = "0" ]; then
+            if api_container_running; then
+              run_api_migrations
+            else
+              echo "::warning::Skipping Prisma migration: cankonix-lms-lemdiklat-api is not running."
+            fi
           fi
 
           wait_for_url() {

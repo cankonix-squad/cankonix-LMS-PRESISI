@@ -1928,6 +1928,33 @@ function getErrorMessage(body: unknown, fallback: string): string {
   return fallback;
 }
 
+/**
+ * Error raised for a non-2xx API response.
+ *
+ * The HTTP status is carried explicitly (raw `Error` dropped it), so a caller
+ * can tell a `403` authorization failure apart from a `404` "not found" or a
+ * `5xx` server failure and render the honest state instead of guessing. The
+ * class extends `Error`, so existing `error instanceof Error` handling and
+ * message text keep working unchanged.
+ */
+export class ApiRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+  }
+}
+
+export function isApiRequestError(error: unknown): error is ApiRequestError {
+  return error instanceof ApiRequestError;
+}
+
+export function apiErrorStatus(error: unknown): number {
+  return error instanceof ApiRequestError ? error.status : 0;
+}
+
 export function createApiClient(
   baseUrl: string,
   options: ApiClientOptions = {},
@@ -1954,8 +1981,9 @@ export function createApiClient(
       } catch {
         // ignore non-json error bodies
       }
-      throw new Error(
+      throw new ApiRequestError(
         getErrorMessage(body, `API request failed: ${response.status}`),
+        response.status,
       );
     }
     if (response.status === 204) return undefined as T;
@@ -1971,7 +1999,7 @@ export function createApiClient(
     } catch (error) {
       return {
         ok: false,
-        status: 0,
+        status: apiErrorStatus(error),
         message: error instanceof Error ? error.message : 'Unknown API error',
       };
     }

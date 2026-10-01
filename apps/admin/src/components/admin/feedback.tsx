@@ -56,6 +56,40 @@ export function ErrorState({ message }: { message: string }) {
   );
 }
 
+/**
+ * Honest inline notice for a sub-read that failed.
+ *
+ * Unlike `EmptyState`, it never says a record is absent. It names the failed
+ * operation and its HTTP status, so an operator can tell "the account read was
+ * denied (403)" apart from "the person genuinely has no account".
+ */
+export function LoadErrorNotice({
+  message,
+  status,
+  context,
+}: {
+  message: string;
+  status: number;
+  context: string;
+}) {
+  return (
+    <div
+      role="alert"
+      className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-900"
+    >
+      <p className="font-semibold">Sebagian data tidak dapat dibaca</p>
+      <p className="mt-1">
+        {context} gagal dimuat
+        {status > 0 ? ` (HTTP ${status})` : ''}. Ini bukan berarti datanya
+        kosong — data tidak dapat diverifikasi.
+      </p>
+      <p className="mt-2 rounded-md border border-rose-200 bg-white px-2 py-1 font-mono text-[11px] text-rose-800">
+        {message}
+      </p>
+    </div>
+  );
+}
+
 export function ActionMessage({
   state,
 }: {

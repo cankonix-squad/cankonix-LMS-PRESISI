@@ -43,10 +43,16 @@ export default async function PersonelPage({
             ? await getOrEmpty(() =>
                 api.persons.getKeycloakProvisioning(person.id),
               )
-            : { data: null, error: null };
+            : { data: null, error: null, status: 0 };
           return {
             person,
             account: account.data,
+            // A failed account read (e.g. 403 without `user_account.read`) must
+            // travel with the row so the UI can say "akses ditolak" instead of
+            // showing the person as if no account exists.
+            accountError: account.error
+              ? { message: account.error, status: account.status }
+              : null,
             placements: placements.data ?? [],
             keycloak: keycloak.data,
           };

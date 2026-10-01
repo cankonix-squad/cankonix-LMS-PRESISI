@@ -23,6 +23,7 @@ import {
   FilterToolbar,
   FormActions,
   FormField,
+  LoadErrorNotice,
   PageHeader,
   PaginationBar,
   Pill,
@@ -47,9 +48,17 @@ type Filters = {
   page: number;
   limit: number;
 };
+/**
+ * A failed account read is carried separately from `account`, because
+ * `account === null` alone cannot distinguish "no account exists" from "the
+ * read was denied or errored". The UI must show the reason, never a false
+ * "belum ada akun".
+ */
+export type AccountReadError = { message: string; status: number };
 type Row = {
   person: Person;
   account: UserAccount | null;
+  accountError: AccountReadError | null;
   placements: PersonOrganization[];
   keycloak: KeycloakProvisioningStatusResult | null;
 };
@@ -277,7 +286,7 @@ function PersonRow({
       </td>
       <td className="break-words px-4 py-3 align-middle">
         <div className="flex flex-col gap-1">
-          {accountLabel(row.account)}
+          {accountLabel(row.account, row.accountError)}
           {row.keycloak ? (
             <ProvisioningBadge status={row.keycloak.status} />
           ) : null}
@@ -338,7 +347,7 @@ function PersonCard({
         <div>
           <dt className="text-slate-400">Akun</dt>
           <dd className="mt-1 grid gap-1">
-            {accountLabel(row.account)}
+            {accountLabel(row.account, row.accountError)}
             {row.keycloak ? (
               <ProvisioningBadge status={row.keycloak.status} />
             ) : null}
@@ -544,11 +553,20 @@ function AccountForm({ row, onClose }: { row: Row; onClose: () => void }) {
   const account = row.account;
   if (!account)
     return (
-      <EmptyState>
-        Akun belum tersedia. Buat UserAccount terlebih dahulu melalui tombol
-        tambah personel atau hubungi administrator, lalu provisioning Keycloak
-        dapat dilakukan dari panel ini.
-      </EmptyState>
+      <div className="grid gap-4">
+        {row.accountError ? (
+          <LoadErrorNotice
+            message={row.accountError.message}
+            status={row.accountError.status}
+            context="Data akun login"
+          />
+        ) : null}
+        <EmptyState>
+          {row.accountError
+            ? 'Panel pengelolaan akun belum dapat ditampilkan karena pembacaan akun gagal. Perbaiki penyebab di atas, lalu muat ulang halaman.'
+            : 'Akun belum tersedia. Buat UserAccount terlebih dahulu melalui tombol tambah personel atau hubungi administrator, lalu provisioning Keycloak dapat dilakukan dari panel ini.'}
+        </EmptyState>
+      </div>
     );
   return (
     <form action={action} className="grid gap-4">
@@ -604,23 +622,42 @@ function AccountForm({ row, onClose }: { row: Row; onClose: () => void }) {
   );
 }
 
-function accountLabel(account: UserAccount | null) {
-  return account ? (
-    <div className="flex flex-col gap-1">
-      <Pill tone={account.status === 'ACTIVE' ? 'green' : 'red'}>
-        {account.status === 'ACTIVE'
-          ? 'Aktif'
-          : account.status === 'SUSPENDED'
-            ? 'Ditangguhkan'
-            : 'Nonaktif'}
-      </Pill>
-      <span className="max-w-48 truncate text-xs text-slate-500">
-        {account.username || account.email || 'Tanpa identitas login'}
-      </span>
-    </div>
-  ) : (
-    <Pill tone="slate">Belum ada akun</Pill>
-  );
+function accountLabel(
+  account: UserAccount | null,
+  error: AccountReadError | null,
+) {
+  if (account) {
+    return (
+      <div className="flex flex-col gap-1">
+        <Pill tone={account.status === 'ACTIVE' ? 'green' : 'red'}>
+          {account.status === 'ACTIVE'
+            ? 'Aktif'
+            : account.status === 'SUSPENDED'
+              ? 'Ditangguhkan'
+              : 'Nonaktif'}
+        </Pill>
+        <span className="max-w-48 truncate text-xs text-slate-500">
+          {account.username || account.email || 'Tanpa identitas login'}
+        </span>
+      </div>
+    );
+  }
+  // A failed read is not "no account": report the reason instead of implying
+  // the person has none.
+  if (error) {
+    return (
+      <div className="flex max-w-56 flex-col gap-1">
+        <Pill tone={error.status === 403 ? 'amber' : 'red'}>
+          {error.status === 403 ? 'Akses akun ditolak' : 'Akun gagal dibaca'}
+        </Pill>
+        <span className="text-xs leading-4 text-slate-500">
+          {error.status > 0 ? `HTTP ${error.status}` : 'koneksi gagal'} · data
+          akun tidak dapat diverifikasi
+        </span>
+      </div>
+    );
+  }
+  return <Pill tone="slate">Belum ada akun</Pill>;
 }
 
 function placementLabel(
