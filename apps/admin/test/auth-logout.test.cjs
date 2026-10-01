@@ -14,7 +14,12 @@ test('logout clears local session and redirects through Keycloak SSO', async () 
   process.env.LMS_OIDC_CLIENT_ID = 'lms-admin';
   try {
     const response = await GET(
-      new Request('https://admin.example.test/api/auth/logout'),
+      new Request('http://0.0.0.0:3000/api/auth/logout', {
+        headers: {
+          'x-forwarded-host': 'admin.example.test',
+          'x-forwarded-proto': 'https',
+        },
+      }),
     );
     const location = new URL(response.headers.get('location'));
     assert.equal(
@@ -49,7 +54,12 @@ test('logout still clears the local session when SSO is not configured', async (
   delete process.env.LMS_OIDC_CLIENT_ID;
   try {
     const response = await GET(
-      new Request('https://admin.example.test/api/auth/logout'),
+      new Request('http://0.0.0.0:3000/api/auth/logout', {
+        headers: {
+          'x-forwarded-host': 'admin.example.test',
+          'x-forwarded-proto': 'https',
+        },
+      }),
     );
     assert.equal(
       response.headers.get('location'),

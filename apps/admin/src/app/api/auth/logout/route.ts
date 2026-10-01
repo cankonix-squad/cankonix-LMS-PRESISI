@@ -3,7 +3,11 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const issuer = process.env.LMS_OIDC_ISSUER;
   const clientId = process.env.LMS_OIDC_CLIENT_ID;
-  const loginUrl = new URL('/login', request.url);
+  const host =
+    request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  const protocol = request.headers.get('x-forwarded-proto') ?? 'https';
+  if (!host) return new NextResponse('Missing forwarded host', { status: 400 });
+  const loginUrl = new URL('/login', `${protocol}://${host}`);
   const logoutUrl =
     issuer && clientId
       ? new URL(`${issuer}/protocol/openid-connect/logout`)
