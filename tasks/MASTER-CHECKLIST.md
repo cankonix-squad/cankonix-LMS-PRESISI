@@ -126,10 +126,10 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-062 | `tasks/TASK-062-organization-program-drill-down.md` | DONE | TASK-061 = DONE |
 | TASK-063 | `tasks/TASK-063-attendance-learning-performance-kpis.md` | DONE | TASK-060 = DONE |
 | TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | DONE | TASK-060 dan TASK-053 = DONE |
-| TASK-065 | `tasks/TASK-065-executive-ui.md` | REVIEW | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
+| TASK-065 | `tasks/TASK-065-executive-ui.md` | DONE | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
 | TASK-066 | `tasks/TASK-066-educator-portal-alignment.md` | DONE | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE |
-| TASK-067 | `tasks/TASK-067-production-zero-downtime-deployment.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED |
-| TASK-068 | `tasks/TASK-068-educator-uat-integration.md` | REVIEW | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE, TASK-066 = DONE |
+| TASK-067 | `tasks/TASK-067-production-zero-downtime-deployment.md` | DONE | TASK-000 = DONE-WITH-DEFERRED |
+| TASK-068 | `tasks/TASK-068-educator-uat-integration.md` | DONE | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE, TASK-066 = DONE |
 
 ### TASK-009J verification update — 2026-09-23
 
