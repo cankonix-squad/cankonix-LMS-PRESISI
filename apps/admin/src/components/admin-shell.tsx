@@ -169,6 +169,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
                   Production API
                 </div>
+                <a
+                  href="/api/auth/logout"
+                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  Keluar
+                </a>
               </div>
             </div>
           </header>
