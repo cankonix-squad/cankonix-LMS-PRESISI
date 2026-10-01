@@ -27,7 +27,7 @@ export default async function AssignmentsPage({
   const page = positiveInt(params.page);
   const limit = clamp(positiveInt(params.limit, 25), 10, 50);
   const api = createAdminApiClient();
-  const [result, roles, persons] = await Promise.all([
+  const [result, roles, persons, organizations] = await Promise.all([
     getOrEmpty(() =>
       api.authorization.assignments({
         roleId,
@@ -38,6 +38,7 @@ export default async function AssignmentsPage({
     ),
     getOrEmpty(() => api.authorization.roles({ limit: 100 })),
     getOrEmpty(() => api.persons.list({ limit: 100 })),
+    getOrEmpty(() => api.organizations.list({ status: 'ACTIVE', limit: 100 })),
   ]);
   const accounts = persons.data?.data
     ? (
@@ -62,6 +63,7 @@ export default async function AssignmentsPage({
         result={result}
         roles={roles.data?.data ?? []}
         accounts={accounts}
+        organizations={organizations.data?.data ?? []}
         filters={{ search, status, roleId, scopeType, page, limit }}
       />
     </AdminShell>

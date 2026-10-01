@@ -17,7 +17,7 @@ import type {
   UpdateUserAccountInput,
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
-import { createAdminApiClient } from '@/lib/api';
+import { createAdminApiClient, getAdminAccessToken } from '@/lib/api';
 import {
   ROLE_TEMPLATES,
   type RoleTemplate,
@@ -289,6 +289,12 @@ export async function createRoleAssignmentAction(
   _state: FoundationActionState,
   formData: FormData,
 ): Promise<FoundationActionState> {
+  if (!(await getAdminAccessToken())) {
+    return {
+      ok: false,
+      message: 'Sesi berakhir. Masuk kembali lalu ulangi assignment.',
+    };
+  }
   const userAccountId = getText(formData, 'userAccountId');
   const roleId = getText(formData, 'roleId');
   const validFrom = getText(formData, 'validFrom');

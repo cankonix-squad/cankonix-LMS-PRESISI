@@ -2,6 +2,7 @@
 
 import type {
   ApiListResponse,
+  Organization,
   Person,
   Role,
   RoleAssignment,
@@ -58,11 +59,13 @@ export function AssignmentWorkspace({
   result,
   roles,
   accounts,
+  organizations,
   filters,
 }: {
   result: Result<ApiListResponse<RoleAssignment>>;
   roles: Role[];
   accounts: AccountRow[];
+  organizations: Organization[];
   filters: Filters;
 }) {
   const [drawer, setDrawer] = useState<
@@ -161,6 +164,7 @@ export function AssignmentWorkspace({
           drawer={drawer}
           roles={roles}
           accounts={accounts}
+          organizations={organizations}
           accountMap={accountMap}
           onClose={() => setDrawer(null)}
         />
@@ -467,6 +471,7 @@ function AssignmentDrawer({
   drawer,
   roles,
   accounts,
+  organizations,
   accountMap,
   onClose,
 }: {
@@ -477,6 +482,7 @@ function AssignmentDrawer({
     | { kind: 'status'; assignment: RoleAssignment };
   roles: Role[];
   accounts: AccountRow[];
+  organizations: Organization[];
   accountMap: Map<string, AccountRow>;
   onClose: () => void;
 }) {
@@ -498,14 +504,18 @@ function AssignmentDrawer({
     >
       <div className="space-y-5">
         {drawer.kind === 'create' ? (
-          <CreateAssignmentForm roles={roles} accounts={accounts} />
+          <CreateAssignmentForm
+            roles={roles}
+            accounts={accounts}
+            organizations={organizations}
+          />
         ) : drawer.kind === 'detail' ? (
           <AssignmentDetail
             assignment={assignment!}
             account={accountMap.get(assignment!.userAccountId)}
           />
         ) : drawer.kind === 'scope' ? (
-          <ScopeForm assignment={assignment!} />
+          <ScopeForm assignment={assignment!} organizations={organizations} />
         ) : (
           <StatusForm assignment={assignment!} />
         )}
@@ -517,9 +527,11 @@ function AssignmentDrawer({
 function CreateAssignmentForm({
   roles,
   accounts,
+  organizations,
 }: {
   roles: Role[];
   accounts: AccountRow[];
+  organizations: Organization[];
 }) {
   const [state, action, pending] = useActionState(createRoleAssignmentAction, {
     ok: false,
@@ -563,12 +575,18 @@ function CreateAssignmentForm({
           />
         </label>
       </div>
-      <ScopeFields />
+      <ScopeFields organizations={organizations} />
       <FormFooter pending={pending} state={state} label="Simpan assignment" />
     </form>
   );
 }
-function ScopeForm({ assignment }: { assignment: RoleAssignment }) {
+function ScopeForm({
+  assignment,
+  organizations,
+}: {
+  assignment: RoleAssignment;
+  organizations: Organization[];
+}) {
   const [addState, addAction, addPending] = useActionState(
     addAssignmentScopeAction,
     { ok: false, message: null },
@@ -626,7 +644,7 @@ function ScopeForm({ assignment }: { assignment: RoleAssignment }) {
         className="space-y-3 border-t border-slate-200 pt-5"
       >
         <input type="hidden" name="assignmentId" value={assignment.id} />
-        <ScopeFields />
+        <ScopeFields organizations={organizations} />
         <FormFooter
           pending={addPending}
           state={addState}
@@ -684,27 +702,18 @@ function SelectField({
     </label>
   );
 }
-function ScopeFields() {
+function ScopeFields({ organizations }: { organizations: Organization[] }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
+      <input type="hidden" name="scopeType" value="ORGANIZATION" />
       <SelectField
-        label="Tipe scope"
-        name="scopeType"
-        options={scopeTypes.map((scope) => ({ value: scope, label: scope }))}
+        label="Organisasi"
+        name="scopeId"
+        options={organizations.map((organization) => ({
+          value: organization.id,
+          label: `${organization.name} (${organization.code})`,
+        }))}
       />
-      <label className="text-sm font-medium text-slate-700">
-        Target scope
-        <input
-          required
-          name="scopeId"
-          placeholder="UUID target scope"
-          className={enterpriseInputClass}
-        />
-        <span className="mt-1 block text-xs font-normal text-slate-500">
-          Daftar target belum tersedia dari kontrak API; masukkan ID target yang
-          sudah diverifikasi.
-        </span>
-      </label>
     </div>
   );
 }

@@ -37,6 +37,8 @@ export async function GET(request: Request) {
   const token = (await tokenResponse.json()) as {
     access_token?: string;
     expires_in?: number;
+    refresh_token?: string;
+    refresh_expires_in?: number;
   };
   if (!token.access_token)
     return new NextResponse('OIDC token missing', { status: 502 });
@@ -48,6 +50,15 @@ export async function GET(request: Request) {
     maxAge: token.expires_in ?? 300,
     path: '/',
   });
+  if (token.refresh_token) {
+    response.cookies.set('lms_refresh_token', token.refresh_token, {
+      httpOnly: true,
+      secure: secureCookie,
+      sameSite: 'lax',
+      maxAge: token.refresh_expires_in ?? 1800,
+      path: '/',
+    });
+  }
   response.cookies.delete('lms_oidc_state');
   return response;
 }
