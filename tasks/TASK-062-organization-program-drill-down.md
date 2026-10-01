@@ -1,6 +1,8 @@
 # TASK-062 — Organization / Program Drill-down
 
-**Status:** REVIEW
+**Status:** DONE
+**Implemented:** 2026-09-20 (Codex)
+**Approved:** 2026-09-30 (reviewer) — implementation accepted; `prisma migrate deploy` remains DEFERRED (no container runtime in this environment), to be completed before integration testing.
 
 ## Dependency
 TASK-061 = DONE.

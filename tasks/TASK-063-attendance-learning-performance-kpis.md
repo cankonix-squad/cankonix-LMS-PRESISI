@@ -1,6 +1,8 @@
 # TASK-063 — Attendance / Learning / Performance KPIs
 
-**Status:** REVIEW
+**Status:** DONE
+**Implemented:** 2026-09-21 (Codex)
+**Approved:** 2026-09-30 (reviewer) — implementation accepted; `prisma migrate deploy` remains DEFERRED (no container runtime in this environment), to be completed before integration testing.
 
 ## Dependency
 TASK-060 = DONE.

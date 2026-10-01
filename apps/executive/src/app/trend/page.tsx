@@ -1,18 +1,37 @@
 import { redirect } from 'next/navigation';
 import { ExecutiveShell } from '@/components/executive-shell';
-import { ExecutiveOverviewWorkspace } from '@/features/reporting/executive-overview-workspace';
+import { GraduationTrendWorkspace } from '@/features/reporting/graduation-trend-workspace';
 import {
   createExecutiveApiClient,
   getOrEmpty,
   hasExecutiveSession,
 } from '@/lib/api';
-import type { ExecutiveOverviewScope } from '@lms/api-client';
+import type {
+  ExecutiveOverviewScope,
+  GraduationTrendGranularity,
+  KpiDetailLevel,
+} from '@lms/api-client';
 
 export const metadata = {
-  title: 'Dashboard — Portal Executive LMS PRESISI',
+  title: 'Tren Kelulusan — Portal Executive LMS PRESISI',
 };
 
-export default async function ExecutiveDashboardPage({
+const KPI_LEVELS: KpiDetailLevel[] = [
+  'PROGRAM',
+  'BATCH',
+  'CLASS',
+  'CLASS_SUBJECT',
+  'ENROLLMENT',
+];
+
+const GRANULARITIES: GraduationTrendGranularity[] = [
+  'COHORT',
+  'YEAR',
+  'QUARTER',
+  'MONTH',
+];
+
+export default async function TrendPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -22,28 +41,35 @@ export default async function ExecutiveDashboardPage({
   const params = await searchParams;
   const scope = scopeFilter(params.scope);
   const scopeId = scope === 'NATIONAL' ? undefined : value(params.scopeId);
+  const level = levelFilter(params.level);
+  const granularity = granularityFilter(params.granularity);
   const periodFrom = value(params.periodFrom);
   const periodTo = value(params.periodTo);
-  const page = positiveInt(params.page);
-  const limit = clamp(positiveInt(params.limit, 25), 10, 50);
 
   const api = createExecutiveApiClient();
   const result = await getOrEmpty(() =>
-    api.reporting.executiveOverview({
+    api.reporting.graduationTrends({
       scope,
       scopeId,
+      level,
+      granularity,
       periodFrom,
       periodTo,
-      page,
-      limit,
     }),
   );
 
   return (
     <ExecutiveShell>
-      <ExecutiveOverviewWorkspace
+      <GraduationTrendWorkspace
         result={result}
-        filters={{ scope, scopeId, periodFrom, periodTo, page, limit }}
+        filters={{
+          scope,
+          scopeId,
+          level,
+          granularity,
+          periodFrom,
+          periodTo,
+        }}
       />
     </ExecutiveShell>
   );
@@ -68,12 +94,20 @@ function scopeFilter(
     : undefined;
 }
 
-function positiveInt(input: string | string[] | undefined, fallback = 1) {
-  if (typeof input !== 'string') return fallback;
-  const parsed = Number(input);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+function levelFilter(
+  input: string | string[] | undefined,
+): KpiDetailLevel | undefined {
+  if (typeof input !== 'string') return undefined;
+  return (KPI_LEVELS as string[]).includes(input)
+    ? (input as KpiDetailLevel)
+    : undefined;
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+function granularityFilter(
+  input: string | string[] | undefined,
+): GraduationTrendGranularity | undefined {
+  if (typeof input !== 'string') return undefined;
+  return (GRANULARITIES as string[]).includes(input)
+    ? (input as GraduationTrendGranularity)
+    : undefined;
 }

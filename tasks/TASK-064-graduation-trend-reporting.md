@@ -1,6 +1,8 @@
 # TASK-064 — Graduation & Trend Reporting
 
-**Status:** REVIEW
+**Status:** DONE
+**Implemented:** 2026-09-25 (Codex)
+**Approved:** 2026-09-30 (reviewer) — implementation accepted; `prisma migrate deploy` remains DEFERRED (no container runtime in this environment), to be completed before integration testing.
 
 ## Dependency
 TASK-060 dan TASK-053 = DONE.

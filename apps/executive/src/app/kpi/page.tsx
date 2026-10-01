@@ -1,18 +1,26 @@
 import { redirect } from 'next/navigation';
 import { ExecutiveShell } from '@/components/executive-shell';
-import { ExecutiveOverviewWorkspace } from '@/features/reporting/executive-overview-workspace';
+import { KpiDetailWorkspace } from '@/features/reporting/kpi-detail-workspace';
 import {
   createExecutiveApiClient,
   getOrEmpty,
   hasExecutiveSession,
 } from '@/lib/api';
-import type { ExecutiveOverviewScope } from '@lms/api-client';
+import type { ExecutiveOverviewScope, KpiDetailLevel } from '@lms/api-client';
 
 export const metadata = {
-  title: 'Dashboard — Portal Executive LMS PRESISI',
+  title: 'Detail KPI — Portal Executive LMS PRESISI',
 };
 
-export default async function ExecutiveDashboardPage({
+const KPI_LEVELS: KpiDetailLevel[] = [
+  'PROGRAM',
+  'BATCH',
+  'CLASS',
+  'CLASS_SUBJECT',
+  'ENROLLMENT',
+];
+
+export default async function KpiDetailPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -22,6 +30,7 @@ export default async function ExecutiveDashboardPage({
   const params = await searchParams;
   const scope = scopeFilter(params.scope);
   const scopeId = scope === 'NATIONAL' ? undefined : value(params.scopeId);
+  const level = levelFilter(params.level);
   const periodFrom = value(params.periodFrom);
   const periodTo = value(params.periodTo);
   const page = positiveInt(params.page);
@@ -29,9 +38,10 @@ export default async function ExecutiveDashboardPage({
 
   const api = createExecutiveApiClient();
   const result = await getOrEmpty(() =>
-    api.reporting.executiveOverview({
+    api.reporting.executiveKpis({
       scope,
       scopeId,
+      level,
       periodFrom,
       periodTo,
       page,
@@ -41,9 +51,9 @@ export default async function ExecutiveDashboardPage({
 
   return (
     <ExecutiveShell>
-      <ExecutiveOverviewWorkspace
+      <KpiDetailWorkspace
         result={result}
-        filters={{ scope, scopeId, periodFrom, periodTo, page, limit }}
+        filters={{ scope, scopeId, level, periodFrom, periodTo, page, limit }}
       />
     </ExecutiveShell>
   );
@@ -65,6 +75,15 @@ function scopeFilter(
   ];
   return allowed.includes(input as ExecutiveOverviewScope)
     ? (input as ExecutiveOverviewScope)
+    : undefined;
+}
+
+function levelFilter(
+  input: string | string[] | undefined,
+): KpiDetailLevel | undefined {
+  if (typeof input !== 'string') return undefined;
+  return (KPI_LEVELS as string[]).includes(input)
+    ? (input as KpiDetailLevel)
     : undefined;
 }
 

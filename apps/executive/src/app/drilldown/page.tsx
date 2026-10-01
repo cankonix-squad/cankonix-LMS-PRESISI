@@ -1,18 +1,27 @@
 import { redirect } from 'next/navigation';
 import { ExecutiveShell } from '@/components/executive-shell';
-import { ExecutiveOverviewWorkspace } from '@/features/reporting/executive-overview-workspace';
+import { DrilldownWorkspace } from '@/features/reporting/drilldown-workspace';
 import {
   createExecutiveApiClient,
   getOrEmpty,
   hasExecutiveSession,
 } from '@/lib/api';
-import type { ExecutiveOverviewScope } from '@lms/api-client';
+import type { ReportingScopeType } from '@lms/api-client';
 
 export const metadata = {
-  title: 'Dashboard — Portal Executive LMS PRESISI',
+  title: 'Drill-down — Portal Executive LMS PRESISI',
 };
 
-export default async function ExecutiveDashboardPage({
+const DRILLDOWN_LEVELS: ReportingScopeType[] = [
+  'ORGANIZATION',
+  'PROGRAM',
+  'BATCH',
+  'CLASS',
+  'CLASS_SUBJECT',
+  'ENROLLMENT',
+];
+
+export default async function DrilldownPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,30 +29,21 @@ export default async function ExecutiveDashboardPage({
   if (!(await hasExecutiveSession())) redirect('/login');
 
   const params = await searchParams;
-  const scope = scopeFilter(params.scope);
-  const scopeId = scope === 'NATIONAL' ? undefined : value(params.scopeId);
-  const periodFrom = value(params.periodFrom);
-  const periodTo = value(params.periodTo);
+  const level = levelFilter(params.level);
+  const parentId = value(params.parentId);
   const page = positiveInt(params.page);
   const limit = clamp(positiveInt(params.limit, 25), 10, 50);
 
   const api = createExecutiveApiClient();
   const result = await getOrEmpty(() =>
-    api.reporting.executiveOverview({
-      scope,
-      scopeId,
-      periodFrom,
-      periodTo,
-      page,
-      limit,
-    }),
+    api.reporting.executiveDrilldown({ level, parentId, page, limit }),
   );
 
   return (
     <ExecutiveShell>
-      <ExecutiveOverviewWorkspace
+      <DrilldownWorkspace
         result={result}
-        filters={{ scope, scopeId, periodFrom, periodTo, page, limit }}
+        filters={{ level, parentId, page, limit }}
       />
     </ExecutiveShell>
   );
@@ -53,19 +53,14 @@ function value(input: string | string[] | undefined) {
   return typeof input === 'string' && input.trim() ? input.trim() : undefined;
 }
 
-function scopeFilter(
-  input: string | string[] | undefined,
-): ExecutiveOverviewScope | undefined {
-  if (typeof input !== 'string') return undefined;
-  const allowed: ExecutiveOverviewScope[] = [
-    'NATIONAL',
-    'ORGANIZATION',
-    'PROGRAM',
-    'BATCH',
-  ];
-  return allowed.includes(input as ExecutiveOverviewScope)
-    ? (input as ExecutiveOverviewScope)
-    : undefined;
+function levelFilter(input: string | string[] | undefined): ReportingScopeType {
+  if (typeof input === 'string') {
+    if ((DRILLDOWN_LEVELS as string[]).includes(input)) {
+      return input as ReportingScopeType;
+    }
+  }
+  // Root level: the executive may enter their institutions.
+  return 'ORGANIZATION';
 }
 
 function positiveInt(input: string | string[] | undefined, fallback = 1) {

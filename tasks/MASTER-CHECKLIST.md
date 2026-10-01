@@ -123,10 +123,10 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-055 | `tasks/TASK-055-certificate-revocation.md` | DONE | TASK-054 dan TASK-006 = DONE |
 | TASK-060 | `tasks/TASK-060-reporting.md` | DONE | Core source domains minimal: enrollment, learning progress, attendance, final grade/graduation = DONE |
 | TASK-061 | `tasks/TASK-061-executive-overview-api.md` | DONE | TASK-060 dan TASK-005 = DONE |
-| TASK-062 | `tasks/TASK-062-organization-program-drill-down.md` | REVIEW | TASK-061 = DONE |
-| TASK-063 | `tasks/TASK-063-attendance-learning-performance-kpis.md` | REVIEW | TASK-060 = DONE |
-| TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | REVIEW | TASK-060 dan TASK-053 = DONE |
-| TASK-065 | `tasks/TASK-065-executive-ui.md` | NOT STARTED | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
+| TASK-062 | `tasks/TASK-062-organization-program-drill-down.md` | DONE | TASK-061 = DONE |
+| TASK-063 | `tasks/TASK-063-attendance-learning-performance-kpis.md` | DONE | TASK-060 = DONE |
+| TASK-064 | `tasks/TASK-064-graduation-trend-reporting.md` | DONE | TASK-060 dan TASK-053 = DONE |
+| TASK-065 | `tasks/TASK-065-executive-ui.md` | REVIEW | TASK-061, TASK-062, TASK-063, TASK-064 = DONE |
 | TASK-066 | `tasks/TASK-066-educator-portal-alignment.md` | DONE | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE |
 | TASK-067 | `tasks/TASK-067-production-zero-downtime-deployment.md` | REVIEW | TASK-000 = DONE-WITH-DEFERRED |
 | TASK-068 | `tasks/TASK-068-educator-uat-integration.md` | REVIEW | TASK-025 = DONE-WITH-DEFERRED, TASK-047 = DONE, TASK-066 = DONE |
@@ -342,15 +342,15 @@ Closed TASK-005 fix summary (kept for history):
 - Runtime Keycloak against a real realm (TASK-003).
 - Audience mapper/client audience Keycloak verification (TASK-003).
 
-## TASK-062 — REVIEW (2026-09-20)
+## TASK-062 — DONE (approved 2026-09-30)
 
 Completed the pre-existing drill-down draft and repaired real repository participant traversal, scoped organization entry pagination/counts, child counts, malformed-request ordering, and empty-branch handling. Endpoint: `GET /api/v1/reporting/executive/drilldown`, protected by executive permission and scope. No schema change, migration, or dependency added.
 
 Verification: `pnpm lint` (11/11 plus Prettier), `pnpm typecheck` (14/14), `pnpm test` (436 API + 6 api-client = 442, zero failures, including 62 drill-down tests), `pnpm build` (11/11), Prisma schema validation using a dummy local DATABASE_URL, and Prisma client generation all PASS. Live PostgreSQL/Keycloak verification remains DEFERRED because container/database runtime tooling is unavailable. Detailed evidence and limitations are in TASK-062.
 
-Current checkpoint: TASK-062 awaits human review. TASK-063 is now separately implemented and awaits human review. TASK-064–065 remain NOT STARTED. TASK-065 still requires approved TASK-062, TASK-063, and TASK-064. Earlier next-task/status notes above are historical and do not supersede the latest checkpoints below.
+Current checkpoint: TASK-062 approved 2026-09-30. TASK-063 and TASK-064 are now also approved.
 
-## TASK-063 — REVIEW (2026-09-21)
+## TASK-063 — DONE (approved 2026-09-30)
 
 Implemented attendance, learning, score/remedial KPI detail in the reporting module. New endpoint: `GET /api/v1/reporting/executive/kpis`, protected by `reporting.executive.read` and bounded by the same executive scope resolver used by TASK-061. The controller passes only the caller account id; the service resolves/narrows Permission + Scope before any read.
 
@@ -364,9 +364,9 @@ Deferred: live PostgreSQL/Keycloak end-to-end runtime verification, because cont
 
 Review notes: the trend is cohort-period trend from `periodStart`/`periodEnd`, not historical snapshot trend; TASK-064 remains responsible for graduation/trend reporting depth. For `CLASS_SUBJECT`, bucket `participants` represent per-subject participant rows, while summary headline remains on disjoint levels to avoid duplicated roster rollups.
 
-Current checkpoint: TASK-063 awaits human review. TASK-064 and TASK-065 remain NOT STARTED. Per AGENTS.md rule 17, Codex must stop at REVIEW and not start TASK-064 until directed after review.
+Current checkpoint: TASK-063 approved 2026-09-30.
 
-## TASK-064 — REVIEW (2026-09-25)
+## TASK-064 — DONE (approved 2026-09-30)
 
 Implemented graduation/pass/fail/remedial trend reporting from the stored `reporting_metrics` read model. New endpoint: `GET /api/v1/reporting/executive/graduation-trends`, protected by `reporting.executive.read` and bounded by the same Permission + Scope executive resolver as prior reporting endpoints.
 
@@ -376,4 +376,16 @@ Trend grouping supports cohort, year, quarter, and month periods. Rates use expl
 
 Verification: Prisma format PASS, Prisma validate PASS with dummy local PostgreSQL URL, Prisma generate PASS, API lint PASS, API typecheck PASS, API build PASS, targeted graduation trend tests PASS (5/5), full API tests PASS outside sandbox (446/446), and `git diff --check` PASS. The first sandboxed full test run failed only because HTTP tests could not bind `127.0.0.1` (`listen EPERM`), then passed with sandbox escalation.
 
-Deferred: live PostgreSQL migration deployment and live Keycloak/API runtime verification remain deferred because no runtime database/container was started here. TASK-065 was not started.
+Deferred: live PostgreSQL migration deployment and live Keycloak/API runtime verification remain deferred because no runtime database/container was started here.
+
+Current checkpoint: TASK-064 approved 2026-09-30.
+
+TASK-065 is now eligible (TASK-061, TASK-062, TASK-063, TASK-064 all DONE).
+
+## TASK-065 — REVIEW (2026-10-01)
+
+Implemented the Executive read-only reporting portal using only the typed Reporting API client: overview KPI cards, filters, comparison chart and breakdown table; drill-down hierarchy; KPI distribution and attention views; graduation trends; responsive shell, loading, empty and error states; and server-side OIDC cookie flow compatible with local HTTP. Corrected the local API fallback to port 4000. No schema, migration, API contract, backend business logic, or dependency changes.
+
+Verification: Executive ESLint PASS; `next typegen` + `tsc --noEmit` PASS; `next build --webpack` PASS; Executive Prettier and `git diff --check` PASS; standalone smoke check `/login` HTTP 200 and anonymous dashboard redirect PASS; direct Node API tests 446/446 PASS; direct Node API client tests 9/9 PASS. Turbo's test wrapper could not verify the configured pnpm signature while the npm registry was unreachable, so the same built test files were run directly with Node. Full monorepo Turbo build did not complete within the available run; the independent Executive production build passed.
+
+Deferred: live Keycloak/OIDC and PostgreSQL-backed Reporting API verification, because local Keycloak and database/container runtime are unavailable. Review notes and implementation details are in TASK-065. TASK-065 awaits human review; no later task was started.
