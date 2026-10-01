@@ -10,7 +10,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint && prettier --check .",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test --filter=@lms/api --filter=@lms/api-client",
+    "test": "turbo run test --filter=@lms/api --filter=@lms/api-client --filter=@lms/admin",
     "format": "prettier --write .",
     "db:validate": "pnpm --filter @lms/api db:validate"
   },

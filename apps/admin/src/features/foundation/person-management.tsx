@@ -568,48 +568,54 @@ function AccountForm({ row, onClose }: { row: Row; onClose: () => void }) {
         </EmptyState>
       </div>
     );
+  // The account form and the Keycloak panel must be SIBLING forms, never
+  // nested. HTML forbids a <form> inside a <form>: the browser drops the inner
+  // one during parsing, so the panel's action would run on the outer account
+  // form and `Buat user Keycloak` would never call the provisioning action.
   return (
-    <form action={action} className="grid gap-4">
-      <input type="hidden" name="personId" value={row.person.id} />
-      <p className="border-b border-slate-200 pb-2 text-sm font-semibold text-slate-950">
-        Akun Login
-      </p>
-      {(
-        [
-          ['username', 'Username', account.username],
-          ['accountEmail', 'Email akun', account.email],
-          ['externalAuthId', 'Keycloak subject', account.externalAuthId],
-        ] as [string, string, string | null | undefined][]
-      ).map(([name, label, value]) => (
-        <FormField key={name} label={label}>
-          <input
-            name={name}
-            defaultValue={(value ?? undefined) as string | undefined}
+    <div className="grid gap-4">
+      <form action={action} className="grid gap-4">
+        <input type="hidden" name="personId" value={row.person.id} />
+        <p className="border-b border-slate-200 pb-2 text-sm font-semibold text-slate-950">
+          Akun Login
+        </p>
+        {(
+          [
+            ['username', 'Username', account.username],
+            ['accountEmail', 'Email akun', account.email],
+            ['externalAuthId', 'Keycloak subject', account.externalAuthId],
+          ] as [string, string, string | null | undefined][]
+        ).map(([name, label, value]) => (
+          <FormField key={name} label={label}>
+            <input
+              name={name}
+              defaultValue={(value ?? undefined) as string | undefined}
+              className={enterpriseInputClass}
+            />
+          </FormField>
+        ))}
+        <FormField label="Status akun">
+          <select
+            name="accountStatus"
+            defaultValue={account.status}
             className={enterpriseInputClass}
-          />
+          >
+            <option value="ACTIVE">Aktif</option>
+            <option value="INACTIVE">Nonaktif</option>
+            <option value="SUSPENDED">Ditangguhkan</option>
+          </select>
         </FormField>
-      ))}
-      <FormField label="Status akun">
-        <select
-          name="accountStatus"
-          defaultValue={account.status}
-          className={enterpriseInputClass}
-        >
-          <option value="ACTIVE">Aktif</option>
-          <option value="INACTIVE">Nonaktif</option>
-          <option value="SUSPENDED">Ditangguhkan</option>
-        </select>
-      </FormField>
-      <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
-        Password tidak disimpan di LMS. Perubahan username, email, dan status
-        hanya memperbarui metadata akun lokal.
-      </p>
-      <FormActions
-        onCancel={onClose}
-        pending={pending}
-        submitLabel="Simpan Akun"
-      />
-      {state.message ? <ActionMessage state={state} /> : null}
+        <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
+          Password tidak disimpan di LMS. Perubahan username, email, dan status
+          hanya memperbarui metadata akun lokal.
+        </p>
+        <FormActions
+          onCancel={onClose}
+          pending={pending}
+          submitLabel="Simpan Akun"
+        />
+        {state.message ? <ActionMessage state={state} /> : null}
+      </form>
       {row.keycloak ? (
         <div className="border-t border-slate-200 pt-4">
           <KeycloakProvisioningPanel
@@ -618,7 +624,7 @@ function AccountForm({ row, onClose }: { row: Row; onClose: () => void }) {
           />
         </div>
       ) : null}
-    </form>
+    </div>
   );
 }
 
