@@ -27,10 +27,7 @@ test('logout clears local session and redirects through Keycloak SSO', async () 
       'https://auth.example.test/realms/lemdiklat/protocol/openid-connect/logout',
     );
     assert.equal(location.searchParams.get('client_id'), 'lms-admin');
-    assert.equal(
-      location.searchParams.get('post_logout_redirect_uri'),
-      'https://admin.example.test/login',
-    );
+    assert.equal(location.searchParams.has('post_logout_redirect_uri'), false);
     const cookies = response.headers.getSetCookie().join(' ');
     for (const name of [
       'lms_access_token',

@@ -14,7 +14,6 @@ export async function GET(request: Request) {
       : loginUrl;
   if (issuer && clientId) {
     logoutUrl.searchParams.set('client_id', clientId);
-    logoutUrl.searchParams.set('post_logout_redirect_uri', loginUrl.toString());
   }
   const response = NextResponse.redirect(logoutUrl);
   response.cookies.delete('lms_access_token');
