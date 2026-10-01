@@ -111,6 +111,38 @@ services:
       retries: 18
       start_period: 30s
 
+  # One-shot Prisma migration runner. It shares the API image (same build) and
+  # runs to completion BEFORE the API starts, because `api` declares
+  # `service_completed_successfully` on it. This makes applying pending
+  # migrations structural: no `docker compose up -d api` can start the API
+  # without first applying migrations, so a migration can no longer be skipped
+  # while the deploy still reports success.
+  #
+  # `migrate deploy` is idempotent. The trailing `migrate status` check fails the
+  # container (and therefore the start of `api`) if any migration is still
+  # pending, instead of silently serving data from a stale schema.
+  api-migrate:
+    image: cankonix-lms-lemdiklat-api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: cankonix-lms-lemdiklat-api-migrate
+    restart: 'no'
+    environment:
+      DATABASE_URL: postgresql://lemdiklat:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/lemdiklat?schema=public
+    command:
+      - sh
+      - -c
+      - >-
+        node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma &&
+        ! node_modules/.bin/prisma migrate status --schema=prisma/schema.prisma
+        2>&1 | grep -q 'have not yet been applied'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+
   api:
     build:
       context: .
@@ -147,6 +179,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+      api-migrate:
+        condition: service_completed_successfully
     networks:
       - internal
       - proxy

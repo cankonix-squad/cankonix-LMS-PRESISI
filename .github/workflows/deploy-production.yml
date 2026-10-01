@@ -298,24 +298,24 @@ jobs:
             wait_for_healthy "$container"
           done
 
-          # `prisma migrate deploy` is idempotent and a no-op when every
-          # migration is already recorded, so it is always safe to run. The
-          # failure mode being fixed here is a migration that was SKIPPED, not
-          # one that ran twice.
+          # Migrations are applied by the one-shot `api-migrate` compose service,
+          # which the `api` service depends on with
+          # `service_completed_successfully`. Recreating it here makes the step
+          # authoritative and observable: `docker wait` returns its exit code,
+          # and a non-zero exit fails the deploy instead of letting the API
+          # serve traffic from a stale schema.
           run_api_migrations() {
-            echo "Applying Prisma migrations (idempotent)."
-            docker exec cankonix-lms-lemdiklat-api \
-              /app/node_modules/.bin/prisma migrate deploy \
-              --schema=/app/prisma/schema.prisma
-            # TASK-009AI — idempotent: ensure bootstrap-admin holds the
-            # authorization SUPER_ADMIN role so /roles and /assignments open.
-            docker exec -e BOOTSTRAP_EXTERNAL_AUTH_ID="$BOOTSTRAP_EXTERNAL_AUTH_ID" \
-              cankonix-lms-lemdiklat-api \
-              node dist/scripts/bootstrap-admin-authorization.js
-
-            # Fail the deploy if the database still reports unapplied
-            # migrations, so a skipped migration can never masquerade as a
-            # successful deploy again.
+            echo "Applying Prisma migrations via the api-migrate one-shot service."
+            docker compose -f docker-compose.production.yml \
+              up -d --no-build --force-recreate api-migrate
+            MIGRATE_EXIT=$(docker wait cankonix-lms-lemdiklat-api-migrate 2>/dev/null || echo 1)
+            docker logs --tail 40 cankonix-lms-lemdiklat-api-migrate || true
+            if [ "$MIGRATE_EXIT" != "0" ]; then
+              echo "api-migrate exited $MIGRATE_EXIT: pending migrations were not applied" >&2
+              exit 1
+            fi
+            # Independent verification against the database, so a green
+            # one-shot cannot hide an unapplied migration.
             MIGRATE_STATUS=$(docker exec cankonix-lms-lemdiklat-api \
               /app/node_modules/.bin/prisma migrate status \
               --schema=/app/prisma/schema.prisma 2>&1 || true)
@@ -324,24 +324,21 @@ jobs:
               echo "Pending Prisma migrations remain after migrate deploy" >&2
               exit 1
             fi
+            # TASK-009AI — idempotent: ensure bootstrap-admin holds the
+            # authorization SUPER_ADMIN role so /roles and /assignments open.
+            docker exec -e BOOTSTRAP_EXTERNAL_AUTH_ID="$BOOTSTRAP_EXTERNAL_AUTH_ID" \
+              cankonix-lms-lemdiklat-api \
+              node dist/scripts/bootstrap-admin-authorization.js
           }
 
-          api_container_running() {
-            [ "$(docker inspect -f '{{.State.Running}}' cankonix-lms-lemdiklat-api 2>/dev/null)" = "true" ]
-          }
-
-          # Run migrations when the API was (re)built, when a migration file
-          # changed, or when this deploy has no service change at all. The last
-          # case is what let a migration-only commit leave a migration
-          # unapplied while the workflow still reported success.
-          if printf '%s\n' "${SERVICES[@]}" | grep -qx api \
-            || [ "$MIGRATION_CHANGED" = true ] \
-            || [ "$DEPLOY_REVISION_CHANGED" = "0" ]; then
-            if api_container_running; then
-              run_api_migrations
-            else
-              echo "::warning::Skipping Prisma migration: cankonix-lms-lemdiklat-api is not running."
-            fi
+          # Run migrations on every deploy. `migrate deploy` is idempotent and
+          # the one-shot is recreated here, so this is always safe and removes
+          # the detect-a-change gate that previously let a pending migration be
+          # skipped.
+          if docker image inspect cankonix-lms-lemdiklat-api:latest >/dev/null 2>&1; then
+            run_api_migrations
+          else
+            echo "API image not present yet; the first deploy builds it before migrating."
           fi
 
           wait_for_url() {
