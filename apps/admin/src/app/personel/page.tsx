@@ -37,10 +37,18 @@ export default async function PersonelPage({
             getOrEmpty(() => api.persons.getAccount(person.id)),
             getOrEmpty(() => api.persons.listOrganizations(person.id)),
           ]);
+          // Provisioning status is only meaningful for a person that already has
+          // a UserAccount, so the extra call is skipped otherwise.
+          const keycloak = account.data
+            ? await getOrEmpty(() =>
+                api.persons.getKeycloakProvisioning(person.id),
+              )
+            : { data: null, error: null };
           return {
             person,
             account: account.data,
             placements: placements.data ?? [],
+            keycloak: keycloak.data,
           };
         }),
       )

@@ -8,27 +8,33 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AllowAuthenticated } from '../authorization/authorization.decorators';
+import { RequirePermissions } from '../authorization/authorization.decorators';
 import { CreateUserAccountDto } from './dto/create-user-account.dto';
 import { UpdateUserAccountDto } from './dto/update-user-account.dto';
 import { UserAccountResponseDto } from './dto/user-account-response.dto';
+import { USER_ACCOUNT_PERMISSIONS } from './user-account-permissions';
 import { UserAccountsService } from './user-accounts.service';
 
 /**
  * User account records (TASK-002 foundation).
  *
- * Explicitly allow-listed for authenticated callers: the fail-closed
- * `PermissionGuard` needs an auditable decision per route, and this module's
- * permission vocabulary is owned by the task that owns the module. Replace this
- * allow-list with `@RequirePermissions(...)` before production readiness.
+ * The boundary is a real permission: `user_account.read` for reads and
+ * `user_account.manage` for lifecycle writes. Creating an account is a sensitive
+ * identity operation, so "any authenticated caller" is not enough — the
+ * foundation allow-list was replaced once this module's permission catalogue
+ * existed.
+ *
+ * Keycloak identity provisioning lives in a separate controller
+ * (`persons/:personId/keycloak`) so the account contract stays free of provider
+ * details.
  */
 @ApiTags('user-accounts')
-@AllowAuthenticated()
 @Controller('persons/:personId/account')
 export class UserAccountsController {
   constructor(private readonly accounts: UserAccountsService) {}
 
   @Post()
+  @RequirePermissions(USER_ACCOUNT_PERMISSIONS.MANAGE)
   @ApiCreatedResponse({ type: UserAccountResponseDto })
   create(
     @Param('personId', ParseUUIDPipe) personId: string,
@@ -38,6 +44,7 @@ export class UserAccountsController {
   }
 
   @Get()
+  @RequirePermissions(USER_ACCOUNT_PERMISSIONS.READ)
   @ApiOkResponse({ type: UserAccountResponseDto })
   findByPerson(
     @Param('personId', ParseUUIDPipe) personId: string,
@@ -46,6 +53,7 @@ export class UserAccountsController {
   }
 
   @Patch()
+  @RequirePermissions(USER_ACCOUNT_PERMISSIONS.MANAGE)
   @ApiOkResponse({ type: UserAccountResponseDto })
   update(
     @Param('personId', ParseUUIDPipe) personId: string,

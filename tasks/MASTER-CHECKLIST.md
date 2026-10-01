@@ -66,6 +66,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009AI | `tasks/TASK-009AI-bootstrap-admin-authorization-fix.md` | REVIEW | TASK-004 = DONE-WITH-DEFERRED; TASK-005 = DONE-WITH-DEFERRED |
 | TASK-009AL | `tasks/TASK-009AL-admin-permission-human-labels-role-template-ux.md` | REVIEW | TASK-009AH = REVIEW; TASK-009AI = REVIEW |
 | TASK-009AM | `tasks/TASK-009AM-seed-educator-role-permissions.md` | REVIEW | TASK-009AI = REVIEW; TASK-009AL = REVIEW |
+| TASK-009AN | `tasks/TASK-009AN-admin-keycloak-user-provisioning.md` | REVIEW | TASK-003 = DONE-WITH-DEFERRED; TASK-009AM = REVIEW |
 | TASK-009N | `tasks/TASK-009N-admin-assignment-scope-operator-ux-polish.md` | REVIEW | TASK-009M = REVIEW |
 | TASK-009O | `tasks/TASK-009O-admin-academic-program-operator-ux.md` | REVIEW | TASK-009N = REVIEW; TASK-010 = DONE-WITH-DEFERRED |
 | TASK-009P | `tasks/TASK-009P-admin-curriculum-operator-ux.md` | REVIEW | TASK-009O = REVIEW; TASK-011 = DONE-WITH-DEFERRED |
@@ -389,3 +390,33 @@ Implemented the Executive read-only reporting portal using only the typed Report
 Verification: Executive ESLint PASS; `next typegen` + `tsc --noEmit` PASS; `next build --webpack` PASS; Executive Prettier and `git diff --check` PASS; standalone smoke check `/login` HTTP 200 and anonymous dashboard redirect PASS; direct Node API tests 446/446 PASS; direct Node API client tests 9/9 PASS. Turbo's test wrapper could not verify the configured pnpm signature while the npm registry was unreachable, so the same built test files were run directly with Node. Full monorepo Turbo build did not complete within the available run; the independent Executive production build passed.
 
 Deferred: live Keycloak/OIDC and PostgreSQL-backed Reporting API verification, because local Keycloak and database/container runtime are unavailable. Review notes and implementation details are in TASK-065. TASK-065 awaits human review; no later task was started.
+
+## TASK-009AN — REVIEW (2026-10-01)
+
+Tambahkan provisioning user Keycloak dari portal Admin. Backend LMS memanggil
+Keycloak Admin API memakai kredensial layanan dari environment (`KEYCLOAK_ADMIN_*`)
+dan hanya menyimpan subject Keycloak ke `UserAccount.externalAuthId`; tidak ada
+password/hash/token di database LMS. Password awal dikirim satu kali ke Keycloak
+sebagai kredensial sementara (`temporary`), dan endpoint "activation" hanya
+melaporkan state aktivasi karena email dimiliki Keycloak.
+
+Endpoint baru bersifat aditif di bawah `/api/v1/persons/:personId/keycloak`
+(`status`/`provision`/`link-existing`/`password`/`activation`/`status`) serta
+pengetatan `GET/POST/PATCH /api/v1/persons/:personId/account` dari allow-list
+menjadi `user_account.read`/`user_account.manage`. Tidak ada perubahan API yang
+breaking. Model Permission + Scope dipertahankan. UI Admin menampilkan status
+jujur (siap login / perlu aktivasi / dapat diadopsi / konflik / gagal) dan
+menyediakan jalur hubungkan-ulang untuk akun `ui-pengajar-01102601`.
+
+Verification: `pnpm typecheck` PASS; `pnpm test` PASS (467 test API + 9 test
+api-client, termasuk 21 test baru `apps/api/test/keycloak-provisioning.test.cjs`);
+`pnpm build` PASS; `pnpm --filter @lms/api db:validate` PASS; `pnpm --filter
+@lms/api db:generate` PASS; `git diff --check` PASS. `pnpm lint`: Turbo lint 11/11
+PASS, tetapi langkah repo-wide `prettier --check .` gagal pada 46 file pre-existing
+di luar task ini (overlap dengan file task = 0).
+
+Deferred: `prisma migrate deploy` untuk migration seed permission, verifikasi
+runtime Keycloak Admin API (user nyata + email aktivasi), dan verifikasi UI
+end-to-end terhadap Keycloak production — karena Docker/container runtime dan
+Keycloak lokal tidak tersedia. Detail implementasi dan batas deferred ada di
+TASK-009AN.

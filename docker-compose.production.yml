@@ -129,6 +129,14 @@ services:
       S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
       KEYCLOAK_ISSUER: https://auth.lms-presisi.digitallearningcenter.id/realms/lemdiklat
       KEYCLOAK_AUDIENCE: lemdiklat-api
+      # Keycloak Admin API (user provisioning). Leave these unset to disable
+      # provisioning; the endpoints then fail closed with 503.
+      KEYCLOAK_ADMIN_BASE_URL: https://auth.lms-presisi.digitallearningcenter.id
+      KEYCLOAK_ADMIN_REALM: lemdiklat
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
+      KEYCLOAK_ADMIN_RESET_PASSWORD_TEMPORARY: 'true'
+      KEYCLOAK_ADMIN_TIMEOUT_MS: '8000'
       DOCS_ENABLED: 'false'
     depends_on:
       postgres:

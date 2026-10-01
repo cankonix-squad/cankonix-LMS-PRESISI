@@ -236,6 +236,50 @@ export type CreateUserAccountInput = {
 
 export type UpdateUserAccountInput = Partial<CreateUserAccountInput>;
 
+/**
+ * Honest Keycloak provisioning state for one account.
+ *
+ * Mirrors the API vocabulary; the UI renders one badge from `status` and never
+ * infers "can log in" from a combination of booleans.
+ */
+export type KeycloakProvisioningStatus =
+  | 'READY'
+  | 'ACTIVATION_REQUIRED'
+  | 'NOT_PROVISIONED'
+  | 'ADOPTABLE'
+  | 'LINK_CONFLICT'
+  | 'STALE_LINK'
+  | 'NOT_CONFIGURED'
+  | 'ERROR';
+
+export type KeycloakProvisioningAction =
+  'PROVISION' | 'LINK_EXISTING' | 'SET_PASSWORD' | 'ENABLE' | 'RETRY';
+
+export type KeycloakProvisioningStatusResult = {
+  personId: string;
+  userAccountId: string;
+  status: KeycloakProvisioningStatus;
+  summary: string;
+  readyToLogin: boolean;
+  availableActions: KeycloakProvisioningAction[];
+  externalAuthId?: string | null;
+  keycloakUsername?: string | null;
+  provisioningConfigured: boolean;
+};
+
+export type KeycloakProvisioningOperationResult = {
+  success: boolean;
+  provisioning: KeycloakProvisioningStatusResult;
+  message?: string | null;
+  adoptedExisting?: boolean;
+};
+
+export type SetKeycloakPasswordInput = {
+  password: string;
+  /** Defaults to `true`: a one-time credential the user must change. */
+  temporary?: boolean;
+};
+
 export type Role = {
   id: string;
   code: string;
@@ -308,10 +352,7 @@ export type UpdateRoleInput = Partial<
 };
 
 export type RolePermissionOutcome =
-  | 'granted'
-  | 'already_granted'
-  | 'removed'
-  | 'already_removed';
+  'granted' | 'already_granted' | 'removed' | 'already_removed';
 
 export type RolePermissionMutationResult = {
   roleId: string;
@@ -2213,6 +2254,41 @@ export function createApiClient(
       getAccount(personId: string) {
         return request<UserAccount>(`/persons/${personId}/account`);
       },
+      getKeycloakProvisioning(personId: string) {
+        return request<KeycloakProvisioningStatusResult>(
+          `/persons/${personId}/keycloak/status`,
+        );
+      },
+      provisionKeycloakUser(personId: string) {
+        return mutate<KeycloakProvisioningOperationResult>(
+          `/persons/${personId}/keycloak/provision`,
+          { method: 'POST' },
+        );
+      },
+      linkExistingKeycloakUser(personId: string) {
+        return mutate<KeycloakProvisioningOperationResult>(
+          `/persons/${personId}/keycloak/link-existing`,
+          { method: 'POST' },
+        );
+      },
+      setKeycloakPassword(personId: string, input: SetKeycloakPasswordInput) {
+        return mutate<KeycloakProvisioningOperationResult>(
+          `/persons/${personId}/keycloak/password`,
+          { method: 'PUT', body: JSON.stringify(input) },
+        );
+      },
+      requestKeycloakActivation(personId: string) {
+        return mutate<KeycloakProvisioningOperationResult>(
+          `/persons/${personId}/keycloak/activation`,
+          { method: 'POST' },
+        );
+      },
+      setKeycloakUserStatus(personId: string, enabled: boolean) {
+        return mutate<KeycloakProvisioningOperationResult>(
+          `/persons/${personId}/keycloak/status`,
+          { method: 'PUT', body: JSON.stringify({ enabled }) },
+        );
+      },
       listOrganizations(personId: string) {
         return request<PersonOrganization[]>(
           `/persons/${personId}/organizations`,
@@ -2252,9 +2328,7 @@ export function createApiClient(
         );
       },
       role(id: string) {
-        return request<RoleDetail>(
-          `/authorization/roles/${id}`,
-        );
+        return request<RoleDetail>(`/authorization/roles/${id}`);
       },
       rolePermissions(id: string) {
         return request<Permission[]>(`/authorization/roles/${id}/permissions`);

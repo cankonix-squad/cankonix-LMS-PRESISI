@@ -158,6 +158,14 @@ export const AUDIT_ACTIONS = {
   USER_ACCOUNT_CREATED: 'user_account.created',
   USER_ACCOUNT_UPDATED: 'user_account.updated',
 
+  // Keycloak identity provisioning. Split into distinct actions so "who created
+  // a login" is a direct audit query rather than a diff of two snapshots.
+  // `_LINKED` means an existing Keycloak user was adopted (no duplicate created).
+  USER_ACCOUNT_KEYCLOAK_PROVISIONED: 'user_account.keycloak_provisioned',
+  USER_ACCOUNT_KEYCLOAK_LINKED: 'user_account.keycloak_linked',
+  USER_ACCOUNT_KEYCLOAK_PASSWORD_SET: 'user_account.keycloak_password_set',
+  USER_ACCOUNT_KEYCLOAK_STATUS_CHANGED: 'user_account.keycloak_status_changed',
+
   ROLE_CREATED: 'role.created',
   ROLE_UPDATED: 'role.updated',
   ROLE_DELETED: 'role.deleted',

@@ -112,8 +112,30 @@ class StubIdentityResolver {
   }
 }
 
+/** Deterministic permission evaluator: it answers questions, it cannot bypass. */
+class StubPermissionEvaluator {
+  constructor(permissions = []) {
+    this.permissions = new Set(permissions);
+  }
+
+  async hasPermission(_userAccountId, permissionCode) {
+    return this.permissions.has(permissionCode);
+  }
+
+  async getUserEffectivePermissions(userAccountId) {
+    return {
+      userAccountId,
+      permissions: Array.from(this.permissions).map((code) => ({
+        code,
+        isUnrestricted: true,
+        scopes: [],
+      })),
+    };
+  }
+}
+
 /** Boots the application with a local key set so HTTP tests can authenticate. */
-async function startAuthenticatedApp() {
+async function startAuthenticatedApp(permissions = []) {
   const app = await createApp({
     authConfig: {
       issuer: AUTH_ISSUER,
@@ -126,6 +148,7 @@ async function startAuthenticatedApp() {
     },
     jwksProvider: new StaticJwksProvider(),
     identityResolver: new StubIdentityResolver(),
+    permissionEvaluator: new StubPermissionEvaluator(permissions),
   });
   await app.listen(0, '127.0.0.1');
   return { app, base: await app.getUrl() };
@@ -693,7 +716,10 @@ test('user account lifecycle can be read and updated', async () => {
 });
 
 test('password fields are rejected by the person and account contracts', async () => {
-  const { app, base } = await startAuthenticatedApp();
+  // The account endpoints now enforce `user_account.manage` (the previous
+  // authenticated allow-list was removed), so the caller is granted it here to
+  // reach DTO validation — which is what this test is actually about.
+  const { app, base } = await startAuthenticatedApp(['user_account.manage']);
   try {
     const accountResponse = await fetch(
       `${base}/api/v1/persons/${UNKNOWN_ID}/account`,

@@ -2,6 +2,7 @@
 
 import type {
   ApiListResponse,
+  KeycloakProvisioningStatusResult,
   Organization,
   Person,
   PersonOrganization,
@@ -34,6 +35,10 @@ import {
   updatePersonAccountAction,
   updatePersonAction,
 } from './actions';
+import {
+  KeycloakProvisioningPanel,
+  ProvisioningBadge,
+} from './keycloak-provisioning-panel';
 
 type Result<T> = { data: T | null; error: string | null };
 type Filters = {
@@ -46,6 +51,7 @@ type Row = {
   person: Person;
   account: UserAccount | null;
   placements: PersonOrganization[];
+  keycloak: KeycloakProvisioningStatusResult | null;
 };
 
 export function PersonWorkspace({
@@ -270,7 +276,12 @@ function PersonRow({
         {placementLabel(row.placements, orgMap)}
       </td>
       <td className="break-words px-4 py-3 align-middle">
-        {accountLabel(row.account)}
+        <div className="flex flex-col gap-1">
+          {accountLabel(row.account)}
+          {row.keycloak ? (
+            <ProvisioningBadge status={row.keycloak.status} />
+          ) : null}
+        </div>
       </td>
       <td className="px-4 py-3 align-middle">
         <Pill tone={row.person.status === 'ACTIVE' ? 'green' : 'red'}>
@@ -326,7 +337,12 @@ function PersonCard({
         </div>
         <div>
           <dt className="text-slate-400">Akun</dt>
-          <dd className="mt-1">{accountLabel(row.account)}</dd>
+          <dd className="mt-1 grid gap-1">
+            {accountLabel(row.account)}
+            {row.keycloak ? (
+              <ProvisioningBadge status={row.keycloak.status} />
+            ) : null}
+          </dd>
         </div>
         <div>
           <dt className="text-slate-400">Diubah</dt>
@@ -529,8 +545,9 @@ function AccountForm({ row, onClose }: { row: Row; onClose: () => void }) {
   if (!account)
     return (
       <EmptyState>
-        Akun belum tersedia. Pembuatan akun tetap mengikuti alur API yang sudah
-        ada.
+        Akun belum tersedia. Buat UserAccount terlebih dahulu melalui tombol
+        tambah personel atau hubungi administrator, lalu provisioning Keycloak
+        dapat dilakukan dari panel ini.
       </EmptyState>
     );
   return (
@@ -575,6 +592,14 @@ function AccountForm({ row, onClose }: { row: Row; onClose: () => void }) {
         submitLabel="Simpan Akun"
       />
       {state.message ? <ActionMessage state={state} /> : null}
+      {row.keycloak ? (
+        <div className="border-t border-slate-200 pt-4">
+          <KeycloakProvisioningPanel
+            personId={row.person.id}
+            provisioning={row.keycloak}
+          />
+        </div>
+      ) : null}
     </form>
   );
 }

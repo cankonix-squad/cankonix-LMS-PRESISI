@@ -36,6 +36,7 @@ import {
 } from './reporting/reporting.module';
 import { HealthModule } from './health/health.module';
 import { GradingModule } from './grading/grading.module';
+import { KeycloakProvisioningModule } from './keycloak-provisioning/keycloak-provisioning.module';
 import { LearningActivitiesModule } from './learning-activities/learning-activities.module';
 import { LearningActivityTypesModule } from './learning-activity-types/learning-activity-types.module';
 import { LearningMeetingsModule } from './learning-meetings/learning-meetings.module';
@@ -105,6 +106,9 @@ export class AppModule {
         FilesModule,
         PersonsModule,
         UserAccountsModule,
+        // Keycloak identity provisioning depends on persons + user accounts, so
+        // it is registered after them. Authorization stays last.
+        KeycloakProvisioningModule,
         AuthorizationModule.register({
           permissionEvaluator: options.permissionEvaluator,
         }),

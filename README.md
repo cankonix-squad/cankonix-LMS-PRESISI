@@ -73,6 +73,29 @@ Configuration (`apps/api/.env.example`):
 
 If authentication is unconfigured or misconfigured, protected routes fail **closed** with `401`; a production instance refuses to start.
 
+### Keycloak user provisioning (Admin)
+
+Admins can create a Keycloak user for an existing `UserAccount` from the Admin
+portal (`/personel` → **Kelola Akun** → **Akun Keycloak**). The API calls the
+Keycloak Admin API with **service credentials from the environment**; the granted
+Keycloak subject is stored in `UserAccount.externalAuthId` and no password or
+token is ever written to the LMS database. See
+`apps/api/src/keycloak-provisioning/README.md` for the full setup.
+
+| Variable                                   | Required | Purpose                                                                  |
+| ------------------------------------------ | -------- | ------------------------------------------------------------------------ |
+| `KEYCLOAK_ADMIN_BASE_URL`                  | no       | Keycloak base URL; derived from `KEYCLOAK_ISSUER` when omitted           |
+| `KEYCLOAK_ADMIN_REALM`                     | no       | Realm to provision into; derived from `KEYCLOAK_ISSUER` when omitted     |
+| `KEYCLOAK_ADMIN_CLIENT_ID`                 | no       | Confidential client with a `manage-users` + `view-users` service account |
+| `KEYCLOAK_ADMIN_CLIENT_SECRET`             | no       | Secret for the client above                                              |
+| `KEYCLOAK_ADMIN_USERNAME` / `..._PASSWORD` | no       | Dev-only `password` grant alternative to the service account             |
+| `KEYCLOAK_ADMIN_RESET_PASSWORD_TEMPORARY`  | no       | New passwords are one-time credentials by default (`true`)               |
+| `KEYCLOAK_ADMIN_TIMEOUT_MS`                | no       | Admin API timeout (default `8000`)                                       |
+
+Provisioning is **optional**. When no credential is configured the endpoints fail
+closed with `503` and every other feature keeps working; the Admin UI then shows
+the honest `NOT_CONFIGURED` status instead of pretending an account was created.
+
 ## Verification
 
 ```bash
