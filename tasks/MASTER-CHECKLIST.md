@@ -415,8 +415,18 @@ api-client, termasuk 21 test baru `apps/api/test/keycloak-provisioning.test.cjs`
 PASS, tetapi langkah repo-wide `prettier --check .` gagal pada 46 file pre-existing
 di luar task ini (overlap dengan file task = 0).
 
-Deferred: `prisma migrate deploy` untuk migration seed permission, verifikasi
-runtime Keycloak Admin API (user nyata + email aktivasi), dan verifikasi UI
-end-to-end terhadap Keycloak production — karena Docker/container runtime dan
-Keycloak lokal tidak tersedia. Detail implementasi dan batas deferred ada di
+Production 2026-10-01: akar masalah "Belum ada akun" terbukti adalah kedua
+migration seed permission belum pernah diterapkan di production (bukan
+duplikasi artefak). Perbaikan struktural — one-shot compose service
+`api-migrate` + `api.depends_on.api-migrate: service_completed_successfully` —
+terverifikasi pada deploy commit `69772cec` (run `36866483770` = success):
+container `cankonix-lms-lemdiklat-api-migrate` `Exited (0)`, kedua migration
+`20261009001000`/`20261009001100` `ok=true`, `permissions` = 19 (`user_account.
+read`/`manage` ada), `P_001` (PENGAJAR) = 10 permission, `SUPER_ADMIN` = 9.
+UI Admin kini menampilkan 403 pada baca akun sebagai error jujur, bukan "Belum
+ada akun".
+
+Deferred: verifikasi runtime Keycloak Admin API (user nyata + email aktivasi)
+dan UI end-to-end terhadap Keycloak production — karena Keycloak lokal tidak
+tersedia. Detail implementasi, bukti production, dan batas deferred ada di
 TASK-009AN.

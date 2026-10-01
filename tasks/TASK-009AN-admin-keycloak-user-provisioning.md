@@ -172,14 +172,48 @@ transport Keycloak, gagal tulis DB + retry, penolakan penulisan bersamaan,
 password (forward + tidak tersimpan), status (ADOPTABLE/STALE_LINK/ERROR/
 NOT_CONFIGURED), batas HTTP (401/403), dan OpenAPI (tanpa field password).
 
+## Verifikasi production (2026-10-01, setelah deploy)
+
+Blocker provisioning "Belum ada akun" terbukti disebabkan migration seed
+permission belum pernah diterapkan di production, bukan oleh kegagalan artefak
+(image API memang sudah memuat kedua migration). Perbaikan struktural:
+migration kini diterapkan oleh one-shot compose service `api-migrate` yang
+wajib sukses sebelum service `api` boleh start
+(`api.depends_on.api-migrate: service_completed_successfully`), sehingga
+`docker compose up -d api` secara struktural tidak dapat melewati migration.
+
+Bukti terverifikasi pada VPS `187.77.127.202` (db `lemdiklat`, commit `69772cec`,
+deploy run `36866483770` = success):
+
+- `cankonix-lms-lemdiklat-api-migrate` — `Exited (0)`; log berakhir
+  `No pending migrations to apply.`
+- `_prisma_migrations`: `20261009001000_task_009AM_seed_educator_role_permissions`
+  dan `20261009001100_task_009AN_keycloak_provisioning_permissions` keduanya
+  `ok=true` (finished); 0 migration gagal.
+- `permissions` = 19; `assessment.manage`, `user_account.read`,
+  `user_account.manage` ada.
+- Role `P_001` (name `PENGAJAR`) = 10 permission; `SUPER_ADMIN` = 9 permission,
+  termasuk `user_account.read` + `user_account.manage`.
+- `bootstrap-admin` (personnel `BOOTSTRAP-ADMIN`) = `SUPER_ADMIN`,
+  `external_auth_id = 5ca4fb3f-75a8-45e6-9de0-b928ff71e344`.
+- Dist yang ter-deploy memuat `user_account.read`
+  (`/app/dist/user-accounts/user-account-permissions.js`) dan 41 direktori
+  migration.
+- 403 pada `GET /persons/:id/account` kini tampil sebagai error jujur di UI
+  ("Akses akun ditolak", `LoadErrorNotice`), bukan lagi sebagai "Belum ada akun".
+
 ## Deferred (infrastruktur tidak tersedia lokal)
 
-Docker/container runtime tidak tersedia, sehingga verifikasi berikut **DEFERRED**
-dan wajib diselesaikan sebelum integration testing/UAT/production:
+Docker/container runtime tidak tersedia secara lokal, sehingga verifikasi
+berikut **DEFERRED** dan wajib diselesaikan sebelum integration testing/UAT:
 
-- Menjalankan `prisma migrate deploy` untuk migration seed permission.
-- Verifikasi runtime Keycloak Admin API (pembuatan user nyata, email aktivasi).
-- Verifikasi UI end-to-end terhadap Keycloak production.
+- Verifikasi runtime Keycloak Admin API dengan kredensial layanan nyata
+  (pembuatan user sungguhan + email aktivasi) dan UI end-to-end terhadap
+  Keycloak production.
+
+`prisma migrate deploy` untuk kedua migration seed permission **sudah
+terverifikasi di production** (lihat bagian bukti di atas), sehingga tidak lagi
+termasuk deferred.
 
 Deferred ini bukan blocker development: seluruh perilaku service diuji terhadap
 double in-memory, dan endpoint fail-closed saat provisioning tidak dikonfigurasi.
