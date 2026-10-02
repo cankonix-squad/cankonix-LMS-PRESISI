@@ -67,6 +67,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009AL | `tasks/TASK-009AL-admin-permission-human-labels-role-template-ux.md` | REVIEW | TASK-009AH = REVIEW; TASK-009AI = REVIEW |
 | TASK-009AM | `tasks/TASK-009AM-seed-educator-role-permissions.md` | REVIEW | TASK-009AI = REVIEW; TASK-009AL = REVIEW |
 | TASK-009AN | `tasks/TASK-009AN-admin-keycloak-user-provisioning.md` | REVIEW | TASK-003 = DONE-WITH-DEFERRED; TASK-009AM = REVIEW |
+| TASK-009AO | `tasks/TASK-009AO-admin-portal-access-boundary.md` | REVIEW | TASK-005 = DONE-WITH-DEFERRED; TASK-009AI = REVIEW; TASK-009AN = REVIEW |
 | TASK-009N | `tasks/TASK-009N-admin-assignment-scope-operator-ux-polish.md` | REVIEW | TASK-009M = REVIEW |
 | TASK-009O | `tasks/TASK-009O-admin-academic-program-operator-ux.md` | REVIEW | TASK-009N = REVIEW; TASK-010 = DONE-WITH-DEFERRED |
 | TASK-009P | `tasks/TASK-009P-admin-curriculum-operator-ux.md` | REVIEW | TASK-009O = REVIEW; TASK-011 = DONE-WITH-DEFERRED |
@@ -426,7 +427,68 @@ read`/`manage` ada), `P_001` (PENGAJAR) = 10 permission, `SUPER_ADMIN` = 9.
 UI Admin kini menampilkan 403 pada baca akun sebagai error jujur, bukan "Belum
 ada akun".
 
-Deferred: verifikasi runtime Keycloak Admin API (user nyata + email aktivasi)
-dan UI end-to-end terhadap Keycloak production — karena Keycloak lokal tidak
-tersedia. Detail implementasi, bukti production, dan batas deferred ada di
-TASK-009AN.
+Production 2026-10-01 (lanjutan): akar "Provisioning nonaktif" terbukti
+`KEYCLOAK_ADMIN_CLIENT_ID`/`_CLIENT_SECRET` kosong di container API (`.env` VPS
+belum memuatnya, compose meneruskan default kosong). Service account confidential
+`lms-admin-provisioning` dibuat di realm `lemdiklat` dengan izin minimum
+`realm-management`: `view-users`, `query-users`, `manage-users` saja. Kedua nilai
+ditulis ke `.env` VPS (1 baris masing-masing, `chmod 600`, tanpa menampilkan
+nilai), container `api` di-`up -d --no-build` (`api-migrate` `Exited (0)`, `api`
+`healthy`). Bukti: env container `CLIENT_ID=SET`/`CLIENT_SECRET=SET`; log
+`[KeycloakAdmin] Keycloak user provisioning enabled for realm lemdiklat`; uji
+`client_credentials` HTTP 200 dan `GET .../users` HTTP 200 dari dalam container;
+health publik `{"status":"ok"}`. Akun `ui-pengajar-01102601` kini
+`NOT_PROVISIONED` ("Belum terhubung") + tombol provisioning, bukan
+"Provisioning nonaktif". Tidak ada password user dibuat/direset dan tidak ada akun
+test diprovision sesuai instruksi.
+
+Deferred: pembuatan user Keycloak sungguhan + email aktivasi melalui UI
+end-to-end (ditahan atas permintaan operator pada langkah ini). Detail
+implementasi, bukti production, dan batas deferred ada di TASK-009AN.
+
+## TASK-009AO — REVIEW (2026-10-02)
+
+Menutup celah otorisasi pada batas portal Admin. Sebelum task ini gate portal
+Admin adalah `hasAdminSession()`, yang hanya menanyakan keberadaan cookie
+`lms_access_token` — bukan hak akun. Akibatnya akun pendidik dengan assignment
+`PENGAJAR` aktif (`ui-pengajar-01102601`) memegang token yang sah dan dapat
+membuka portal Admin; hanya permission domain per halaman yang menghentikannya,
+dan rute `/` tidak dihentikan oleh apa pun selain cookie.
+
+Gate cookie digantikan batas portal berupa **permission** `portal.admin.access`
+yang dinilai LMS. Portal Admin memanggil dua endpoint backend berurutan —
+`GET /me` lalu `GET /authorization/users/{id}/has-permission/portal.admin.access`
+— sehingga wildcard `portal.*.access` dan assignment non-aktif/kedaluwarsa
+dihormati mesin otorisasi yang sama dengan guard API. Tidak ada role name dan
+tidak ada klaim token yang diperiksa; kegagalan memverifikasi berarti
+`UNAVAILABLE` (fail closed), bukan lolos. Callback OIDC menjalankan evaluasi ini
+**sebelum** menulis cookie sesi, jadi akun yang ditolak tidak pernah menerima
+sesi Admin.
+
+Keenam halaman yang menavigasi (`/`, `/roles`, `/sertifikat`, `/system-health`,
+`/template-sertifikat`, `/tugas`) memakai `requireAdminPortalAccess()`; dashboard
+memakai varian non-navigasi `hasAdminPortalAccess()` karena ia bercabang di dalam
+komponen untuk merender `LoginRequiredState`. Penolakan dirutekan per alasan:
+`NO_SESSION`/`UNAUTHENTICATED` ke `/login`, `DENIED`/`UNAVAILABLE` ke
+`/akses-ditolak`, sehingga "belum masuk" tidak disamakan dengan "bukan Admin".
+`hasAdminSession()` dihapus agar tidak ada lagi jalan pintas berbasis cookie.
+Migration `20261009001200_task_009AO_admin_portal_access_permission` men-seed
+permission dan meng-grant-nya **hanya** ke `SUPER_ADMIN` (idempotent, `ON
+CONFLICT ... DO NOTHING`); ia sengaja TIDAK diberikan ke `PENGAJAR` — memberi
+permission portal Admin ke role pendidik agar gate UI lolos adalah kesalahan yang
+justru dicegah task ini.
+
+Verification: `pnpm --filter @lms/api test` PASS (473 test, +2 kontrak migration
+dan katalog); `pnpm --filter @lms/admin test` PASS (16 test, +8 regresi portal);
+`pnpm --filter @lms/admin typecheck` PASS (sebelumnya 7 error: `hasAdminSession`
+tidak diekspor pada 6 halaman + dashboard, dan `hasPermission` belum ada di
+`dist` api-client — akar TS2551 diselesaikan dengan rebuild `@lms/api-client`);
+`pnpm --filter @lms/api-client build` PASS; Prettier, ESLint, dan
+`git diff --check` PASS.
+
+Deferred: verifikasi runtime terhadap Keycloak + PostgreSQL production (akun
+pendidik ditolak, akun `SUPER_ADMIN` diterima) karena tidak ada container runtime
+lokal; dan penerapan migration `20261009001200` di production oleh one-shot
+`api-migrate` pada deploy berikutnya (verifikasi lewat `_prisma_migrations`
+`ok=true`, bukan status run). Detail di TASK-009AO. Tidak ada task setelah ini
+yang dimulai.
