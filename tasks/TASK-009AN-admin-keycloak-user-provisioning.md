@@ -202,18 +202,59 @@ deploy run `36866483770` = success):
 - 403 pada `GET /persons/:id/account` kini tampil sebagai error jujur di UI
   ("Akses akun ditolak", `LoadErrorNotice`), bukan lagi sebagai "Belum ada akun".
 
+## Konfigurasi kredensial provisioning production (2026-10-01, lanjutan)
+
+Panel Admin menampilkan "Provisioning nonaktif" karena container API menerima
+`KEYCLOAK_ADMIN_CLIENT_ID`/`KEYCLOAK_ADMIN_CLIENT_SECRET` kosong: `.env` VPS
+belum memiliki keduanya, sedangkan `docker-compose.production.yml` meneruskannya
+dengan default `:-` kosong. Kredensial disiapkan sebagai **service account
+confidential** dengan izin minimum di realm `lemdiklat`.
+
+Bukti terverifikasi di VPS `187.77.127.202` (nilai secret **tidak pernah**
+ditampilkan pada repo, log, atau output):
+
+- Client Keycloak `lms-admin-provisioning` dibuat di realm `lemdiklat` dengan
+  `publicClient=false`, `serviceAccountsEnabled=true`, `standardFlowEnabled=false`,
+  `directAccessGrantsEnabled=false`.
+- Service account-nya hanya diberi **tiga** client role `realm-management`:
+  `view-users`, `query-users`, `manage-users` (minimum untuk melihat/membuat
+  user). Tidak ada `realm-admin` atau role lain.
+- `KEYCLOAK_ADMIN_CLIENT_ID` (len 22) dan `KEYCLOAK_ADMIN_CLIENT_SECRET` (len 32)
+  ditulis ke `.env` VPS — tepat 1 baris masing-masing, file `chmod 600`. Secret
+  dibaca dari file sementara di dalam container lalu file dihapus; tidak masuk
+  Git, log, maupun output.
+- `docker compose up -d --no-build api` → container `api-migrate` `Exited (0)`,
+  container `api` `healthy`. Env container: `KEYCLOAK_ADMIN_CLIENT_ID=SET`,
+  `KEYCLOAK_ADMIN_CLIENT_SECRET=SET`, `KEYCLOAK_ADMIN_BASE_URL=SET len=49`,
+  `KEYCLOAK_ADMIN_REALM=SET len=9` (nilai tidak ditampilkan).
+- Log startup API: `[KeycloakAdmin] Keycloak user provisioning enabled for realm
+  lemdiklat` — bukan lagi peringatan unconfigured. Uji `client_credentials` dari
+  dalam container → HTTP `200`; uji `GET /admin/realms/lemdiklat/users?...`
+  dengan token itu → HTTP `200`. Health publik `GET /api/v1/health` =
+  `{"status":"ok"}`.
+- Akun `ui-pengajar-01102601` (`status=ACTIVE`, `external_auth_id` kosong, dan
+  belum ada user Keycloak dengan username tersebut) kini berstatus
+  **NOT_PROVISIONED** ("Belum terhubung") dengan tombol provisioning — bukan lagi
+  "Provisioning nonaktif".
+
+Sesuai instruksi operator, langkah ini **tidak** membuat/mereset password user dan
+**tidak** memprovision akun test; pembuatan user sungguhan tetap menjadi langkah
+berikutnya yang eksplisit.
+
 ## Deferred (infrastruktur tidak tersedia lokal)
 
-Docker/container runtime tidak tersedia secara lokal, sehingga verifikasi
-berikut **DEFERRED** dan wajib diselesaikan sebelum integration testing/UAT:
+Docker/container runtime tidak tersedia secara lokal. Kredensial provisioning
+production **sudah terpasang dan terverifikasi** (lihat bagian di atas), sehingga
+verifikasi yang masih **DEFERRED** sebelum integration testing/UAT hanya:
 
-- Verifikasi runtime Keycloak Admin API dengan kredensial layanan nyata
-  (pembuatan user sungguhan + email aktivasi) dan UI end-to-end terhadap
-  Keycloak production.
+- Pembuatan user Keycloak sungguhan + email aktivasi melalui UI Admin
+  end-to-end. Belum dijalankan karena operator meminta menahan provisioning akun
+  test pada langkah ini.
 
 `prisma migrate deploy` untuk kedua migration seed permission **sudah
 terverifikasi di production** (lihat bagian bukti di atas), sehingga tidak lagi
 termasuk deferred.
 
 Deferred ini bukan blocker development: seluruh perilaku service diuji terhadap
-double in-memory, dan endpoint fail-closed saat provisioning tidak dikonfigurasi.
+double in-memory, endpoint fail-closed saat provisioning tidak dikonfigurasi tetap
+teruji, dan konfigurasi production kini menerima kredensial layanan.
