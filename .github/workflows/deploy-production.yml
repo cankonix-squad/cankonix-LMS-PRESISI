@@ -270,14 +270,32 @@ jobs:
             echo "Keycloak client lms-admin was not found" >&2
             exit 1
           fi
+          # Keycloak stores this attribute as a `##`-separated list
+          # (Constants.CFG_DELIMITER), NOT as a JSON array. A JSON array is
+          # parsed as a single malformed URI and the redirect is refused.
+          ADMIN_POST_LOGOUT_URIS='https://lms-presisi.digitallearningcenter.id/##https://admin.lms-presisi.digitallearningcenter.id/##http://localhost:3000/'
           docker compose -f docker-compose.production.yml exec -T keycloak \
             /opt/keycloak/bin/kcadm.sh update "clients/$ADMIN_CLIENT_ID" -r lemdiklat \
             -s attributes.login_theme=lms-presisi \
             -s 'redirectUris=["https://lms-presisi.digitallearningcenter.id/api/auth/callback","https://admin.lms-presisi.digitallearningcenter.id/api/auth/callback","http://localhost:3000/api/auth/callback"]' \
-            -s 'webOrigins=["https://lms-presisi.digitallearningcenter.id","https://admin.lms-presisi.digitallearningcenter.id","http://localhost:3000"]'
+            -s 'webOrigins=["https://lms-presisi.digitallearningcenter.id","https://admin.lms-presisi.digitallearningcenter.id","http://localhost:3000"]' \
+            -s "attributes.post.logout.redirect.uris=$ADMIN_POST_LOGOUT_URIS"
           docker compose -f docker-compose.production.yml exec -T keycloak \
             /opt/keycloak/bin/kcadm.sh get "clients/$ADMIN_CLIENT_ID" -r lemdiklat \
             --fields clientId,attributes,redirectUris,webOrigins
+          # A logout that cannot return to the LMS leaves the operator on
+          # Keycloak's own page. Verify the allow-list is actually stored, so a
+          # future silent drop fails the deploy instead of the operator. The
+          # `attributes` payload is used on purpose: `redirectUris`/`webOrigins`
+          # also contain this host, so grepping the whole client would be a
+          # false pass.
+          ADMIN_CLIENT_ATTRIBUTES=$(docker compose -f docker-compose.production.yml exec -T keycloak \
+            /opt/keycloak/bin/kcadm.sh get "clients/$ADMIN_CLIENT_ID" -r lemdiklat \
+            --fields attributes 2>/dev/null)
+          if ! printf '%s' "$ADMIN_CLIENT_ATTRIBUTES" | grep -q 'lms-presisi\.digitallearningcenter\.id/'; then
+            echo "Keycloak client lms-admin is missing a post-logout redirect URI in attributes: $ADMIN_CLIENT_ATTRIBUTES" >&2
+            exit 1
+          fi
 
           BOOTSTRAP_EXTERNAL_AUTH_ID=$(docker compose -f docker-compose.production.yml exec -T keycloak \
             /opt/keycloak/bin/kcadm.sh get users -r lemdiklat \

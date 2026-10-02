@@ -27,7 +27,13 @@ test('logout clears local session and redirects through Keycloak SSO', async () 
       'https://auth.example.test/realms/lemdiklat/protocol/openid-connect/logout',
     );
     assert.equal(location.searchParams.get('client_id'), 'lms-admin');
-    assert.equal(location.searchParams.has('post_logout_redirect_uri'), false);
+    // The operator must land back on the LMS, not on Keycloak's own page. This
+    // value MUST stay registered as `attributes."post.logout.redirect.uris"` on
+    // the lms-admin client, or Keycloak rejects it as an unapproved redirect.
+    assert.equal(
+      location.searchParams.get('post_logout_redirect_uri'),
+      'https://admin.example.test/',
+    );
     const cookies = response.headers.getSetCookie().join(' ');
     for (const name of [
       'lms_access_token',
@@ -60,7 +66,7 @@ test('logout still clears the local session when SSO is not configured', async (
     );
     assert.equal(
       response.headers.get('location'),
-      'https://admin.example.test/login',
+      'https://admin.example.test/',
     );
     assert.match(
       response.headers.getSetCookie().join(' '),
