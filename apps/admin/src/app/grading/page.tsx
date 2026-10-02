@@ -1,14 +1,17 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { GradingWorkspace } from '@/features/assessment/grading-workspace';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  requireAdminPortalAccess,
+} from '@/lib/api';
 
 export const metadata = {
   title: 'Grading — Admin LMS PRESISI',
 };
 
 export default async function GradingPage() {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   const api = createAdminApiClient();
   const [schemesResult, classSubjectsResult] = await Promise.all([

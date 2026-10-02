@@ -1,7 +1,10 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { AssignmentWorkspace } from '@/features/foundation/assignment-scope-management';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  requireAdminPortalAccess,
+} from '@/lib/api';
 
 export const metadata = {
   title: 'Assignment & Scope — Admin LMS PRESISI',
@@ -12,7 +15,7 @@ export default async function AssignmentsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   const params = await searchParams;
   const search = value(params.search);

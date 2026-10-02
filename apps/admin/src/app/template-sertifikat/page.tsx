@@ -1,7 +1,10 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { CertificateTemplateWorkspace } from '@/features/graduation/certificate-template-workspace';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  requireAdminPortalAccess,
+} from '@/lib/api';
 import type { CertificateTemplateStatus } from '@lms/api-client';
 
 export const metadata = {
@@ -13,7 +16,7 @@ export default async function TemplateSertifikatPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   const params = await searchParams;
   const code = value(params.code);

@@ -1,7 +1,10 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { ProgramWorkspace } from '@/features/academic/program-management';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  requireAdminPortalAccess,
+} from '@/lib/api';
 
 export const metadata = {
   title: 'Program Pendidikan — Admin LMS PRESISI',
@@ -12,7 +15,7 @@ export default async function ProgramPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   const params = await searchParams;
   const search = value(params.search);

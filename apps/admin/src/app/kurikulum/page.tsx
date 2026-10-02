@@ -1,7 +1,10 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { CurriculumWorkspace } from '@/features/academic/curriculum-management';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  requireAdminPortalAccess,
+} from '@/lib/api';
 
 export const metadata = { title: 'Kurikulum — Admin LMS PRESISI' };
 
@@ -10,7 +13,7 @@ export default async function CurriculumPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
   const params = await searchParams;
   const educationProgramId = value(params.educationProgramId);
   const status =

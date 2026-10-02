@@ -27,6 +27,12 @@ const React = require('react');
 const SRC_ROOT = path.resolve(__dirname, '..', 'src');
 const CACHE = new Map();
 
+/**
+ * The access-token cookie `lib/api.ts` sees through `next/headers`. `null`
+ * means "no cookie", which is what every other test in this suite expects.
+ */
+let sessionCookie = null;
+
 /** Server-side API seam, stubbed so no Next request context is needed. */
 const apiStub = {
   createAdminApiClient: () => {
@@ -34,7 +40,13 @@ const apiStub = {
   },
   getAdminAccessToken: async () => null,
   getApiBaseUrl: () => 'http://localhost:3001',
-  hasAdminSession: async () => false,
+  /**
+   * Portal gate doubles. `hasAdminPortalAccess` answers a state (used by
+   * in-component fallbacks); `requireAdminPortalAccess` is the page gate and
+   * resolves for a permitted caller rather than navigating.
+   */
+  hasAdminPortalAccess: async () => false,
+  requireAdminPortalAccess: async () => {},
 };
 
 /** Lazily resolved aliases so loading order cannot matter. */
@@ -49,6 +61,26 @@ const aliasLoaders = {
   '@/features/foundation/keycloak-actions': () =>
     loadSrcModule('features/foundation/keycloak-actions.ts'),
   'next/cache': () => ({ revalidatePath() {} }),
+  // Loadable so `lib/api.ts` itself can be exercised (portal gate + denial
+  // mapping) without a Next request context. `cookies()` answers the value set
+  // by `setSessionCookie` (default: no cookie), and `redirect()` throws the
+  // same sentinel Next throws.
+  'next/headers': () => ({
+    cookies: async () => ({
+      get: (name) =>
+        name === 'lms_access_token' && sessionCookie !== null
+          ? { name, value: sessionCookie }
+          : undefined,
+      set() {},
+    }),
+  }),
+  'next/navigation': () => ({
+    redirect(url) {
+      const error = new Error(`NEXT_REDIRECT: ${url}`);
+      error.digest = `NEXT_REDIRECT;replace;${url};307;`;
+      throw error;
+    },
+  }),
 };
 
 function resolveSpecifier(specifier, fromDir) {
@@ -117,6 +149,15 @@ function setApiStub(client) {
 /** Configure the session token the server actions observe. */
 function setAccessToken(token) {
   apiStub.getAdminAccessToken = async () => token;
+}
+
+/**
+ * Configure the access-token cookie that `lib/api.ts` reads through
+ * `next/headers`. Only `lms_access_token` is answered; every other cookie name
+ * resolves to `undefined`.
+ */
+function setSessionCookie(value) {
+  sessionCookie = value === undefined ? null : value;
 }
 
 /**
@@ -224,4 +265,5 @@ module.exports = {
   apiStub,
   setApiStub,
   setAccessToken,
+  setSessionCookie,
 };

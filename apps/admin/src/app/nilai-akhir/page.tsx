@@ -1,7 +1,6 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { FinalGradeWorkspace } from '@/features/graduation/final-grade-workspace';
-import { hasAdminSession } from '@/lib/api';
+import { requireAdminPortalAccess } from '@/lib/api';
 
 export const metadata = {
   title: 'Nilai Akhir — Admin LMS PRESISI',
@@ -15,7 +14,7 @@ export const metadata = {
  * that final grades are computed through the Grading workspace.
  */
 export default async function NilaiAkhirPage() {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   return (
     <AdminShell>

@@ -1,7 +1,6 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { OrganizationPanel } from '@/features/foundation/dashboard';
-import { hasAdminSession } from '@/lib/api';
+import { requireAdminPortalAccess } from '@/lib/api';
 
 export const metadata = {
   title: 'Organisasi — Admin LMS PRESISI',
@@ -12,7 +11,7 @@ export default async function OrganizationPage({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   const params = await searchParams;
   const search =

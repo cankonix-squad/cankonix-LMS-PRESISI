@@ -1,7 +1,10 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { GraduationDecisionWorkspace } from '@/features/graduation/decision-workspace';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  requireAdminPortalAccess,
+} from '@/lib/api';
 import type { GraduationDecisionOutcome, GraduationDecisionStatus } from '@lms/api-client';
 
 export const metadata = {
@@ -13,7 +16,7 @@ export default async function KeputusanKelulusanPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   const params = await searchParams;
   const status = decisionStatusFilter(params.status);

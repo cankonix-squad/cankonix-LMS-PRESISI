@@ -15,13 +15,20 @@ import {
 } from '@/components/admin-design-system';
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  hasAdminPortalAccess,
+} from '@/lib/api';
 import { AssignmentManagement } from './assignment-management';
 import { CreatePersonAccountForm } from './create-person-account-form';
 import { OrganizationWorkspace } from './organization-management';
 
 export async function FoundationDashboard() {
-  const hasSession = await hasAdminSession();
+  // Non-redirecting on purpose: this is an in-component fallback, so it must
+  // return a state rather than navigate. The page that renders it is already
+  // gated by `requireAdminPortalAccess()`, so reaching here ungranted is rare.
+  const hasSession = await hasAdminPortalAccess();
   if (!hasSession) return <LoginRequiredState />;
 
   const api = createAdminApiClient();

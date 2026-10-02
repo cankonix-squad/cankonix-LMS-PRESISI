@@ -1,7 +1,10 @@
-import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin-shell';
 import { ReportingTrendWorkspace } from '@/features/reporting/reporting-trend-workspace';
-import { createAdminApiClient, getOrEmpty, hasAdminSession } from '@/lib/api';
+import {
+  createAdminApiClient,
+  getOrEmpty,
+  requireAdminPortalAccess,
+} from '@/lib/api';
 import type {
   ExecutiveOverviewScope,
   GraduationTrendGranularity,
@@ -17,7 +20,7 @@ export default async function TrendKelulusanPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!(await hasAdminSession())) redirect('/login');
+  await requireAdminPortalAccess();
 
   const params = await searchParams;
   const scope = scopeFilter(params.scope);

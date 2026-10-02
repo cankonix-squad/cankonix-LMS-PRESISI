@@ -369,6 +369,26 @@ export type CreatePermissionInput = {
   grantToRoleCodes?: string[];
 };
 
+/**
+ * One permission resolved for an account, with the scopes it is active in.
+ *
+ * `isUnrestricted` means the granting assignment carried no scope, which the
+ * LMS treats as national/unrestricted access. An empty `scopes` list together
+ * with `isUnrestricted === false` means the permission is granted only within
+ * the listed scopes — the LMS is the only place that decision is made.
+ */
+export type EffectivePermission = {
+  code: string;
+  isUnrestricted: boolean;
+  scopes: { scopeType: string; scopeId: string }[];
+};
+
+/** Answer to "does this account hold this permission, optionally in a scope?". */
+export type PermissionEvaluationResult = {
+  allowed: boolean;
+  reason?: string;
+};
+
 // ---------------------------------------------------------------------------
 // Learning domain (TASK-020 .. TASK-024)
 //
@@ -2405,6 +2425,34 @@ export function createApiClient(
       ) {
         return request<ApiListResponse<Permission>>(
           `/authorization/permissions${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      /**
+       * Resolve the caller's OWN effective permissions.
+       *
+       * The route is self-service: the guard allows it when `userAccountId` is
+       * the caller's own account, so no administrative permission is needed to
+       * answer "what may I do?". Read the account id from `me()` first.
+       */
+      effectivePermissions(userAccountId: string) {
+        return request<{
+          userAccountId: string;
+          permissions: EffectivePermission[];
+        }>(`/authorization/users/${userAccountId}/effective-permissions`);
+      },
+      /**
+       * Ask the LMS whether an account holds a permission (wildcards honoured),
+       * optionally inside a scope. The LMS answers; nothing here re-derives it.
+       */
+      hasPermission(
+        userAccountId: string,
+        permissionCode: string,
+        params: { scopeType?: string; scopeId?: string } = {},
+      ) {
+        return request<PermissionEvaluationResult>(
+          `/authorization/users/${userAccountId}/has-permission/${encodeURIComponent(
+            permissionCode,
+          )}${buildQuery(params)}`,
         );
       },
       createPermission(input: CreatePermissionInput) {

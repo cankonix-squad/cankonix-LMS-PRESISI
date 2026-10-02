@@ -1,7 +1,24 @@
-import { apiErrorStatus, createApiClient } from '@lms/api-client';
+import {
+  apiErrorStatus,
+  createApiClient,
+  isApiRequestError,
+} from '@lms/api-client';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export type AdminApiClient = ReturnType<typeof createAdminApiClient>;
+
+/**
+ * Portal boundary permission for the Admin app.
+ *
+ * Mirrors `apps/api/src/authorization/portal-permissions.ts`. It is only ever
+ * *asked about* here — the LMS decides. The code is data: a role grants it, and
+ * this constant carries no role name and no fallback.
+ *
+ * A role may instead hold the broader `portal.*.access`; the backend's wildcard
+ * matcher resolves that, so this app never has to.
+ */
+export const ADMIN_PORTAL_PERMISSION = 'portal.admin.access';
 
 /**
  * Outcome of a server-side API read.
@@ -79,8 +96,161 @@ export async function getAdminAccessToken() {
   return token.access_token;
 }
 
-export async function hasAdminSession() {
-  return Boolean((await cookies()).get('lms_access_token')?.value);
+/**
+ * Outcome of resolving whether the current token may operate the Admin portal.
+ *
+ * The important property: `DENIED` is decided by the LMS, not by the presence of
+ * a cookie. Holding a valid Keycloak token says *who* the caller is; it says
+ * nothing about *what* they may do. An educator with an ACTIVE PENGAJAR
+ * assignment holds a perfectly valid token and must still be refused here.
+ */
+export type AdminPortalAccess =
+  /** LMS answered `allowed: true` for `portal.admin.access`. */
+  | 'GRANTED'
+  /** LMS answered `allowed: false`: authenticated, but no Admin authorization. */
+  | 'DENIED'
+  /** No token cookie at all, and no refresh token to mint one from. */
+  | 'NO_SESSION'
+  /** A token exists but the LMS rejected it (expired / invalid / unmapped). */
+  | 'UNAUTHENTICATED'
+  /** The LMS could not be reached or errored; fail closed. */
+  | 'UNAVAILABLE';
+
+export type AdminPortalAccessResult = {
+  status: AdminPortalAccess;
+  /** The account id the LMS resolved the token to, when it got that far. */
+  accountId: string | null;
+};
+
+/** What the Admin app can honestly tell the operator about a refusal. */
+export type AdminPortalDenial = Exclude<AdminPortalAccess, 'GRANTED'>;
+
+/**
+ * Resolve the caller's portal authorization from the LMS.
+ *
+ * Two backend calls, in order, because the LMS is the only authority:
+ * 1. `GET /me` turns the (already locally validated) token into an account id,
+ *    and is the honest test of "is this token still accepted?".
+ * 2. `GET /authorization/users/{id}/has-permission/portal.admin.access` asks the
+ *    authorization engine — the same engine the API guards use — whether that
+ *    account holds the portal permission, honouring wildcards (`portal.*.access`)
+ *    and inactive/future assignments.
+ *
+ * No role name and no token claim is ever inspected, and a failure to ask is a
+ * refusal rather than a pass (`UNAVAILABLE`).
+ */
+export async function getAdminPortalAccess(): Promise<AdminPortalAccessResult> {
+  const token = await getAdminAccessToken();
+  if (!token) return { status: 'NO_SESSION', accountId: null };
+  return evaluateAdminPortalAccess(token);
+}
+
+/**
+ * Same evaluation, but for a token that is not yet in a cookie.
+ *
+ * The OIDC callback needs this: it has just exchanged the authorization code and
+ * must decide whether to *establish* a session before setting any cookie. An
+ * account that fails here never receives an Admin session at all.
+ */
+export async function evaluateAdminPortalAccess(
+  token: string,
+): Promise<AdminPortalAccessResult> {
+  const api = createApiClient(getApiBaseUrl(), { getAccessToken: () => token });
+  let accountId: string;
+  try {
+    const identity = await api.me();
+    accountId = identity.accountId;
+  } catch (error) {
+    return {
+      status:
+        isApiRequestError(error) && error.status === 401
+          ? 'UNAUTHENTICATED'
+          : 'UNAVAILABLE',
+      accountId: null,
+    };
+  }
+
+  try {
+    const decision = await api.authorization.hasPermission(
+      accountId,
+      ADMIN_PORTAL_PERMISSION,
+    );
+    return {
+      status: decision.allowed ? 'GRANTED' : 'DENIED',
+      accountId,
+    };
+  } catch (error) {
+    return {
+      status:
+        isApiRequestError(error) && error.status === 401
+          ? 'UNAUTHENTICATED'
+          : 'UNAVAILABLE',
+      accountId,
+    };
+  }
+}
+
+/** True only when the LMS explicitly granted the portal permission. */
+export async function hasAdminPortalAccess(): Promise<boolean> {
+  return (await getAdminPortalAccess()).status === 'GRANTED';
+}
+
+/**
+ * Page-level gate. Returns once access is confirmed; otherwise it navigates and
+ * never returns, so a protected page cannot render for an unauthorized caller —
+ * and the data loader it wraps is never invoked.
+ */
+export async function requireAdminPortalAccess(): Promise<void> {
+  const access = await getAdminPortalAccess();
+  if (access.status === 'GRANTED') return;
+  redirect(denialRedirect(access.status));
+}
+
+/**
+ * Where a refusal lands. `NO_SESSION`/`UNAUTHENTICATED` are "log in" problems;
+ * `DENIED`/`UNAVAILABLE` are "you are signed in but not authorized" problems and
+ * get the explicit access-denied page rather than a silent bounce to login.
+ */
+export function denialRedirect(status: AdminPortalDenial): string {
+  if (status === 'NO_SESSION' || status === 'UNAUTHENTICATED') return '/login';
+  return `/akses-ditolak?reason=${status.toLowerCase()}`;
+}
+
+/** Bahasa Indonesia copy for the access-denied page, chosen by the reason. */
+export const PORTAL_DENIAL_MESSAGES: Record<
+  AdminPortalDenial,
+  { title: string; description: string }
+> = {
+  DENIED: {
+    title: 'Anda tidak memiliki akses ke Portal Admin',
+    description:
+      'Akun Anda berhasil terautentikasi, tetapi tidak memegang permission portal.admin.access (atau portal.*.access) untuk Portal Admin. Peran pendidik atau assignment PENGAJAR bukan izin Admin. Hubungi administrator pusat bila Anda memang memerlukan akses Admin.',
+  },
+  NO_SESSION: {
+    title: 'Sesi tidak ditemukan',
+    description:
+      'Anda belum masuk. Silakan masuk memakai SSO LMS PRESISI untuk melanjutkan.',
+  },
+  UNAUTHENTICATED: {
+    title: 'Sesi tidak valid atau kedaluwarsa',
+    description:
+      'Token akses ditolak oleh API. Silakan masuk kembali memakai SSO LMS PRESISI.',
+  },
+  UNAVAILABLE: {
+    title: 'Akses tidak dapat diverifikasi',
+    description:
+      'API otorisasi tidak dapat dihubungi sehingga akses tidak dapat dipastikan. Demi keamanan, akses ditutup sampai verifikasi berhasil. Silakan coba lagi beberapa saat lagi.',
+  },
+};
+
+/** Narrow untrusted input (e.g. `?reason=`) to a known denial reason. */
+export function toDenialReason(value: unknown): AdminPortalDenial {
+  return value === 'no_session' ||
+    value === 'unauthenticated' ||
+    value === 'unavailable' ||
+    value === 'denied'
+    ? (value.toUpperCase() as AdminPortalDenial)
+    : 'DENIED';
 }
 
 export async function getOrEmpty<T>(

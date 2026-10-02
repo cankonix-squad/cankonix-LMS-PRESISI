@@ -891,3 +891,38 @@ test('TASK-009AM and TASK-009AN seed migrations exist and stay idempotent', () =
   assert.match(an, /ON CONFLICT \("code"\) DO NOTHING/);
   assert.match(an, /ON CONFLICT \("role_id", "permission_id"\) DO NOTHING/);
 });
+
+test('TASK-009AO seeds the Admin portal access permission and stays idempotent', () => {
+  // Portal access is authorization DATA, not a role-name branch in runtime code.
+  // The code is seeded once and granted to SUPER_ADMIN only: granting it to the
+  // educator role to make a UI gate pass is the exact mistake this task exists
+  // to prevent, so the absence of the PENGAJAR code is asserted too.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const migrationsDir = path.join(__dirname, '..', 'prisma', 'migrations');
+
+  const aoPath = path.join(
+    migrationsDir,
+    '20261009001200_task_009AO_admin_portal_access_permission',
+    'migration.sql',
+  );
+  assert.ok(fs.existsSync(aoPath), 'TASK-009AO migration must exist');
+
+  const ao = fs.readFileSync(aoPath, 'utf8');
+  assert.match(ao, /'portal\.admin\.access'/);
+  assert.match(ao, /r\.code = 'SUPER_ADMIN'/);
+  assert.match(ao, /ON CONFLICT \("code"\) DO NOTHING/);
+  assert.match(ao, /ON CONFLICT \("role_id", "permission_id"\) DO NOTHING/);
+  assert.doesNotMatch(ao, /'PENGAJAR'/);
+  assert.doesNotMatch(ao, /'P_001'/);
+});
+
+test('the portal permission catalogue exposes exactly the Admin portal code', () => {
+  // The Admin app asks about this code; the migration seeds it. A silent
+  // divergence between the two would make the portal permanently unreachable.
+  const {
+    PORTAL_PERMISSIONS,
+  } = require('../dist/authorization/portal-permissions');
+  assert.equal(PORTAL_PERMISSIONS.ADMIN_ACCESS, 'portal.admin.access');
+  assert.deepEqual(Object.values(PORTAL_PERMISSIONS), ['portal.admin.access']);
+});
