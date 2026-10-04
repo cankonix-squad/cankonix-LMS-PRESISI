@@ -87,21 +87,21 @@ export function RolePermissionWorkspace({
   return (
     <AdminPage>
       <PageHeader
-        eyebrow="Foundation / Akses"
-        title="Role & permission"
+        eyebrow="Manajemen Akses / Peran & Hak Akses"
+        title="Peran & Hak Akses"
         description={
           roles.error
             ? 'Data belum dapat dimuat.'
-            : `${roles.data?.total ?? 0} role tersedia. Gunakan pencarian dan filter untuk mempersempit daftar.`
+            : `${roles.data?.total ?? 0} peran tersedia. Gunakan pencarian dan filter untuk mempersempit daftar.`
         }
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <div className="grid grid-cols-2 gap-2 text-center sm:flex sm:text-left">
-              <Metric label="Role" value={roles.data?.total ?? 0} />
-              <Metric label="Permission" value={permissions.data?.total ?? 0} />
+              <Metric label="Peran" value={roles.data?.total ?? 0} />
+              <Metric label="Hak Akses" value={permissions.data?.total ?? 0} />
             </div>
             <PrimaryActionButton onClick={() => setDrawer({ mode: 'create' })}>
-              + Buat role
+              + Buat peran
             </PrimaryActionButton>
           </div>
         }
@@ -114,13 +114,13 @@ export function RolePermissionWorkspace({
         ) : roleItems.length === 0 ? (
           <EmptyState>
             <p className="text-sm font-semibold text-slate-950">
-              Tidak ada role yang cocok.
+              Tidak ada peran yang cocok.
             </p>
             <p className="mt-2 text-sm text-slate-500">
               Coba hapus pencarian atau ubah filter status.
             </p>
             <Link
-              href="/roles"
+              href="/peran-hak-akses"
               className="mt-4 inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
             >
               Tampilkan semua
@@ -136,7 +136,7 @@ export function RolePermissionWorkspace({
         )}
         {!roles.error ? (
           <Pagination
-            basePath="/roles"
+            basePath="/peran-hak-akses"
             query={{
               roleSearch: roleFilters.search,
               roleStatus: roleFilters.status,
@@ -168,7 +168,7 @@ export function RolePermissionWorkspace({
         )}
         {!permissions.error ? (
           <Pagination
-            basePath="/roles"
+            basePath="/peran-hak-akses"
             query={{
               permissionSearch: permissionFilters.search,
               roleSearch: roleFilters.search,
@@ -246,7 +246,7 @@ function PermissionErrorState({ message }: { message: string }) {
         <p className="mt-4 leading-6">
           Buka{' '}
           <Link
-            href="/assignments"
+            href="/penugasan"
             className="font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-900"
           >
             halaman assignments
@@ -293,7 +293,7 @@ function Metric({ label, value }: { label: string; value: number }) {
 function RoleToolbar({ filters }: { filters: RoleFilters }) {
   return (
     <FilterToolbar
-      label="Filter role"
+      label="Filter peran"
       filters={
         <FilterTabs
           tabs={[
@@ -317,10 +317,10 @@ function RoleToolbar({ filters }: { filters: RoleFilters }) {
       }
     >
       <SearchForm
-        action="/roles"
+        action="/peran-hak-akses"
         name="roleSearch"
         value={filters.search}
-        placeholder="Cari nama atau kode role"
+        placeholder="Cari nama atau kode peran"
         hidden={{ roleStatus: filters.status }}
       />
     </FilterToolbar>
@@ -345,10 +345,10 @@ function PermissionToolbar({
         </p>
       </div>
       <SearchForm
-        action="/roles"
+        action="/peran-hak-akses"
         name="permissionSearch"
         value={filters.search}
-        placeholder="Cari kode atau nama permission"
+        placeholder="Cari kode atau nama hak akses"
         hidden={{
           roleSearch: roleFilters.search,
           roleStatus: roleFilters.status,
@@ -395,7 +395,7 @@ function SearchForm({
         Cari
       </button>
       <Link
-        href="/roles"
+        href="/peran-hak-akses"
         className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
       >
         Reset
@@ -418,9 +418,9 @@ function RoleTable({
   return (
     <EnterpriseTable
       columns={[
-        { label: 'Role' },
+        { label: 'Peran' },
         { label: 'Deskripsi' },
-        { label: 'Permission' },
+        { label: 'Hak Akses' },
         { label: 'Status' },
         { label: 'Aksi', sticky: true },
       ]}
@@ -513,7 +513,7 @@ function RoleMobileRow({
           <p className="font-semibold text-slate-950">{role.name}</p>
           <p className="mt-1 text-xs text-slate-500">
             {role.code}
-            {role.isSystem ? ' · SYSTEM' : ''}
+            {role.isSystem ? ' · BAWAAN SISTEM' : ''}
           </p>
         </div>
         <StatusBadge tone={role.status === 'ACTIVE' ? 'green' : 'red'}>
@@ -547,7 +547,7 @@ function RoleRowActions({
     <div className="space-y-2">
       <ActionGroup>
         <ActionButton onClick={() => onDetail(role)}>Detail</ActionButton>
-        <ActionButton onClick={() => onEdit(role)}>Edit</ActionButton>
+        <ActionButton onClick={() => onEdit(role)}>Ubah</ActionButton>
       </ActionGroup>
       <form action={statusAction} className="w-full">
         <input type="hidden" name="id" value={role.id} />
@@ -562,10 +562,10 @@ function RoleRowActions({
           disabled={statusPending || role.isSystem}
           title={
             role.isSystem
-              ? 'Role sistem tidak dapat dinonaktifkan'
+              ? 'Peran bawaan sistem tidak dapat dinonaktifkan'
               : role.status === 'ACTIVE'
-                ? 'Nonaktifkan role'
-                : 'Aktifkan role'
+                ? 'Nonaktifkan peran'
+                : 'Aktifkan peran'
           }
           className={
             role.isSystem
@@ -591,7 +591,7 @@ function PermissionTable({ permissions }: { permissions: Permission[] }) {
   return (
     <EnterpriseTable
       columns={[
-        { label: 'Permission' },
+        { label: 'Hak Akses' },
         { label: 'Kategori' },
         { label: 'Kode Teknis' },
         { label: 'Deskripsi' },
@@ -653,11 +653,11 @@ function RoleFormDrawer({
   return (
     <EnterpriseDrawer
       eyebrow={mode === 'create' ? 'Tambah data' : 'Ubah data'}
-      title={mode === 'create' ? 'Buat Role' : 'Ubah Role'}
+      title={mode === 'create' ? 'Buat Peran' : 'Ubah Peran'}
       description={
         mode === 'create'
-          ? 'Buat role baru. Kode role huruf besar dan underscore. Permission dapat ditambahkan setelah role dibuat.'
-          : 'Ubah data role. Role sistem tidak dapat diubah kode atau dinonaktifkan.'
+          ? 'Buat peran baru. Kode peran memakai huruf besar dan garis bawah. Hak akses dapat ditambahkan setelah peran dibuat.'
+          : 'Ubah data peran. Peran bawaan sistem tidak dapat diubah kode atau dinonaktifkan.'
       }
       onClose={onClose}
     >
@@ -694,11 +694,11 @@ function RoleForm({
       ) : null}
 
       <FormField
-        label="Kode role"
+        label="Kode peran"
         required={mode === 'create'}
         helper={
           isSystemRole && mode === 'edit'
-            ? 'Role sistem tidak dapat diubah kode-nya.'
+            ? 'Peran bawaan sistem tidak dapat diubah kodenya.'
             : 'Gunakan huruf besar dan underscore, contoh: AKADEMIK_ADMIN.'
         }
       >
@@ -714,7 +714,7 @@ function RoleForm({
       </FormField>
 
       <FormField
-        label="Nama role"
+        label="Nama peran"
         required
         helper="Nama yang mudah dikenali operator."
       >
@@ -728,12 +728,12 @@ function RoleForm({
         />
       </FormField>
 
-      <FormField label="Deskripsi" helper="Opsional. Jelaskan tujuan role ini.">
+      <FormField label="Deskripsi" helper="Opsional. Jelaskan tujuan peran ini.">
         <textarea
           name="description"
           defaultValue={role?.description ?? ''}
           rows={3}
-          placeholder="Role untuk administrator bidang akademik..."
+          placeholder="Peran untuk administrator bidang akademik..."
           className={enterpriseInputClass}
         />
       </FormField>
@@ -742,7 +742,7 @@ function RoleForm({
         Tips: setelah role dibuat, buka detail role untuk menambahkan
         permission, lalu buka{' '}
         <Link
-          href="/assignments"
+          href="/penugasan"
           className="font-semibold underline underline-offset-2 hover:text-sky-900"
         >
           assignments
@@ -753,7 +753,7 @@ function RoleForm({
       <FormActions
         onCancel={onClose}
         pending={isPending}
-        submitLabel={mode === 'create' ? 'Simpan Role' : 'Simpan Perubahan'}
+        submitLabel={mode === 'create' ? 'Simpan Peran' : 'Simpan Perubahan'}
       />
 
       {state.message ? <ActionMessage state={state} /> : null}
@@ -796,7 +796,7 @@ function RoleDetailDrawer({
 
   return (
     <EnterpriseDrawer
-      eyebrow="Detail role"
+      eyebrow="Detail peran"
       title={role.name}
       description={role.code}
       onClose={onClose}
@@ -813,7 +813,7 @@ function RoleDetailDrawer({
         </div>
 
         {!role.isSystem ? (
-          <DetailField label="Template role">
+          <DetailField label="Templat peran">
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {ROLE_TEMPLATES.map((template) => (
                 <form
@@ -853,7 +853,7 @@ function RoleDetailDrawer({
                       !template.enabled
                         ? (template.disabledReason ??
                           'Template belum tersedia.')
-                        : 'Terapkan semua permission dari template ini ke role'
+                        : 'Terapkan semua hak akses dari templat ini ke peran'
                     }
                     className={
                       !template.enabled
@@ -882,18 +882,18 @@ function RoleDetailDrawer({
           </DetailField>
           <DetailField label="Jenis">
             <StatusBadge tone={role.isSystem ? 'blue' : 'slate'}>
-              {role.isSystem ? 'SYSTEM' : 'CUSTOM'}
+              {role.isSystem ? 'Bawaan Sistem' : 'Khusus'}
             </StatusBadge>
           </DetailField>
         </div>
 
         <DetailField label="Deskripsi">
           <p className="text-sm text-slate-700">
-            {role.description || 'Role ini belum memiliki deskripsi.'}
+            {role.description || 'Peran ini belum memiliki deskripsi.'}
           </p>
         </DetailField>
 
-        <DetailField label="Permission melekat">
+        <DetailField label="Hak akses melekat">
           {permissions?.error ? (
             <ErrorState message={permissions.error} />
           ) : permissions?.data ? (
@@ -924,8 +924,8 @@ function RoleDetailDrawer({
                         disabled={revokePending || role.isSystem}
                         title={
                           role.isSystem
-                            ? 'Role sistem tidak dapat diubah permission-nya'
-                            : 'Lepas permission dari role'
+                            ? 'Peran bawaan sistem tidak dapat diubah hak aksesnya'
+                            : 'Lepas hak akses dari peran'
                         }
                         className={
                           role.isSystem
@@ -939,7 +939,7 @@ function RoleDetailDrawer({
                   </div>
                 ))
               ) : (
-                <EmptyState>Belum ada permission pada role ini.</EmptyState>
+                <EmptyState>Belum ada hak akses pada peran ini.</EmptyState>
               )}
             </div>
           ) : (
@@ -951,7 +951,7 @@ function RoleDetailDrawer({
         </DetailField>
 
         {unattachedPermissions.length > 0 ? (
-          <DetailField label="Tambah permission">
+          <DetailField label="Tambah hak akses">
             <div className="max-h-80 space-y-5 overflow-y-auto">
               {[
                 ...groupPermissionsByCategory(
@@ -992,8 +992,8 @@ function RoleDetailDrawer({
                             disabled={grantPending || role.isSystem}
                             title={
                               role.isSystem
-                                ? 'Role sistem tidak dapat diubah permission-nya'
-                                : 'Tambahkan permission ke role'
+                                ? 'Peran bawaan sistem tidak dapat diubah hak aksesnya'
+                                : 'Tambahkan hak akses ke peran'
                             }
                             className={
                               role.isSystem
@@ -1047,11 +1047,11 @@ function DetailField({
 }
 
 function permissionLabel(count?: number) {
-  return count === undefined ? 'Belum dihitung' : `${count} permission`;
+  return count === undefined ? 'Belum dihitung' : `${count} hak akses`;
 }
 
 function roleHref(filters: RoleFilters) {
-  return `/roles?${new URLSearchParams({ ...(filters.search ? { roleSearch: filters.search } : {}), ...(filters.status ? { roleStatus: filters.status } : {}), rolePage: String(filters.page), roleLimit: String(filters.limit) }).toString()}`;
+  return `/peran-hak-akses?${new URLSearchParams({ ...(filters.search ? { roleSearch: filters.search } : {}), ...(filters.status ? { roleStatus: filters.status } : {}), rolePage: String(filters.page), roleLimit: String(filters.limit) }).toString()}`;
 }
 
 function Pagination({

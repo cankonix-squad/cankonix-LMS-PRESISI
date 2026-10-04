@@ -7,10 +7,10 @@ import {
 } from '@/lib/api';
 
 export const metadata = {
-  title: 'Role & Permission — Admin LMS PRESISI',
+  title: 'Peran & Hak Akses — Admin LMS PRESISI',
 };
 
-export default async function RolesPage({
+export default async function PeranHakAksesPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

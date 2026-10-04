@@ -68,7 +68,7 @@ export function OrganizationWorkspace({
   return (
     <AdminPage>
       <PageHeader
-        eyebrow="Foundation / Organisasi"
+        eyebrow="Data Induk / Organisasi"
         title="Kelola organisasi"
         description={
           result.error

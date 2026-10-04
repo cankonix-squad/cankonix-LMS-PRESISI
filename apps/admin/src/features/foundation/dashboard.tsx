@@ -5,7 +5,6 @@ import type {
   Person,
   Role,
   RoleAssignment,
-  UserAccount,
 } from '@lms/api-client';
 import Link from 'next/link';
 import {
@@ -13,6 +12,7 @@ import {
   PageHeader,
   StatCard,
 } from '@/components/admin-design-system';
+import { assignmentStatusLabel, personStatusLabel } from './display';
 import { SectionCard } from '@/components/admin-shell';
 import { EmptyState, ErrorState, Pill } from '@/components/data-state';
 import {
@@ -20,8 +20,6 @@ import {
   getOrEmpty,
   hasAdminPortalAccess,
 } from '@/lib/api';
-import { AssignmentManagement } from './assignment-management';
-import { CreatePersonAccountForm } from './create-person-account-form';
 import { OrganizationWorkspace } from './organization-management';
 
 export async function FoundationDashboard() {
@@ -46,7 +44,7 @@ export async function FoundationDashboard() {
       <PageHeader
         eyebrow="Dashboard Admin Pusat"
         title="Administrasi Platform Nasional"
-        description="Kelola organisasi, personel, akun, permission, assignment, dan scope dalam satu workspace operasional."
+        description="Kelola organisasi, data individu, akun pengguna, peran, hak akses, dan penugasan dalam satu workspace operasional."
       />
       <DashboardHero />
       <KpiGrid
@@ -78,12 +76,12 @@ function DashboardHero() {
             Operasional
           </p>
           <h2 className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-slate-950">
-            Ringkasan kesiapan foundation
+            Ringkasan kesiapan Data Induk
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            Snapshot data foundation untuk memantau kesiapan Admin sebelum
-            operator masuk ke halaman detail. Validasi akses tetap dilakukan
-            backend dengan permission dan scope.
+            Snapshot data induk untuk memantau kesiapan Admin sebelum operator
+            masuk ke halaman detail. Validasi akses tetap dilakukan backend
+            dengan Hak Akses dan Cakupan Organisasi.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -94,10 +92,10 @@ function DashboardHero() {
             Kelola Organisasi
           </Link>
           <Link
-            href="/assignments"
+            href="/penugasan"
             className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-sky-400 hover:text-sky-700"
           >
-            Atur Hak Akses
+            Atur Penugasan
           </Link>
         </div>
       </div>
@@ -125,19 +123,19 @@ function KpiGrid({
       note: `${activeCount(organizations.data?.data)} aktif pada halaman awal`,
     },
     {
-      label: 'Personel',
+      label: 'Data Individu',
       value: totalOf(persons),
-      note: `${activeCount(persons.data?.data)} personel aktif terbaca`,
+      note: `${activeCount(persons.data?.data)} individu aktif terbaca`,
     },
     {
-      label: 'Role & Permission',
+      label: 'Peran & Hak Akses',
       value: totalOf(roles),
-      note: `${totalOf(permissions)} permission tersedia`,
+      note: `${totalOf(permissions)} hak akses tersedia`,
     },
     {
-      label: 'Assignment Aktif',
+      label: 'Penugasan Aktif',
       value: totalOf(assignments),
-      note: `${activeCount(assignments.data?.data)} assignment aktif terbaca`,
+      note: `${activeCount(assignments.data?.data)} penugasan aktif terbaca`,
     },
   ];
 
@@ -171,9 +169,9 @@ function RecentFoundationTable({
   if (hasError) {
     return (
       <SectionCard
-        id="foundation-overview"
-        title="Ringkasan Foundation"
-        description="Status data operasional dari API foundation."
+        id="data-induk-overview"
+        title="Ringkasan Data Induk"
+        description="Status data operasional dari API Data Induk."
       >
         <ErrorState message={hasError} />
       </SectionCard>
@@ -187,43 +185,47 @@ function RecentFoundationTable({
       code: item.code,
       domain: 'Organisasi',
       status: item.status,
+      statusLabel: personStatusLabel(item.status),
       href: '/organisasi',
     })),
     ...(persons.data?.data ?? []).slice(0, 3).map((item) => ({
       key: `person-${item.id}`,
       name: item.fullName,
       code: item.personnelNumber,
-      domain: 'Personel',
+      domain: 'Data Individu',
       status: item.status,
-      href: '/personel',
+      statusLabel: personStatusLabel(item.status),
+      href: '/data-individu',
     })),
     ...(roles.data?.data ?? []).slice(0, 2).map((item) => ({
       key: `role-${item.id}`,
       name: item.name,
       code: item.code,
-      domain: 'Role',
+      domain: 'Peran',
       status: item.status,
-      href: '/roles',
+      statusLabel: personStatusLabel(item.status),
+      href: '/peran-hak-akses',
     })),
     ...(assignments.data?.data ?? []).slice(0, 2).map((item) => ({
       key: `assignment-${item.id}`,
       name: item.role?.name ?? item.roleId,
       code: item.userAccountId,
-      domain: 'Assignment',
+      domain: 'Penugasan',
       status: item.status,
-      href: '/assignments',
+      statusLabel: assignmentStatusLabel(item.status),
+      href: '/penugasan',
     })),
   ];
 
   return (
     <SectionCard
-      id="foundation-overview"
-      title="Foundation Terbaru"
+      id="data-induk-overview"
+      title="Data Induk Terbaru"
       description="Snapshot data utama untuk memantau kesiapan operasional Admin."
     >
       {rows.length === 0 ? (
         <EmptyState>
-          Belum ada data foundation yang dapat ditampilkan.
+          Belum ada data induk yang dapat ditampilkan.
         </EmptyState>
       ) : (
         <DataTable columns={['Nama', 'Domain', 'Status', 'Aksi']}>
@@ -238,7 +240,7 @@ function RecentFoundationTable({
               <td className="px-4 py-3 text-slate-600">{row.domain}</td>
               <td className="px-4 py-3">
                 <Pill tone={row.status === 'ACTIVE' ? 'green' : 'red'}>
-                  {row.status}
+                  {row.statusLabel}
                 </Pill>
               </td>
               <td className="px-4 py-3 text-right">
@@ -268,22 +270,27 @@ function QuickActions({
     {
       label: 'Tambah Organisasi',
       href: '/organisasi',
-      note: 'Unit, kode, dan hierarchy',
+      note: 'Unit, kode, dan hierarki',
     },
     {
-      label: 'Tambah Person & Akun',
-      href: '/personel',
-      note: 'Identitas personel dan UserAccount',
+      label: 'Tambah Data Individu',
+      href: '/data-individu',
+      note: 'Identitas orang, tanpa akun',
     },
     {
-      label: 'Review Role',
-      href: '/roles',
-      note: `${totalOf(permissions)} permission terbaca`,
+      label: 'Kelola Akun Pengguna',
+      href: '/akun-pengguna',
+      note: 'Login SSO, peran, dan penugasan',
     },
     {
-      label: 'Atur Assignment',
-      href: '/assignments',
-      note: `${activeCount(assignments.data?.data)} assignment aktif`,
+      label: 'Review Peran',
+      href: '/peran-hak-akses',
+      note: `${totalOf(permissions)} hak akses terbaca`,
+    },
+    {
+      label: 'Atur Penugasan',
+      href: '/penugasan',
+      note: `${activeCount(assignments.data?.data)} penugasan aktif`,
     },
   ];
 
@@ -325,7 +332,7 @@ function QuickActions({
       </div>
       <div className="mt-5 rounded-md border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
         Semua perubahan akses tetap diproses melalui endpoint protected. Bila
-        operator belum punya permission, UI akan menampilkan arahan operasional.
+        operator belum punya Hak Akses, UI akan menampilkan arahan operasional.
       </div>
     </aside>
   );
@@ -376,74 +383,6 @@ export async function OrganizationPanel({
   );
 }
 
-export async function PersonAccountPanel() {
-  const api = createAdminApiClient();
-  const persons = await getOrEmpty(() => api.persons.list({ limit: 8 }));
-  const personAccounts =
-    persons.data?.data.length && !persons.error
-      ? await loadPersonAccounts(api, persons.data.data)
-      : new Map<string, DataResult<UserAccount>>();
-
-  return (
-    <SectionCard
-      id="persons"
-      title="Person & User Account"
-      description="Ringkasan personel foundation. Person dan user account tetap domain berbeda."
-    >
-      <CreatePersonAccountForm />
-      <PersonList result={persons} accounts={personAccounts} />
-    </SectionCard>
-  );
-}
-
-export async function RolePermissionPanel() {
-  const api = createAdminApiClient();
-  const [roles, permissions] = await Promise.all([
-    getOrEmpty(() => api.authorization.roles({ limit: 8 })),
-    getOrEmpty(() => api.authorization.permissions({ limit: 8 })),
-  ]);
-
-  return (
-    <SectionCard
-      id="roles"
-      title="Role & Permission"
-      description="Katalog RBAC berbasis permission. UI tidak melakukan hardcoded role branching."
-    >
-      <RolePermissionList roles={roles} permissions={permissions} />
-    </SectionCard>
-  );
-}
-
-export async function AssignmentScopePanel() {
-  const api = createAdminApiClient();
-  const [assignments, roles, persons] = await Promise.all([
-    getOrEmpty(() => api.authorization.assignments({ limit: 8 })),
-    getOrEmpty(() => api.authorization.roles({ limit: 50 })),
-    getOrEmpty(() => api.persons.list({ limit: 50 })),
-  ]);
-  const accounts =
-    persons.data?.data.length && !persons.error
-      ? await loadUserAccounts(api, persons.data.data)
-      : [];
-
-  return (
-    <SectionCard
-      id="assignments"
-      title="Assignment & Scope"
-      description="Role assignment dan scope efektif. Backend tetap security boundary."
-    >
-      <AssignmentManagement
-        roles={(roles.data?.data ?? []).filter(
-          (role) => role.status === 'ACTIVE',
-        )}
-        accounts={accounts}
-        assignments={assignments.data?.data ?? []}
-      />
-      <AssignmentList result={assignments} />
-    </SectionCard>
-  );
-}
-
 function LoginRequiredState() {
   return (
     <SectionCard
@@ -469,187 +408,6 @@ function LoginRequiredState() {
   );
 }
 
-function PersonList({
-  result,
-  accounts,
-}: {
-  result: DataResult<ApiListResponse<Person>>;
-  accounts: Map<string, DataResult<UserAccount>>;
-}) {
-  if (result.error) return <ErrorState message={result.error} />;
-  const items = result.data?.data ?? [];
-  if (items.length === 0)
-    return <EmptyState>Belum ada data personel.</EmptyState>;
-  return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-          <tr>
-            <th className="px-4 py-3">Nama</th>
-            <th className="px-4 py-3">NRP</th>
-            <th className="px-4 py-3">Akun</th>
-            <th className="px-4 py-3">Status</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {items.map((person) => (
-            <tr key={person.id}>
-              <td className="px-4 py-3 font-medium text-slate-950">
-                {person.fullName}
-              </td>
-              <td className="px-4 py-3 text-slate-600">
-                {person.personnelNumber}
-              </td>
-              <td className="px-4 py-3">
-                <PersonAccountCell account={accounts.get(person.id)} />
-              </td>
-              <td className="px-4 py-3">
-                <Pill tone={person.status === 'ACTIVE' ? 'green' : 'red'}>
-                  {person.status}
-                </Pill>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function PersonAccountCell({
-  account,
-}: {
-  account: DataResult<UserAccount> | undefined;
-}) {
-  if (!account) return <Pill tone="slate">Belum dicek</Pill>;
-  if (account.error)
-    return (
-      <Pill tone={account.status === 403 ? 'amber' : 'red'}>
-        {account.status === 403 ? 'Akses akun ditolak' : 'Akun gagal dibaca'}
-      </Pill>
-    );
-  if (!account.data) return <Pill tone="slate">Belum ada akun</Pill>;
-  return (
-    <div className="flex flex-col gap-1">
-      <Pill tone={account.data.status === 'ACTIVE' ? 'green' : 'red'}>
-        {account.data.status}
-      </Pill>
-      <span className="max-w-48 truncate text-xs text-slate-500">
-        {account.data.username ?? account.data.email ?? account.data.id}
-      </span>
-    </div>
-  );
-}
-
-function RolePermissionList({
-  roles,
-  permissions,
-}: {
-  roles: DataResult<ApiListResponse<Role>>;
-  permissions: DataResult<ApiListResponse<Permission>>;
-}) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">Roles</h3>
-        {roles.error ? (
-          <ErrorState message={roles.error} />
-        ) : (
-          <RoleList roles={roles.data?.data ?? []} />
-        )}
-      </div>
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">
-          Permissions
-        </h3>
-        {permissions.error ? (
-          <ErrorState message={permissions.error} />
-        ) : (
-          <PermissionList permissions={permissions.data?.data ?? []} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function RoleList({ roles }: { roles: Role[] }) {
-  if (roles.length === 0) return <EmptyState>Belum ada role.</EmptyState>;
-  return (
-    <div className="space-y-2">
-      {roles.map((role) => (
-        <div
-          key={role.id}
-          className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
-        >
-          <div className="flex justify-between gap-3">
-            <p className="font-medium text-slate-950">{role.name}</p>
-            {role.isSystem ? <Pill tone="blue">SYSTEM</Pill> : null}
-          </div>
-          <p className="mt-1 text-xs text-slate-500">{role.code}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PermissionList({ permissions }: { permissions: Permission[] }) {
-  if (permissions.length === 0)
-    return <EmptyState>Belum ada permission.</EmptyState>;
-  return (
-    <div className="flex flex-wrap gap-2">
-      {permissions.map((permission) => (
-        <Pill key={permission.id}>{permission.code}</Pill>
-      ))}
-    </div>
-  );
-}
-
-function AssignmentList({
-  result,
-}: {
-  result: DataResult<ApiListResponse<RoleAssignment>>;
-}) {
-  if (result.error) return <ErrorState message={result.error} />;
-  const items = result.data?.data ?? [];
-  if (items.length === 0)
-    return <EmptyState>Belum ada assignment role.</EmptyState>;
-  return (
-    <div className="space-y-3">
-      {items.map((assignment) => (
-        <article
-          key={assignment.id}
-          className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
-        >
-          <div className="flex justify-between gap-3">
-            <div>
-              <p className="font-medium text-slate-950">
-                {assignment.role?.name ?? assignment.roleId}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                User: {assignment.userAccountId}
-              </p>
-            </div>
-            <Pill tone={assignment.status === 'ACTIVE' ? 'green' : 'red'}>
-              {assignment.status}
-            </Pill>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {assignment.scopes.length === 0 ? (
-              <Pill tone="blue">UNRESTRICTED</Pill>
-            ) : (
-              assignment.scopes.map((scope) => (
-                <Pill key={scope.id}>
-                  {scope.scopeType}: {scope.scopeId}
-                </Pill>
-              ))
-            )}
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
 type DataResult<T> = {
   data: T | null;
   error: string | null;
@@ -663,30 +421,4 @@ function totalOf<T>(result: DataResult<ApiListResponse<T>>) {
 
 function activeCount<T extends { status?: string }>(items: T[] | undefined) {
   return (items ?? []).filter((item) => item.status === 'ACTIVE').length;
-}
-
-async function loadPersonAccounts(
-  api: ReturnType<typeof createAdminApiClient>,
-  persons: Person[],
-) {
-  const entries = await Promise.all(
-    persons.map(async (person) => {
-      const account = await getOrEmpty(() => api.persons.getAccount(person.id));
-      return [person.id, account] as const;
-    }),
-  );
-  return new Map(entries);
-}
-
-async function loadUserAccounts(
-  api: ReturnType<typeof createAdminApiClient>,
-  persons: Person[],
-) {
-  const accounts = await Promise.all(
-    persons.map(async (person) => {
-      const account = await getOrEmpty(() => api.persons.getAccount(person.id));
-      return account.data;
-    }),
-  );
-  return accounts.filter((account): account is UserAccount => Boolean(account));
 }

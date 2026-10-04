@@ -21,6 +21,7 @@ import { AllowAuthenticated } from '../authorization/authorization.decorators';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { CreatePersonOrganizationDto } from './dto/create-person-organization.dto';
 import { EndPersonOrganizationDto } from './dto/end-person-organization.dto';
+import { IdentityAuditResponseDto } from './dto/identity-audit-response.dto';
 import { ListPersonsQueryDto } from './dto/list-persons-query.dto';
 import { PersonOrganizationResponseDto } from './dto/person-organization-response.dto';
 import {
@@ -54,6 +55,12 @@ export class PersonsController {
   @ApiOkResponse({ type: PersonListResponseDto })
   list(@Query() query: ListPersonsQueryDto): Promise<PersonListResponseDto> {
     return this.persons.list(query);
+  }
+
+  @Get('identity-audit')
+  @ApiOkResponse({ type: IdentityAuditResponseDto })
+  identityAudit(): Promise<IdentityAuditResponseDto> {
+    return this.persons.auditIdentity();
   }
 
   @Get(':id/organizations')

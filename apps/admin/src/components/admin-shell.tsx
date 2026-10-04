@@ -10,12 +10,18 @@ const primaryNavigation = [{ href: '/', label: 'Dashboard', marker: 'D' }];
 
 const navigationGroups = [
   {
-    label: 'Foundation',
+    label: 'Data Induk',
     items: [
       { href: '/organisasi', label: 'Organisasi', marker: 'O' },
-      { href: '/personel', label: 'Person & User Account', marker: 'P' },
-      { href: '/roles', label: 'Role & Permission', marker: 'R' },
-      { href: '/assignments', label: 'Assignment & Scope', marker: 'A' },
+      { href: '/data-individu', label: 'Data Individu', marker: 'DI' },
+    ],
+  },
+  {
+    label: 'Manajemen Akses',
+    items: [
+      { href: '/akun-pengguna', label: 'Akun Pengguna', marker: 'AP' },
+      { href: '/peran-hak-akses', label: 'Peran & Hak Akses', marker: 'PH' },
+      { href: '/penugasan', label: 'Penugasan', marker: 'PN' },
     ],
   },
   {
@@ -147,7 +153,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
               sidebarCollapsed && 'lg:hidden',
             )}
           >
-            Permission + Scope aktif di backend.
+            <p className="text-xs font-medium text-emerald-100">
+              Hak Akses + Cakupan Organisasi dinilai di backend.
+            </p>
           </div>
         </aside>
 
@@ -164,7 +172,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="min-w-64 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                  Cari organisasi, personel, atau permission
+                  Cari organisasi, data individu, atau akun pengguna
                 </div>
                 <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
                   Production API

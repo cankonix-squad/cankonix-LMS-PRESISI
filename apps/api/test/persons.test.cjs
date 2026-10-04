@@ -295,6 +295,33 @@ class MemoryPersonsRepository {
     };
   }
 
+  /**
+   * The audit candidate projection is owned by the account side of the
+   * relation, so the memory repository resolves the linkage at read time
+   * instead of the person fixture having to keep a mirrored copy in sync.
+   */
+  linkAccounts(userAccountsRepository) {
+    this.accounts = userAccountsRepository.records;
+  }
+
+  async listIdentityCandidates() {
+    return this.persons
+      .map((record) => ({
+        id: record.id,
+        personnelNumber: record.personnelNumber,
+        fullName: record.fullName,
+        email: record.email ?? null,
+        phone: record.phone ?? null,
+        status: record.status,
+        userAccount:
+          this.accounts?.find((account) => account.personId === record.id) ??
+          null,
+      }))
+      .sort((left, right) =>
+        left.personnelNumber.localeCompare(right.personnelNumber),
+      );
+  }
+
   async update(id, data) {
     const index = this.persons.findIndex((record) => record.id === id);
     if (index < 0) throw new Error('person missing');
@@ -377,6 +404,10 @@ class MemoryUserAccountsRepository {
     return record;
   }
 
+  async findById(id) {
+    return this.records.find((record) => record.id === id) ?? null;
+  }
+
   async findByPersonId(personId) {
     return this.records.find((record) => record.personId === personId) ?? null;
   }
@@ -386,6 +417,42 @@ class MemoryUserAccountsRepository {
       this.records.find((record) => record.externalAuthId === externalAuthId) ??
       null
     );
+  }
+
+  /** Mirrors the Prisma projection: the account joined with its person. */
+  async list(filter) {
+    const search = filter.search?.toLowerCase();
+    const matched = this.records
+      .filter((record) => !filter.status || record.status === filter.status)
+      .filter((record) => {
+        if (!search) return true;
+        const person = this.persons?.find(
+          (candidate) => candidate.id === record.personId,
+        );
+        return [
+          record.username,
+          record.email,
+          person?.fullName,
+          person?.personnelNumber,
+        ].some((value) => value?.toLowerCase().includes(search));
+      })
+      .sort((left, right) => right.createdAt - left.createdAt)
+      .map((record) => ({
+        ...record,
+        person: this.persons?.find(
+          (candidate) => candidate.id === record.personId,
+        ),
+      }));
+    const start = (filter.page - 1) * filter.limit;
+    return {
+      data: matched.slice(start, start + filter.limit),
+      total: matched.length,
+    };
+  }
+
+  /** Resolves the person side of the join at read time, as Prisma does. */
+  linkPersons(personsRepository) {
+    this.persons = personsRepository.persons;
   }
 
   async update(personId, data) {
@@ -414,8 +481,12 @@ function createContext() {
     organizationsService,
     audit,
   );
+  const userAccountsRepository = new MemoryUserAccountsRepository();
+  // The two repositories join on `person_id` exactly like the Prisma schema.
+  userAccountsRepository.linkPersons(personsRepository);
+  personsRepository.linkAccounts(userAccountsRepository);
   const userAccountsService = new UserAccountsService(
-    new MemoryUserAccountsRepository(),
+    userAccountsRepository,
     personsService,
     audit,
   );
@@ -424,6 +495,7 @@ function createContext() {
     personsService,
     userAccountsService,
     personsRepository,
+    userAccountsRepository,
     audit,
   };
 }
@@ -715,6 +787,177 @@ test('user account lifecycle can be read and updated', async () => {
   assert.equal(read.lastLoginAt, null);
 });
 
+test('account directory lists accounts with their owner identity', async () => {
+  const { personsService, userAccountsService } = createContext();
+
+  const ani = await personsService.create({
+    personnelNumber: '87001',
+    fullName: 'Ani Wijaya',
+  });
+  const budi = await personsService.create({
+    personnelNumber: '87002',
+    fullName: 'Budi Santoso',
+  });
+  // Identity without an account: the directory is a list of *accounts*, so
+  // this person must not appear and must not be silently created an account.
+  await personsService.create({ personnelNumber: '87003', fullName: 'Candra' });
+
+  await userAccountsService.create(ani.id, {
+    username: 'ani',
+    email: 'ani@polri.go.id',
+  });
+  await userAccountsService.create(budi.id, { username: 'budi' });
+
+  const all = await userAccountsService.list({ page: 1, limit: 25 });
+  assert.equal(all.total, 2);
+  assert.equal(all.data.length, 2);
+  assert.equal(all.page, 1);
+  assert.equal(all.limit, 25);
+  // Identity travels with the account as a projection of Person.
+  const aniRow = all.data.find((row) => row.personId === ani.id);
+  assert.equal(aniRow.person.fullName, 'Ani Wijaya');
+  assert.equal(aniRow.person.personnelNumber, '87001');
+  assert.equal(aniRow.person.status, PersonStatusDto.ACTIVE);
+
+  // Search spans both sides of the relation: a name typed by an operator must
+  // match the row that displays that very name.
+  const byName = await userAccountsService.list({ search: 'budi' });
+  assert.equal(byName.total, 1);
+  assert.equal(byName.data[0].personId, budi.id);
+
+  const byPersonnelNumber = await userAccountsService.list({
+    search: '87001',
+  });
+  assert.equal(byPersonnelNumber.total, 1);
+  assert.equal(byPersonnelNumber.data[0].personId, ani.id);
+
+  const noMatch = await userAccountsService.list({ search: 'candra' });
+  assert.equal(noMatch.total, 0);
+  assert.deepEqual(noMatch.data, []);
+});
+
+test('account directory filters by account status independently of person status', async () => {
+  const { personsService, userAccountsService } = createContext();
+
+  const ani = await personsService.create({
+    personnelNumber: '87001',
+    fullName: 'Ani Wijaya',
+  });
+  const budi = await personsService.create({
+    personnelNumber: '87002',
+    fullName: 'Budi Santoso',
+  });
+
+  await userAccountsService.create(ani.id, { username: 'ani' });
+  await userAccountsService.create(budi.id, { username: 'budi' });
+  await userAccountsService.update(budi.id, {
+    status: UserAccountStatusDto.SUSPENDED,
+  });
+
+  const suspended = await userAccountsService.list({
+    status: UserAccountStatusDto.SUSPENDED,
+  });
+  assert.equal(suspended.total, 1);
+  assert.equal(suspended.data[0].personId, budi.id);
+  // Deactivating the account must not deactivate the person.
+  assert.equal(suspended.data[0].person.status, PersonStatusDto.ACTIVE);
+
+  // …and the reverse: deactivating the person leaves the account status alone.
+  await personsService.deactivate(ani.id);
+  const activeAccounts = await userAccountsService.list({
+    status: UserAccountStatusDto.ACTIVE,
+  });
+  assert.equal(activeAccounts.total, 1);
+  assert.equal(activeAccounts.data[0].personId, ani.id);
+  assert.equal(activeAccounts.data[0].person.status, PersonStatusDto.INACTIVE);
+
+  const paged = await userAccountsService.list({ page: 2, limit: 1 });
+  assert.equal(paged.total, 2);
+  assert.equal(paged.data.length, 1);
+});
+
+test('identity audit reports linkage without merging or mutating identities', async () => {
+  const {
+    personsService,
+    userAccountsService,
+    personsRepository,
+    userAccountsRepository,
+  } = createContext();
+
+  const withAccount = await personsService.create({
+    personnelNumber: '87001',
+    fullName: 'Ani Wijaya',
+    email: 'ani@polri.go.id',
+  });
+  await personsService.create({
+    personnelNumber: '87002',
+    fullName: 'Candra',
+  });
+  await userAccountsService.create(withAccount.id, {
+    username: 'ani',
+    email: 'ani@polri.go.id',
+  });
+
+  const before = JSON.stringify(personsRepository.persons);
+  const report = await personsService.auditIdentity();
+
+  assert.equal(report.totalPersons, 2);
+  assert.equal(report.personsWithAccount, 1);
+  assert.equal(report.personsWithoutAccount, 1);
+  assert.equal(report.orphanedAccounts, 0);
+  assert.equal(report.personsWithMultipleAccounts, 0);
+  assert.deepEqual(report.ambiguities, []);
+  // Read-only: an audit must never rewrite or merge identities.
+  assert.equal(JSON.stringify(personsRepository.persons), before);
+  assert.equal(userAccountsRepository.records.length, 1);
+});
+
+test('identity audit flags ambiguity for human review instead of merging', async () => {
+  const { personsService, userAccountsService } = createContext();
+
+  // Same name, different NRP: two rows the audit cannot declare identical.
+  const first = await personsService.create({
+    personnelNumber: '87001',
+    fullName: 'Siti Aminah',
+    email: 'shared@polri.go.id',
+  });
+  const second = await personsService.create({
+    personnelNumber: '87002',
+    fullName: 'Siti Aminah',
+    email: 'shared@polri.go.id',
+  });
+
+  // Account email that disagrees with the person email is surfaced, not fixed.
+  const third = await personsService.create({
+    personnelNumber: '87003',
+    fullName: 'Rudi',
+    email: 'rudi@polri.go.id',
+  });
+  await userAccountsService.create(third.id, {
+    username: 'rudi',
+    email: 'rudi.other@polri.go.id',
+  });
+
+  const report = await personsService.auditIdentity();
+  const kinds = report.ambiguities.map((finding) => finding.kind);
+  assert.ok(kinds.includes('DUPLICATE_NAME'));
+  assert.ok(kinds.includes('DUPLICATE_EMAIL'));
+  assert.ok(kinds.includes('ACCOUNT_EMAIL_MISMATCH'));
+
+  const duplicateName = report.ambiguities.find(
+    (finding) => finding.kind === 'DUPLICATE_NAME',
+  );
+  // Both rows are reported: no survivor is picked automatically.
+  assert.deepEqual(
+    [...duplicateName.personIds].sort(),
+    [first.id, second.id].sort(),
+  );
+  assert.equal(duplicateName.personIds.length, 2);
+
+  // Three persons and three persons only: ambiguity is reported, not resolved.
+  assert.equal(report.totalPersons, 3);
+});
+
 test('password fields are rejected by the person and account contracts', async () => {
   // The account endpoints now enforce `user_account.manage` (the previous
   // authenticated allow-list was removed), so the caller is granted it here to
@@ -790,6 +1033,8 @@ test('person and user account endpoints are exposed in OpenAPI under api v1', as
     assert.ok(spec.paths['/api/v1/persons/{personId}/account'].get);
     assert.ok(spec.paths['/api/v1/persons/{personId}/account'].post);
     assert.ok(spec.paths['/api/v1/persons/{personId}/account'].patch);
+    assert.ok(spec.paths['/api/v1/persons/identity-audit'].get);
+    assert.ok(spec.paths['/api/v1/user-accounts'].get);
 
     const accountSchema = spec.components.schemas.CreateUserAccountDto;
     assert.ok(!('password' in accountSchema.properties));
@@ -836,6 +1081,33 @@ test('granting user_account.read authorizes the account read', async () => {
       { headers: { authorization: AUTHORIZATION } },
     );
     assert.notEqual(withPermission.status, 403);
+  } finally {
+    await denied.app.close();
+    await granted.app.close();
+  }
+});
+
+test('account directory requires user_account.read and separating the menu does not widen access', async () => {
+  const denied = await startAuthenticatedApp([]);
+  const granted = await startAuthenticatedApp(['user_account.read']);
+  try {
+    const withoutPermission = await fetch(
+      `${denied.base}/api/v1/user-accounts`,
+      {
+        headers: { authorization: AUTHORIZATION },
+      },
+    );
+    assert.equal(withoutPermission.status, 403);
+
+    // Reading a *list* of accounts is the same authority as reading one
+    // account: the directory must not become a bypass around the denial above.
+    const withPermission = await fetch(`${granted.base}/api/v1/user-accounts`, {
+      headers: { authorization: AUTHORIZATION },
+    });
+    assert.notEqual(withPermission.status, 403);
+
+    const anonymous = await fetch(`${denied.base}/api/v1/user-accounts`);
+    assert.equal(anonymous.status, 401);
   } finally {
     await denied.app.close();
     await granted.app.close();

@@ -1,6 +1,6 @@
 export default function AssignmentsLoading() {
   return (
-    <div className="space-y-5" aria-busy="true" aria-label="Memuat assignment">
+    <div className="space-y-5" aria-busy="true" aria-label="Memuat penugasan">
       <div className="h-32 animate-pulse rounded-lg border border-slate-200 bg-white" />
       <div className="h-24 animate-pulse rounded-lg border border-slate-200 bg-slate-50" />
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
