@@ -32,6 +32,7 @@ import {
 import {
   assignmentStatusLabel,
   assignmentStatusTone,
+  scopeTypeLabel,
 } from './display';
 import {
   addAssignmentScopeAction,
@@ -256,7 +257,7 @@ function AssignmentToolbar({
             href="/penugasan"
             className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700"
           >
-            Reset
+            Atur ulang
           </Link>
         </form>
       </FilterToolbar>
@@ -335,9 +336,7 @@ function AssignmentTable({
             <article key={assignment.id} className="space-y-3 p-4">
               <div className="flex justify-between gap-3">
                 <UserCell account={accountMap.get(assignment.userAccountId)} />
-                <StatusBadge
-                  tone={assignmentStatusTone(assignment.status)}
-                >
+                <StatusBadge tone={assignmentStatusTone(assignment.status)}>
                   {assignmentStatusLabel(assignment.status)}
                 </StatusBadge>
               </div>
@@ -437,11 +436,11 @@ function ScopeBadges({ assignment }: { assignment: RoleAssignment }) {
       {assignment.scopes.length ? (
         assignment.scopes.map((scope) => (
           <StatusBadge key={scope.id} tone="blue">
-            {scope.scopeType}
+            {scopeTypeLabel(scope.scopeType)}
           </StatusBadge>
         ))
       ) : (
-        <span className="text-xs text-slate-500">Tanpa scope</span>
+        <span className="text-xs text-slate-500">Tanpa cakupan</span>
       )}
     </div>
   );
@@ -461,7 +460,7 @@ function AssignmentActions({
     <ActionGroup>
       <ActionButton onClick={() => onDetail(assignment)}>Detail</ActionButton>
       <ActionButton onClick={() => onScope(assignment)}>
-        Kelola scope
+        Kelola cakupan
       </ActionButton>
       <ActionButton onClick={() => onStatus(assignment)}>Status</ActionButton>
       <ActionButton disabled title="Ubah penugasan belum tersedia">
@@ -602,7 +601,9 @@ function ScopeForm({
   return (
     <div className="space-y-5">
       <div>
-        <p className="mb-2 text-sm font-semibold text-slate-950">Cakupan aktif</p>
+        <p className="mb-2 text-sm font-semibold text-slate-950">
+          Cakupan aktif
+        </p>
         <div className="space-y-2">
           {assignment.scopes.length ? (
             assignment.scopes.map((scope) => (
@@ -611,7 +612,9 @@ function ScopeForm({
                 className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
               >
                 <div>
-                  <StatusBadge tone="blue">{scope.scopeType}</StatusBadge>
+                  <StatusBadge tone="blue">
+                    {scopeTypeLabel(scope.scopeType)}
+                  </StatusBadge>
                   <p className="mt-1 font-mono text-xs text-slate-600">
                     {scope.scopeId}
                   </p>
@@ -779,14 +782,16 @@ function AssignmentDetail({
                 key={scope.id}
                 className="rounded-md border border-slate-200 bg-slate-50 p-3"
               >
-                <StatusBadge tone="blue">{scope.scopeType}</StatusBadge>
+                <StatusBadge tone="blue">
+                  {scopeTypeLabel(scope.scopeType)}
+                </StatusBadge>
                 <p className="mt-1 font-mono text-xs text-slate-600">
                   {scope.scopeId}
                 </p>
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-500">Tanpa scope.</p>
+            <p className="text-sm text-slate-500">Tanpa cakupan.</p>
           )}
         </div>
       </Info>

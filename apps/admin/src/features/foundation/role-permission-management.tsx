@@ -161,7 +161,7 @@ export function RolePermissionWorkspace({
           <ErrorState message={permissions.error} />
         ) : permissionItems.length === 0 ? (
           <EmptyState>
-            Tidak ada permission yang cocok dengan pencarian.
+            Tidak ada hak akses yang cocok dengan pencarian.
           </EmptyState>
         ) : (
           <PermissionTable permissions={permissionItems} />
@@ -217,10 +217,10 @@ function PermissionErrorState({ message }: { message: string }) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
         <p className="font-semibold">
-          Akses role &amp; permission belum tersedia untuk akun ini.
+          Akses peran &amp; hak akses belum tersedia untuk akun ini.
         </p>
         <p className="mt-2 leading-6">
-          Untuk melihat dan mengelola role, akun Anda membutuhkan permission
+          Untuk melihat dan mengelola peran, akun Anda membutuhkan hak akses
           berikut:
         </p>
         <ul className="mt-3 ml-5 list-disc space-y-1 text-amber-800">
@@ -228,19 +228,19 @@ function PermissionErrorState({ message }: { message: string }) {
             <code className="rounded bg-amber-100 px-1 text-xs font-semibold">
               authorization.role.read
             </code>{' '}
-            — melihat daftar role
+            — melihat daftar peran
           </li>
           <li>
             <code className="rounded bg-amber-100 px-1 text-xs font-semibold">
               authorization.permission.read
             </code>{' '}
-            — melihat katalog permission
+            — melihat katalog hak akses
           </li>
           <li>
             <code className="rounded bg-amber-100 px-1 text-xs font-semibold">
               authorization.role.manage
             </code>{' '}
-            — membuat, mengedit, dan mengelola permission role
+            — membuat, mengedit, dan mengelola hak akses peran
           </li>
         </ul>
         <p className="mt-4 leading-6">
@@ -249,15 +249,15 @@ function PermissionErrorState({ message }: { message: string }) {
             href="/penugasan"
             className="font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-900"
           >
-            halaman assignments
+            halaman penugasan
           </Link>{' '}
-          dan pastikan akun Anda sudah diberikan role yang memiliki
-          permission-permission tersebut dengan scope yang sesuai. Setelah
-          assignment aktif, muat ulang halaman ini.
+          dan pastikan akun Anda sudah diberikan peran yang memiliki hak akses
+          tersebut dengan cakupan yang sesuai. Setelah penugasan aktif, muat
+          ulang halaman ini.
         </p>
         {perm ? (
           <p className="mt-3 rounded-md border border-amber-200 bg-white px-3 py-2 font-mono text-xs text-amber-800">
-            Permission diperlukan: {perm}
+            Hak akses diperlukan: {perm}
           </p>
         ) : null}
       </div>
@@ -338,10 +338,10 @@ function PermissionToolbar({
     <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
         <h2 className="text-sm font-semibold text-slate-950">
-          Katalog permission
+          Katalog hak akses
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Kategori mengikuti segmen pertama dari kode permission.
+          Kategori mengikuti segmen pertama dari kode hak akses.
         </p>
       </div>
       <SearchForm
@@ -398,7 +398,7 @@ function SearchForm({
         href="/peran-hak-akses"
         className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
       >
-        Reset
+        Atur ulang
       </Link>
     </form>
   );
@@ -728,7 +728,10 @@ function RoleForm({
         />
       </FormField>
 
-      <FormField label="Deskripsi" helper="Opsional. Jelaskan tujuan peran ini.">
+      <FormField
+        label="Deskripsi"
+        helper="Opsional. Jelaskan tujuan peran ini."
+      >
         <textarea
           name="description"
           defaultValue={role?.description ?? ''}
@@ -739,8 +742,8 @@ function RoleForm({
       </FormField>
 
       <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
-        Tips: setelah role dibuat, buka detail role untuk menambahkan
-        permission, lalu buka{' '}
+        Petunjuk: setelah peran dibuat, buka detail peran untuk menambahkan hak
+        akses, lalu buka{' '}
         <Link
           href="/penugasan"
           className="font-semibold underline underline-offset-2 hover:text-sky-900"
@@ -808,7 +811,7 @@ function RoleDetailDrawer({
             onClick={() => onEdit(role)}
             className="inline-flex min-h-9 items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
           >
-            Edit role
+            Ubah peran
           </button>
         </div>
 
@@ -944,7 +947,7 @@ function RoleDetailDrawer({
             </div>
           ) : (
             <p className="text-sm text-slate-500">
-              Permission role sedang dimuat.
+              Hak akses peran sedang dimuat.
             </p>
           )}
           {revokeState.message ? <ActionMessage state={revokeState} /> : null}
@@ -1014,14 +1017,14 @@ function RoleDetailDrawer({
           </DetailField>
         ) : permissions?.data ? (
           <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-            Semua permission yang tersedia sudah melekat pada role ini.
+            Semua hak akses yang tersedia sudah melekat pada peran ini.
           </p>
         ) : null}
 
         {role.isSystem ? (
           <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            Role ini adalah role sistem yang dilindungi. Kode, status, dan
-            permission-nya tidak dapat diubah dari UI ini.
+            Peran ini adalah peran sistem yang dilindungi. Kode, status, dan hak
+            aksesnya tidak dapat diubah dari antarmuka ini.
           </div>
         ) : null}
       </div>

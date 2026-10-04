@@ -118,3 +118,25 @@ export const PROVISIONING_STATUS_LABEL: Record<string, string> = {
   NOT_CONFIGURED: 'Provisioning nonaktif',
   ERROR: 'Gagal / tidak diketahui',
 };
+
+/** Keep backend identifiers intact while presenting mutation failures in Indonesian. */
+export function foundationMutationError(
+  error: { status: number; message: string },
+  fallback: string,
+): string {
+  if (error.status === 401) return 'Sesi berakhir. Masuk kembali melalui SSO.';
+  if (error.status === 403)
+    return 'Hak akses Anda tidak mencukupi untuk perubahan ini.';
+  if (error.status === 404)
+    return 'Data tidak ditemukan. Muat ulang halaman sebelum mencoba kembali.';
+  if (error.status === 400)
+    return `${fallback} Periksa isian dan format data pada formulir.`;
+  if (error.status === 409) {
+    if (/already has a user account/i.test(error.message))
+      return 'Individu ini sudah memiliki akun pengguna.';
+    if (/external auth identifier/i.test(error.message))
+      return 'ID pengguna SSO sudah terhubung ke akun lain.';
+    return `${fallback} Data bertentangan dengan data yang sudah tersimpan. Periksa duplikasi dan relasinya.`;
+  }
+  return `${fallback} Coba kembali atau hubungi pengelola sistem.`;
+}

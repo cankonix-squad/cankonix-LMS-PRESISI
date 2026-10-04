@@ -44,9 +44,10 @@ export default async function DataIndividuDetailPage({
     getOrEmpty(() => api.persons.getKeycloakProvisioning(id)),
   ]);
   const row = person.data;
-  const accountError = account.error
-    ? { message: account.error, status: account.status }
-    : null;
+  const accountError =
+    account.error && account.status !== 404
+      ? { message: account.error, status: account.status }
+      : null;
 
   return (
     <AdminShell>
@@ -70,7 +71,9 @@ export default async function DataIndividuDetailPage({
         />
         <div className="px-5 pb-5">
           {!row ? (
-            <ErrorState message={person.error ?? 'Data individu tidak ditemukan.'} />
+            <ErrorState
+              message={person.error ?? 'Data individu tidak ditemukan.'}
+            />
           ) : (
             <div className="grid gap-4 lg:grid-cols-3">
               <section className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-2">
@@ -109,9 +112,9 @@ export default async function DataIndividuDetailPage({
                   </div>
                 </dl>
                 <p className="mt-4 text-xs leading-5 text-slate-500">
-                  Status individu tidak mengubah status akun. Riwayat pendidikan,
-                  penugasan, dan data akademik tetap tersimpan walau akun
-                  dinonaktifkan.
+                  Status individu tidak mengubah status akun. Riwayat
+                  pendidikan, penugasan, dan data akademik tetap tersimpan walau
+                  akun dinonaktifkan.
                 </p>
               </section>
               <section className="rounded-lg border border-slate-200 bg-white p-5">
@@ -126,7 +129,9 @@ export default async function DataIndividuDetailPage({
                   <>
                     <dl className="mt-3 grid gap-3 text-sm">
                       <div>
-                        <dt className="text-xs text-slate-400">Nama pengguna</dt>
+                        <dt className="text-xs text-slate-400">
+                          Nama pengguna
+                        </dt>
                         <dd className="mt-1 font-medium text-slate-800">
                           {account.data.username || '-'}
                         </dd>
@@ -186,17 +191,19 @@ export default async function DataIndividuDetailPage({
                   Penempatan organisasi
                 </h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  Penempatan saat ini:{' '}
-                  {placementLabel(placements.data ?? [])}
+                  Penempatan saat ini: {placementLabel(placements.data ?? [])}
                 </p>
                 <div className="mt-4">
-                  {(placements.data ?? []).length === 0 ? (
+                  {placements.error ? (
+                    <ErrorState message="Riwayat penempatan belum dapat dimuat. Muat ulang halaman untuk mencoba kembali." />
+                  ) : (placements.data ?? []).length === 0 ? (
                     <EmptyState>
                       <p className="font-semibold text-slate-950">
                         Belum ada penempatan
                       </p>
                       <p className="mt-2">
-                        Individu ini belum ditempatkan pada satuan kerja mana pun.
+                        Individu ini belum ditempatkan pada satuan kerja mana
+                        pun.
                       </p>
                     </EmptyState>
                   ) : (
@@ -221,7 +228,8 @@ export default async function DataIndividuDetailPage({
                                   'Unit tidak terbaca'}
                               </p>
                               <p className="mt-1 text-xs text-slate-500">
-                                {placement.positionName || 'Jabatan belum diisi'}
+                                {placement.positionName ||
+                                  'Jabatan belum diisi'}
                               </p>
                               <div className="mt-3 flex items-center justify-between gap-3">
                                 <span className="text-xs text-slate-500">
@@ -244,7 +252,8 @@ export default async function DataIndividuDetailPage({
                       {(placements.data ?? []).map((placement) => (
                         <tr key={placement.id} className="hover:bg-slate-50/80">
                           <td className="px-4 py-3 font-medium text-slate-800">
-                            {placement.organization?.name || 'Unit tidak terbaca'}
+                            {placement.organization?.name ||
+                              'Unit tidak terbaca'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {placement.positionName || '-'}
@@ -258,9 +267,7 @@ export default async function DataIndividuDetailPage({
                               : '-'}
                           </td>
                           <td className="px-4 py-3">
-                            <Pill
-                              tone={placement.isActive ? 'green' : 'slate'}
-                            >
+                            <Pill tone={placement.isActive ? 'green' : 'slate'}>
                               {placement.isActive ? 'Aktif' : 'Nonaktif'}
                             </Pill>
                           </td>
@@ -284,9 +291,7 @@ export default async function DataIndividuDetailPage({
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-xs text-slate-400">
-                          Siap login
-                        </dt>
+                        <dt className="text-xs text-slate-400">Siap login</dt>
                         <dd className="mt-1 font-medium text-slate-800">
                           {keycloak.data.readyToLogin ? 'Ya' : 'Belum'}
                         </dd>

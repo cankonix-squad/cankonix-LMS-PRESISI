@@ -217,3 +217,85 @@ apa adanya, dan dukungan akun sistem/service tidak diubah.
 5. **Nonaktifkan individu.** Tombol nonaktif cepat pada daftar Data Individu
    sengaja dinonaktifkan; status individu hanya diubah melalui Edit agar tidak
    ada perubahan tersembunyi yang berdampak ke modul akademik.
+
+
+## Pemeriksaan lanjutan — 2026-10-05
+
+Permintaan pengguna untuk memeriksa pekerjaan menemukan celah pada implementasi
+REVIEW sebelumnya. Task dibuka kembali sebagai IN PROGRESS selama perbaikan.
+
+Perbaikan:
+
+- Selesaikan istilah yang tertinggal pada katalog peran/hak akses, petunjuk
+  otorisasi, tombol atur ulang, panel Keycloak, dan label tipe cakupan.
+- Pesan gagal mutasi Foundation memakai `foundationMutationError`: validasi,
+  konflik, sesi, dan penolakan akses ditampilkan dalam Bahasa Indonesia.
+  Nama field, kode permission, dan kontrak API tetap dipertahankan.
+- Pemilih pemilik akun memeriksa `getAccount` untuk setiap kandidat, termasuk
+  pemilik akun di luar halaman/filter daftar akun yang sedang dibuka. Hanya
+  respons 404 dianggap belum memiliki akun; 401/403/500 menggagalkan pembacaan
+  dan menampilkan kesalahan, bukan klaim bahwa semua individu sudah punya akun.
+- Detail individu menampilkan "Belum memiliki akun" untuk 404 akun. Kegagalan
+  pembacaan riwayat penempatan ditampilkan sebagai kesalahan, bukan riwayat kosong.
+- Audit identitas dibatasi oleh `user_account.read`, sama seperti direktori akun.
+  Regresi HTTP menguji 401/403 serta izin baca. Allow-list lama pada endpoint
+  Person lain tidak diubah dalam perbaikan ini.
+- Tidak ada perubahan schema, migrasi, dependensi, autentikasi SSO, ID, maupun
+  data produksi. Tidak ada deployment.
+
+File perubahan lanjutan:
+
+- `apps/admin/src/app/akun-pengguna/page.tsx`
+- `apps/admin/src/app/data-individu/[id]/page.tsx`
+- `apps/admin/src/features/foundation/account-person-options.ts` (baru)
+- `apps/admin/src/features/foundation/account-management.tsx`
+- `apps/admin/src/features/foundation/actions.ts`
+- `apps/admin/src/features/foundation/display.ts`
+- `apps/admin/src/features/foundation/assignment-scope-management.tsx`
+- `apps/admin/src/features/foundation/role-permission-management.tsx`
+- `apps/admin/src/features/foundation/keycloak-provisioning-panel.tsx`
+- `apps/admin/src/features/foundation/person-management.tsx`
+- `apps/admin/src/features/foundation/organization-management.tsx`
+- `apps/admin/src/features/foundation/dashboard.tsx` (format)
+- `apps/admin/test/data-individu-akun-pengguna.test.cjs`
+- `apps/api/src/persons/persons.controller.ts`
+- `apps/api/src/persons/identity-audit.ts` (format)
+- `apps/api/src/persons/person-identity.types.ts` (format)
+- `apps/api/test/persons.test.cjs`
+- Task ini dan `tasks/MASTER-CHECKLIST.md`.
+
+Verifikasi ulang:
+
+- Pengujian API: 478/478 PASS; Admin: 29/29 PASS; api-client: 12/12 PASS.
+  API/client dijalankan di luar sandbox karena fixture HTTP membutuhkan loopback.
+  Suite API pertama mengalami satu kegagalan inisialisasi modul saat kompilasi
+  lain berjalan; setelah kompilasi selesai, seluruh suite diulang dan lulus.
+- Prisma validate PASS. Tidak ada migrasi untuk dijalankan pada task ini.
+- Startup launcher pnpm tertahan; verifikasi memakai executable pnpm 10.34.5
+  yang sudah terpasang, tanpa instalasi dependency.
+- `pnpm lint`: ESLint seluruh 11 package PASS; Prettier repo-wide gagal pada
+  52 file yang sudah bermasalah sebelum pemeriksaan lanjutan. File Foundation
+  terkait yang terkena format diperbaiki; file aplikasi/modul lain tidak diubah.
+- `pnpm build` dan rantai dependency `pnpm typecheck` gagal pada Turbopack
+  (`globals.css`, proses/port, Operation not permitted), termasuk percobaan ulang
+  build di luar sandbox. Build produksi Admin menggunakan `next build --webpack`
+  dipakai sebagai verifikasi alternatif; build API dijalankan dengan
+  `tsc -p tsconfig.build.json`. Package build lain pada Turbo lulus/cache hit.
+- HTTP HEAD situs publik: 307 ke `/login`; ini hanya membuktikan jalur anonim,
+  bukan bukti bahwa perubahan lokal sudah tersedia di produksi.
+
+Batas verifikasi tetap berlaku: PostgreSQL/Keycloak runtime dan audit dataset nyata
+belum dijalankan. Tidak ada Docker lokal dan tidak dipasang otomatis. Ambiguitas
+nama/email serta aturan email login tetap memerlukan peninjauan manusia.
+Aturan autentikasi lama mensyaratkan individu dan akun sama-sama aktif; perubahan
+status individu tidak menulis status akun, tetapi individu nonaktif tetap ditolak
+oleh autentikasi sesuai aturan yang sudah ada.
+Pemilih saat ini menawarkan maksimal 100 individu aktif tanpa akun dan membaca
+akun per kandidat; skala dataset besar memerlukan evaluasi performa sebelum UAT.
+
+- Verifikasi akhir `pnpm turbo run lint typecheck --only`: 22/22 task PASS.
+- Build produksi Admin webpack PASS (36 halaman); build API TypeScript PASS.
+- File yang diubah lolos Prettier dan `git diff --check`.
+
+Task kembali ke REVIEW untuk checkpoint manusia; tidak ditandai DONE dan tidak
+ada task berikutnya yang dimulai.

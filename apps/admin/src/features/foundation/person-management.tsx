@@ -302,7 +302,7 @@ function PersonToolbar({ filters }: { filters: PersonFilters }) {
             href="/data-individu"
             className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 sm:flex-none"
           >
-            Reset
+            Atur ulang
           </Link>
         </form>
       </FilterToolbar>

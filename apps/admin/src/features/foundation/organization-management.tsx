@@ -183,7 +183,7 @@ function OrganizationToolbar({ filters }: { filters: OrganizationFilters }) {
           href="/organisasi"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>

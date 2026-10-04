@@ -1106,6 +1106,25 @@ test('account directory requires user_account.read and separating the menu does 
     });
     assert.notEqual(withPermission.status, 403);
 
+    const deniedAudit = await fetch(
+      `${denied.base}/api/v1/persons/identity-audit`,
+      {
+        headers: { authorization: AUTHORIZATION },
+      },
+    );
+    assert.equal(deniedAudit.status, 403);
+    const grantedAudit = await fetch(
+      `${granted.base}/api/v1/persons/identity-audit`,
+      {
+        headers: { authorization: AUTHORIZATION },
+      },
+    );
+    assert.notEqual(grantedAudit.status, 403);
+    const anonymousAudit = await fetch(
+      `${denied.base}/api/v1/persons/identity-audit`,
+    );
+    assert.equal(anonymousAudit.status, 401);
+
     const anonymous = await fetch(`${denied.base}/api/v1/user-accounts`);
     assert.equal(anonymous.status, 401);
   } finally {

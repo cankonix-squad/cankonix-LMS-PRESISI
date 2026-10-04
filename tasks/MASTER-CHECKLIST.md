@@ -545,3 +545,24 @@ nyata belum diketahui dan belum ditinjau. Keputusan bisnis yang masih menunggu
 peninjauan: alamat email mana yang menjadi identitas login resmi, penggunaan
 email bersama oleh beberapa orang, dan penanganan nama lengkap yang sama. Detail
 di TASK-009AP. Tidak ada task setelah ini yang dimulai.
+
+
+## TASK-009AP — pemeriksaan lanjutan REVIEW (2026-10-05)
+
+Pemeriksaan ulang menemukan istilah Inggris tertinggal, pemilih individu yang
+belum mengecualikan pemilik akun di halaman lain, 404 akun yang ditampilkan
+sebagai error pada detail individu, dan audit identitas tanpa hak baca akun.
+Semuanya diperbaiki dalam task yang sama: glosarium/pesan mutasi Bahasa Indonesia,
+pemilihan berdasarkan pembacaan akun dengan 404 sebagai satu-satunya bukti belum
+memiliki akun, error pembacaan yang jujur, dan `user_account.read` untuk audit.
+Tidak ada schema/migrasi/dependensi baru, perubahan SSO, atau deployment.
+
+Verifikasi: API 478/478, Admin 29/29, api-client 12/12 PASS; Prisma validate
+PASS; lint/typecheck langsung melalui Turbo `--only` 22/22 PASS; build API
+TypeScript dan produksi Admin webpack PASS; Prettier file perubahan dan
+`git diff --check` PASS. `pnpm lint` repo-wide masih menemukan masalah format
+pre-existing di luar scope; `pnpm build` default Turbopack gagal karena proses/port
+Operation not permitted, termasuk retry eskalasi, sehingga build Admin diverifikasi
+melalui webpack. Detail perintah, file, batas pemilih 100 kandidat, aturan individu
+aktif pada autentikasi, dan verifikasi runtime yang DEFERRED dicatat pada TASK-009AP.
+Status kembali REVIEW; menunggu peninjauan manusia, tidak ada task berikutnya.

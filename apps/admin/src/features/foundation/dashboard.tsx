@@ -224,9 +224,7 @@ function RecentFoundationTable({
       description="Snapshot data utama untuk memantau kesiapan operasional Admin."
     >
       {rows.length === 0 ? (
-        <EmptyState>
-          Belum ada data induk yang dapat ditampilkan.
-        </EmptyState>
+        <EmptyState>Belum ada data induk yang dapat ditampilkan.</EmptyState>
       ) : (
         <DataTable columns={['Nama', 'Domain', 'Status', 'Aksi']}>
           {rows.map((row) => (

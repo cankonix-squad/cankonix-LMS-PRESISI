@@ -23,9 +23,7 @@ export type PersonIdentityCandidateRecord = {
 };
 
 export type IdentityAmbiguityKind =
-  | 'DUPLICATE_EMAIL'
-  | 'DUPLICATE_NAME'
-  | 'ACCOUNT_EMAIL_MISMATCH';
+  'DUPLICATE_EMAIL' | 'DUPLICATE_NAME' | 'ACCOUNT_EMAIL_MISMATCH';
 
 /**
  * A finding that needs a human decision.

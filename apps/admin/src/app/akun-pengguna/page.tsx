@@ -1,4 +1,5 @@
 import { AdminShell } from '@/components/admin-shell';
+import { loadAccountPersonOptions } from '@/features/foundation/account-person-options';
 import { AccountWorkspace } from '@/features/foundation/account-management';
 import {
   createAdminApiClient,
@@ -45,11 +46,7 @@ export default async function AkunPenggunaPage({
       )
     : [];
 
-  // A new account can only be linked to a person that does not have one yet, so
-  // the picker is built from the person directory minus the account directory.
-  // The person list is fetched with a generous page size and completed with an
-  // extra pass, because excluding account owners can leave the first page empty.
-  const personOptions = await loadPersonOptions(api, rows);
+  const personOptions = await getOrEmpty(() => loadAccountPersonOptions(api));
 
   return (
     <AdminShell>
@@ -57,41 +54,13 @@ export default async function AkunPenggunaPage({
         result={result}
         filters={{ search, status, page, limit }}
         rows={rows}
-        personOptions={personOptions}
+        personOptions={personOptions.data ?? []}
+        personOptionsError={
+          personOptions.error
+            ? 'Pilihan individu belum dapat dimuat. Muat ulang halaman untuk mencoba kembali.'
+            : null
+        }
       />
     </AdminShell>
   );
-}
-
-type AdminApiClient = ReturnType<typeof createAdminApiClient>;
-type PersonOption = Awaited<
-  ReturnType<AdminApiClient['persons']['list']>
->['data'][number];
-
-const PERSON_OPTION_PAGE_SIZE = 100;
-
-async function loadPersonOptions(
-  api: AdminApiClient,
-  knownRows: { account: { person: { id: string } } }[],
-) {
-  const takenIds = new Set(knownRows.map((row) => row.account.person.id));
-  const options: PersonOption[] = [];
-  let page = 1;
-  while (options.length < PERSON_OPTION_PAGE_SIZE) {
-    const people = await getOrEmpty(() =>
-      api.persons.list({
-        status: 'ACTIVE',
-        page,
-        limit: PERSON_OPTION_PAGE_SIZE,
-      }),
-    );
-    const batch = people.data?.data ?? [];
-    for (const person of batch) {
-      if (!takenIds.has(person.id)) options.push(person);
-    }
-    const total = people.data?.total ?? 0;
-    if (batch.length === 0 || page * PERSON_OPTION_PAGE_SIZE >= total) break;
-    page += 1;
-  }
-  return options.slice(0, PERSON_OPTION_PAGE_SIZE);
 }

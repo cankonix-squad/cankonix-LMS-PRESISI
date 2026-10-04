@@ -84,6 +84,7 @@ export function AccountWorkspace({
   filters,
   rows,
   personOptions,
+  personOptionsError = null,
 }: {
   result: Result<ApiListResponse<UserAccountWithPerson>>;
   filters: AccountFilters;
@@ -94,6 +95,7 @@ export function AccountWorkspace({
    * combination the backend rejects.
    */
   personOptions: Person[];
+  personOptionsError?: string | null;
 }) {
   const [drawer, setDrawer] = useState<
     { kind: 'edit'; row: AccountRow } | { kind: 'create' } | null
@@ -158,6 +160,7 @@ export function AccountWorkspace({
         <AccountDrawer
           drawer={drawer}
           personOptions={personOptions}
+          personOptionsError={personOptionsError}
           onClose={() => setDrawer(null)}
         />
       ) : null}
@@ -208,7 +211,7 @@ function AccountToolbar({ filters }: { filters: AccountFilters }) {
             href="/akun-pengguna"
             className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 sm:flex-none"
           >
-            Reset
+            Atur ulang
           </Link>
         </form>
       </FilterToolbar>
@@ -396,10 +399,12 @@ function AccountCard({
 function AccountDrawer({
   drawer,
   personOptions,
+  personOptionsError,
   onClose,
 }: {
   drawer: { kind: 'edit'; row: AccountRow } | { kind: 'create' };
   personOptions: Person[];
+  personOptionsError: string | null;
   onClose: () => void;
 }) {
   const row = drawer.kind === 'create' ? null : drawer.row;
@@ -412,6 +417,8 @@ function AccountDrawer({
     >
       {row ? (
         <AccountForm row={row} onClose={onClose} />
+      ) : personOptionsError ? (
+        <ErrorState message={personOptionsError} />
       ) : (
         <CreateAccountForm personOptions={personOptions} onClose={onClose} />
       )}
@@ -554,7 +561,7 @@ function CreateAccountForm({
           />
         </FormField>
         <p className="mt-2 text-xs leading-5 text-slate-500">
-          Field ini adalah nilai <code>sub</code> dari Keycloak, bukan email,
+          Kolom ini adalah nilai <code>sub</code> dari Keycloak, bukan email,
           nama pengguna, atau pilihan peran. Kosongkan dulu bila operator belum
           memiliki ID dari Keycloak.
         </p>

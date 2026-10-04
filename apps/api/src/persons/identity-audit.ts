@@ -98,7 +98,10 @@ function emailKey(candidate: PersonIdentityCandidateRecord): string | null {
 }
 
 function nameKey(candidate: PersonIdentityCandidateRecord): string | null {
-  const normalized = candidate.fullName.trim().toLowerCase().replace(/\s+/g, ' ');
+  const normalized = candidate.fullName
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
   return normalized || null;
 }
 

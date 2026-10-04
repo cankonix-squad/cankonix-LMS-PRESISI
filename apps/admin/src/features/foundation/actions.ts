@@ -17,7 +17,7 @@ import type {
   UpdateUserAccountInput,
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
-import { assignmentStatusLabel } from './display';
+import { assignmentStatusLabel, foundationMutationError } from './display';
 import { createAdminApiClient, getAdminAccessToken } from '@/lib/api';
 import {
   ROLE_TEMPLATES,
@@ -57,7 +57,7 @@ export async function createOrganizationAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Organisasi gagal dibuat.',
+      message: foundationMutationError(result, 'Organisasi gagal dibuat.'),
     };
   }
 
@@ -99,7 +99,7 @@ export async function updateOrganizationAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Organisasi gagal diperbarui.',
+      message: foundationMutationError(result, 'Organisasi gagal diperbarui.'),
     };
   }
 
@@ -132,7 +132,10 @@ export async function updateOrganizationStatusAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Status organisasi gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Status organisasi gagal diperbarui.',
+      ),
     };
   }
 
@@ -182,7 +185,7 @@ export async function createPersonAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Data individu gagal dibuat.',
+      message: foundationMutationError(result, 'Data individu gagal dibuat.'),
     };
   }
 
@@ -232,7 +235,7 @@ export async function createPersonAccountAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Akun pengguna gagal dibuat.',
+      message: foundationMutationError(result, 'Akun pengguna gagal dibuat.'),
     };
   }
 
@@ -267,7 +270,10 @@ export async function updatePersonAction(
   if (!result.ok)
     return {
       ok: false,
-      message: result.message || 'Data individu gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Data individu gagal diperbarui.',
+      ),
     };
   revalidatePath('/data-individu');
   revalidatePath(`/data-individu/${id}`);
@@ -301,7 +307,10 @@ export async function updatePersonAccountAction(
   if (!result.ok)
     return {
       ok: false,
-      message: result.message || 'Akun pengguna gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Akun pengguna gagal diperbarui.',
+      ),
     };
   revalidatePath('/akun-pengguna');
   revalidatePath(`/data-individu/${personId}`);
@@ -341,7 +350,7 @@ export async function createRoleAssignmentAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Penugasan gagal dibuat.',
+      message: foundationMutationError(result, 'Penugasan gagal dibuat.'),
     };
   }
 
@@ -375,7 +384,7 @@ export async function addAssignmentScopeAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Scope gagal ditambahkan.',
+      message: foundationMutationError(result, 'Cakupan gagal ditambahkan.'),
     };
   }
 
@@ -406,7 +415,10 @@ export async function updateAssignmentStatusAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Status penugasan gagal diubah.',
+      message: foundationMutationError(
+        result,
+        'Status penugasan gagal diubah.',
+      ),
     };
   }
 
@@ -440,7 +452,7 @@ export async function removeAssignmentScopeAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Scope gagal dihapus.',
+      message: foundationMutationError(result, 'Cakupan gagal dihapus.'),
     };
   }
 
@@ -471,7 +483,7 @@ export async function createRoleAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Role gagal dibuat.',
+      message: foundationMutationError(result, 'Peran gagal dibuat.'),
     };
   }
 
@@ -513,7 +525,7 @@ export async function updateRoleAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Role gagal diperbarui.',
+      message: foundationMutationError(result, 'Peran gagal diperbarui.'),
     };
   }
 
@@ -546,7 +558,10 @@ export async function updateRoleStatusAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Status peran gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Status peran gagal diperbarui.',
+      ),
     };
   }
 
@@ -579,7 +594,10 @@ export async function grantPermissionAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Hak akses gagal ditambahkan ke peran.',
+      message: foundationMutationError(
+        result,
+        'Hak akses gagal ditambahkan ke peran.',
+      ),
     };
   }
 
@@ -609,7 +627,10 @@ export async function revokePermissionAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Hak akses gagal dilepas dari peran.',
+      message: foundationMutationError(
+        result,
+        'Hak akses gagal dilepas dari peran.',
+      ),
     };
   }
 

@@ -392,3 +392,113 @@ test('Data Induk navigation exposes Data Individu and Akun Pengguna as separate 
   assert.doesNotMatch(shell, /label: 'Foundation'/);
   assert.doesNotMatch(shell, /href: '\/personel'/);
 });
+
+test('account picker excludes owners outside the visible account page', async () => {
+  const { loadAccountPersonOptions } = loadSrcModule(
+    'features/foundation/account-person-options.ts',
+  );
+  const { ApiRequestError } = require('@lms/api-client');
+  const seen = [];
+  const available = { ...person, id: 'available' };
+  const options = await loadAccountPersonOptions({
+    persons: {
+      list: async ({ page }) => ({
+        data: page === 1 ? [person] : [available],
+        total: 101,
+      }),
+      getAccount: async (id) => {
+        seen.push(id);
+        if (id === available.id) throw new ApiRequestError('Not found', 404);
+        return account;
+      },
+    },
+  });
+  assert.deepEqual(options, [available]);
+  assert.deepEqual(seen, [person.id, available.id]);
+});
+
+test('account picker fails honestly on denied or failed account reads', async () => {
+  const { loadAccountPersonOptions } = loadSrcModule(
+    'features/foundation/account-person-options.ts',
+  );
+  const { ApiRequestError } = require('@lms/api-client');
+  for (const status of [401, 403, 500]) {
+    await assert.rejects(
+      () =>
+        loadAccountPersonOptions({
+          persons: {
+            list: async () => ({ data: [person], total: 1 }),
+            getAccount: async () => {
+              throw new ApiRequestError('Unavailable', status);
+            },
+          },
+        }),
+      (error) => error.status === status,
+    );
+  }
+  dispatcher.reset();
+  dispatcher.queueState({ kind: 'create' });
+  const tree = renderTree(
+    React.createElement(AccountWorkspace, {
+      result: { data: { data: [], total: 0 }, error: null },
+      filters: { page: 1, limit: 25 },
+      rows: [],
+      personOptions: [],
+      personOptionsError: 'Pilihan individu belum dapat dimuat.',
+    }),
+  );
+  assert.match(textOf(tree), /Pilihan individu belum dapat dimuat/);
+  assert.doesNotMatch(textOf(tree), /Semua data individu sudah memiliki akun/);
+  assert.ok(!inputNames(tree).includes('personId'));
+});
+
+test('role catalogue, empty state and access guidance use Indonesian labels', () => {
+  const { RolePermissionWorkspace } = loadSrcModule(
+    'features/foundation/role-permission-management.tsx',
+  );
+  for (const error of [
+    null,
+    'Access denied: permission authorization.role.read required',
+  ]) {
+    dispatcher.reset();
+    const text = textOf(
+      renderTree(
+        React.createElement(RolePermissionWorkspace, {
+          roles: { data: { data: [], total: 0 }, error },
+          permissions: { data: { data: [], total: 0 }, error },
+          roleFilters: { page: 1, limit: 25 },
+          permissionFilters: { page: 1, limit: 25 },
+          rolePermissions: {},
+        }),
+      ),
+    );
+    assert.doesNotMatch(
+      text.replace(/authorization\.[a-z._]+/g, ''),
+      /\b(role|permission|scope|assignments|Reset)\b/i,
+    );
+    assert.match(text, /hak akses/i);
+  }
+});
+
+test('mutation validation and access failures are presented in Indonesian', () => {
+  const message = display.foundationMutationError;
+  assert.match(
+    message(
+      { status: 409, message: 'Person already has a user account' },
+      'Akun gagal dibuat.',
+    ),
+    /sudah memiliki akun pengguna/,
+  );
+  assert.match(
+    message({ status: 403, message: 'Access denied' }, ''),
+    /Hak akses/,
+  );
+  assert.match(
+    message(
+      { status: 400, message: 'fullName must be a string' },
+      'Data individu gagal dibuat.',
+    ),
+    /Periksa isian/,
+  );
+  assert.match(message({ status: 401, message: '' }, ''), /SSO/);
+});

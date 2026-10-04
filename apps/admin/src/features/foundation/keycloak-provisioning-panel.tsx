@@ -301,9 +301,9 @@ export function KeycloakProvisioningPanel({
       ))}
 
       <p className="text-xs leading-5 text-slate-500">
-        Password tidak pernah disimpan di LMS. Agar personel dapat login, user
-        harus ada di Keycloak dan perannya diberikan melalui Assignment &amp;
-        Scope.
+        Kata sandi tidak pernah disimpan di LMS. Agar individu dapat masuk,
+        pengguna harus terdaftar di Keycloak dan perannya diberikan melalui
+        Penugasan dan Cakupan Organisasi.
       </p>
     </section>
   );
