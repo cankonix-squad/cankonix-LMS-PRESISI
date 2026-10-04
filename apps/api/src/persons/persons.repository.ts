@@ -10,6 +10,7 @@ import {
   PersonRecord,
   PersonUpdateData,
 } from './person.types';
+import { PersonIdentityCandidateRecord } from './person-identity.types';
 
 export const PERSONS_REPOSITORY = Symbol('PERSONS_REPOSITORY');
 
@@ -25,6 +26,12 @@ export interface PersonsRepository {
   findById(id: string): Promise<PersonRecord | null>;
   findByPersonnelNumber(personnelNumber: string): Promise<PersonRecord | null>;
   list(filter: PersonListFilter): Promise<PersonListResult>;
+  /**
+   * Narrow projection for the identity integrity audit: every person plus the
+   * account linkage. Deliberately not the paged `list`, because the audit has to
+   * compare all rows against each other.
+   */
+  listIdentityCandidates(): Promise<PersonIdentityCandidateRecord[]>;
   update(id: string, data: PersonUpdateData): Promise<PersonRecord>;
   createPlacement(
     data: PersonOrganizationCreateData,
@@ -91,6 +98,24 @@ export class PrismaPersonsRepository implements PersonsRepository {
       this.prisma.person.count({ where }),
     ]);
     return { data, total };
+  }
+
+  async listIdentityCandidates(): Promise<PersonIdentityCandidateRecord[]> {
+    const records = await this.prisma.person.findMany({
+      select: {
+        id: true,
+        personnelNumber: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        status: true,
+        userAccount: {
+          select: { id: true, username: true, email: true, status: true },
+        },
+      },
+      orderBy: [{ personnelNumber: 'asc' }],
+    });
+    return records as PersonIdentityCandidateRecord[];
   }
 
   async update(id: string, data: PersonUpdateData): Promise<PersonRecord> {

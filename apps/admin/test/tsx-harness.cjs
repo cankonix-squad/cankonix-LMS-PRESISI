@@ -201,7 +201,12 @@ function renderTree(element) {
   ) {
     return null;
   }
-  if (Array.isArray(element)) return element.map(renderTree).filter(Boolean);
+  // Flattened, because JSX children are frequently produced by `.map()`: a
+  // nested array would otherwise stay an array whose own children `walk` never
+  // descends into, making real inputs and forms invisible to these tests.
+  if (Array.isArray(element)) {
+    return element.map(renderTree).filter(Boolean).flat(Infinity);
+  }
   if (!element || typeof element !== 'object') return null;
 
   if (typeof element.type === 'function') {

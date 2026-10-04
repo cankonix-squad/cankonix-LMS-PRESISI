@@ -3,7 +3,7 @@ export default function RolesLoading() {
     <div
       className="space-y-5"
       aria-busy="true"
-      aria-label="Memuat role dan permission"
+      aria-label="Memuat peran dan hak akses"
     >
       <div className="h-32 animate-pulse rounded-lg border border-slate-200 bg-white" />
       <div className="h-24 animate-pulse rounded-lg border border-slate-200 bg-slate-50" />

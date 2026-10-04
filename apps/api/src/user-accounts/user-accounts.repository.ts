@@ -3,8 +3,11 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   UserAccountCreateData,
+  UserAccountListFilter,
+  UserAccountListResult,
   UserAccountRecord,
   UserAccountUpdateData,
+  UserAccountWithPersonRecord,
 } from './user-account.types';
 
 export const USER_ACCOUNTS_REPOSITORY = Symbol('USER_ACCOUNTS_REPOSITORY');
@@ -16,6 +19,7 @@ export interface UserAccountsRepository {
   findByExternalAuthId(
     externalAuthId: string,
   ): Promise<UserAccountRecord | null>;
+  list(filter: UserAccountListFilter): Promise<UserAccountListResult>;
   update(
     personId: string,
     data: UserAccountUpdateData,
@@ -47,6 +51,52 @@ export class PrismaUserAccountsRepository implements UserAccountsRepository {
     return await this.prisma.userAccount.findUnique({
       where: { externalAuthId },
     });
+  }
+
+  /**
+   * Account directory, newest account first.
+   *
+   * `search` intentionally spans both sides of the relation: the page is a list
+   * of *people who can log in*, so an operator typing a name would otherwise get
+   * no result from a name that is visible in the very same row.
+   */
+  async list(filter: UserAccountListFilter): Promise<UserAccountListResult> {
+    const where: Prisma.UserAccountWhereInput = {
+      status: filter.status,
+      OR: filter.search
+        ? [
+            { username: { contains: filter.search, mode: 'insensitive' } },
+            { email: { contains: filter.search, mode: 'insensitive' } },
+            {
+              person: {
+                fullName: { contains: filter.search, mode: 'insensitive' },
+              },
+            },
+            {
+              person: {
+                personnelNumber: {
+                  contains: filter.search,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          ]
+        : undefined,
+    };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.userAccount.findMany({
+        where,
+        include: { person: true },
+        orderBy: [{ createdAt: 'desc' }],
+        skip: (filter.page - 1) * filter.limit,
+        take: filter.limit,
+      }),
+      this.prisma.userAccount.count({ where }),
+    ]);
+    return {
+      data: data as UserAccountWithPersonRecord[],
+      total,
+    };
   }
 
   async update(

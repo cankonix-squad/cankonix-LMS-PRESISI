@@ -32,7 +32,7 @@ const STATUS_PRESENTATION: Record<
   ADOPTABLE: { label: 'Dapat dihubungkan', tone: 'blue' },
   LINK_CONFLICT: { label: 'Konflik identitas', tone: 'red' },
   STALE_LINK: { label: 'Tautan tidak valid', tone: 'red' },
-  NOT_CONFIGURED: { label: 'Provisioning nonaktif', tone: 'red' },
+  NOT_CONFIGURED: { label: 'Penghubungan akun nonaktif', tone: 'red' },
   ERROR: { label: 'Gagal / tidak diketahui', tone: 'red' },
 };
 
@@ -123,8 +123,8 @@ export function KeycloakProvisioningPanel({
             Identitas Keycloak
           </p>
           <p className="text-xs text-slate-500">
-            Hanya identitas login yang dibuat di Keycloak. Peran dan scope tetap
-            dikelola LMS.
+            Hanya identitas login yang dibuat di Keycloak. Peran dan cakupan
+            kewenangan tetap dikelola LMS.
           </p>
         </div>
         <ProvisioningBadge status={current.status} />
@@ -134,7 +134,7 @@ export function KeycloakProvisioningPanel({
 
       <dl className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
         <div>
-          <dt className="text-slate-400">Username Keycloak</dt>
+          <dt className="text-slate-400">Nama pengguna Keycloak</dt>
           <dd className="mt-0.5 truncate font-medium text-slate-700">
             {current.keycloakUsername || '-'}
           </dd>
@@ -163,9 +163,7 @@ export function KeycloakProvisioningPanel({
               disabled={pending}
               className="min-h-10 rounded-md bg-sky-600 px-4 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {can('PROVISION')
-                ? 'Buat user Keycloak'
-                : 'Coba lagi provisioning'}
+              {can('PROVISION') ? 'Buat akun Keycloak' : 'Coba hubungkan ulang'}
             </button>
           </form>
         ) : null}
@@ -178,7 +176,7 @@ export function KeycloakProvisioningPanel({
               disabled={pending}
               className="min-h-10 rounded-md border border-sky-300 bg-white px-4 text-sm font-semibold text-sky-700 disabled:opacity-60"
             >
-              Hubungkan user Keycloak yang ada
+              Hubungkan pengguna Keycloak yang ada
             </button>
           </form>
         ) : null}
@@ -231,7 +229,7 @@ export function KeycloakProvisioningPanel({
             disabled={pending}
             className="min-h-10 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 disabled:opacity-60"
           >
-            Muat ulang status
+            Muat ulang status login
           </button>
         </form>
       </div>
@@ -243,8 +241,8 @@ export function KeycloakProvisioningPanel({
           className="w-fit text-sm font-semibold text-sky-700"
         >
           {showPassword
-            ? 'Tutup form password'
-            : 'Setel / reset password Keycloak'}
+            ? 'Tutup formulir kata sandi'
+            : 'Setel / reset kata sandi Keycloak'}
         </button>
         {showPassword ? (
           <form
@@ -253,7 +251,7 @@ export function KeycloakProvisioningPanel({
             key={passwordState.message ?? 'fresh'}
           >
             <input type="hidden" name="personId" value={personId} />
-            <FormField label="Password baru" required>
+            <FormField label="Kata sandi baru" required>
               <input
                 name="password"
                 type="password"
@@ -276,7 +274,7 @@ export function KeycloakProvisioningPanel({
               disabled={passwordPending}
               className="w-fit min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {passwordPending ? 'Menyimpan...' : 'Simpan password'}
+              {passwordPending ? 'Menyimpan...' : 'Simpan kata sandi'}
             </button>
             {passwordState.message ? (
               <ActionMessage
@@ -303,9 +301,9 @@ export function KeycloakProvisioningPanel({
       ))}
 
       <p className="text-xs leading-5 text-slate-500">
-        Password tidak pernah disimpan di LMS. Agar personel dapat login, user
-        harus ada di Keycloak dan perannya diberikan melalui Assignment &amp;
-        Scope.
+        Kata sandi tidak pernah disimpan di LMS. Agar individu dapat masuk,
+        pengguna harus terdaftar di Keycloak dan perannya diberikan melalui
+        Penugasan dan Cakupan Organisasi.
       </p>
     </section>
   );

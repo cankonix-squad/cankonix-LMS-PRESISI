@@ -31,7 +31,10 @@ const SRC_ROOT = path.join(__dirname, '..', 'src');
 /** Pages that gate themselves and then redirect. */
 const GATED_PAGES = [
   'app/page.tsx',
-  'app/roles/page.tsx',
+  'app/akun-pengguna/page.tsx',
+  'app/data-individu/page.tsx',
+  'app/peran-hak-akses/page.tsx',
+  'app/penugasan/page.tsx',
   'app/sertifikat/page.tsx',
   'app/system-health/page.tsx',
   'app/template-sertifikat/page.tsx',

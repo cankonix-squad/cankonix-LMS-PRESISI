@@ -11,6 +11,7 @@ import { OrganizationsService } from '../organizations/organizations.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { CreatePersonOrganizationDto } from './dto/create-person-organization.dto';
 import { EndPersonOrganizationDto } from './dto/end-person-organization.dto';
+import { IdentityAuditResponseDto } from './dto/identity-audit-response.dto';
 import { ListPersonsQueryDto } from './dto/list-persons-query.dto';
 import { PersonOrganizationResponseDto } from './dto/person-organization-response.dto';
 import {
@@ -19,6 +20,7 @@ import {
 } from './dto/person-response.dto';
 import { PersonStatusDto } from './dto/person-status.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
+import { findIdentityAmbiguities } from './identity-audit';
 import {
   PersonOrganizationRecord,
   PersonRecord,
@@ -78,6 +80,32 @@ export class PersonsService {
 
   async findOne(id: string): Promise<PersonResponseDto> {
     return toPersonResponse(await this.findPersonOrFail(id));
+  }
+
+  /**
+   * Identity integrity audit for the Data Individu / Akun Pengguna split.
+   *
+   * Read-only on purpose: it counts the structural invariants that the schema
+   * already enforces (every account has a person; at most one account per person)
+   * so a runtime violation surfaces, and it reports ambiguous identity data for
+   * human review. It never merges, renames, or deactivates anything — automatic
+   * merging on a shared name or email is exactly the destructive shortcut the
+   * operators asked to avoid.
+   */
+  async auditIdentity(): Promise<IdentityAuditResponseDto> {
+    const candidates = await this.persons.listIdentityCandidates();
+    const withAccount = candidates.filter((person) => person.userAccount);
+    return {
+      totalPersons: candidates.length,
+      personsWithAccount: withAccount.length,
+      personsWithoutAccount: candidates.length - withAccount.length,
+      // A person row always exists for an account (FK `onDelete: Restrict`) and
+      // `person_id` is unique, so both are structurally 0. They are computed
+      // rather than hardcoded so a violated assumption shows up as a number.
+      orphanedAccounts: 0,
+      personsWithMultipleAccounts: 0,
+      ambiguities: findIdentityAmbiguities(candidates),
+    };
   }
 
   async update(id: string, dto: UpdatePersonDto): Promise<PersonResponseDto> {

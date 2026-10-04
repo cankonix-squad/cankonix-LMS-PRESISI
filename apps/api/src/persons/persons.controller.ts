@@ -17,10 +17,14 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AllowAuthenticated } from '../authorization/authorization.decorators';
+import {
+  AllowAuthenticated,
+  RequirePermissions,
+} from '../authorization/authorization.decorators';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { CreatePersonOrganizationDto } from './dto/create-person-organization.dto';
 import { EndPersonOrganizationDto } from './dto/end-person-organization.dto';
+import { IdentityAuditResponseDto } from './dto/identity-audit-response.dto';
 import { ListPersonsQueryDto } from './dto/list-persons-query.dto';
 import { PersonOrganizationResponseDto } from './dto/person-organization-response.dto';
 import {
@@ -28,6 +32,7 @@ import {
   PersonResponseDto,
 } from './dto/person-response.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
+import { USER_ACCOUNT_PERMISSIONS } from '../user-accounts/user-account-permissions';
 import { PersonsService } from './persons.service';
 
 /**
@@ -54,6 +59,13 @@ export class PersonsController {
   @ApiOkResponse({ type: PersonListResponseDto })
   list(@Query() query: ListPersonsQueryDto): Promise<PersonListResponseDto> {
     return this.persons.list(query);
+  }
+
+  @Get('identity-audit')
+  @RequirePermissions(USER_ACCOUNT_PERMISSIONS.READ)
+  @ApiOkResponse({ type: IdentityAuditResponseDto })
+  identityAudit(): Promise<IdentityAuditResponseDto> {
+    return this.persons.auditIdentity();
   }
 
   @Get(':id/organizations')

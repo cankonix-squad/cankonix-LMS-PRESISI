@@ -31,21 +31,22 @@ async function run(
   if (!(await getAdminAccessToken())) {
     return {
       ...EMPTY,
-      message: 'Sesi berakhir. Masuk kembali lalu ulangi provisioning.',
+      message: 'Sesi berakhir. Masuk kembali lalu ulangi penghubungan akun.',
     };
   }
   const personId = field(formData, 'personId');
-  if (!personId) return { ...EMPTY, message: 'Personel wajib dipilih.' };
+  if (!personId) return { ...EMPTY, message: 'Data individu wajib dipilih.' };
 
   const result = await operation(createAdminApiClient(), personId);
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Permintaan provisioning gagal.',
+      message: result.message || 'Permintaan penghubungan akun gagal.',
       result: null,
     };
   }
-  revalidatePath('/personel');
+  revalidatePath('/akun-pengguna');
+  revalidatePath('/data-individu');
   revalidatePath('/');
   return {
     ok: result.data.success,
@@ -94,7 +95,7 @@ export async function setKeycloakPasswordAction(
   if (password.length < 8) {
     return {
       ...EMPTY,
-      message: 'Password minimal 8 karakter dan tidak disimpan di LMS.',
+      message: 'Kata sandi minimal 8 karakter dan tidak disimpan di LMS.',
     };
   }
   return run(formData, (api, personId) =>
@@ -141,7 +142,7 @@ export async function refreshKeycloakStatusAction(
     };
   }
   const personId = field(formData, 'personId');
-  if (!personId) return { ...EMPTY, message: 'Personel wajib dipilih.' };
+  if (!personId) return { ...EMPTY, message: 'Data individu wajib dipilih.' };
   try {
     const status =
       await createAdminApiClient().persons.getKeycloakProvisioning(personId);
@@ -156,7 +157,7 @@ export async function refreshKeycloakStatusAction(
       message:
         error instanceof Error
           ? error.message
-          : 'Status provisioning tidak dapat dimuat.',
+          : 'Status penghubungan akun tidak dapat dimuat.',
     };
   }
 }

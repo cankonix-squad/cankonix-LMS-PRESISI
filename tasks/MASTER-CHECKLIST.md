@@ -68,6 +68,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009AM | `tasks/TASK-009AM-seed-educator-role-permissions.md` | REVIEW | TASK-009AI = REVIEW; TASK-009AL = REVIEW |
 | TASK-009AN | `tasks/TASK-009AN-admin-keycloak-user-provisioning.md` | REVIEW | TASK-003 = DONE-WITH-DEFERRED; TASK-009AM = REVIEW |
 | TASK-009AO | `tasks/TASK-009AO-admin-portal-access-boundary.md` | REVIEW | TASK-005 = DONE-WITH-DEFERRED; TASK-009AI = REVIEW; TASK-009AN = REVIEW |
+| TASK-009AP | `tasks/TASK-009AP-foundation-identity-account-separation.md` | REVIEW | TASK-002 = DONE; TASK-009L = REVIEW; TASK-009AN = REVIEW; TASK-009AO = REVIEW |
 | TASK-009N | `tasks/TASK-009N-admin-assignment-scope-operator-ux-polish.md` | REVIEW | TASK-009M = REVIEW |
 | TASK-009O | `tasks/TASK-009O-admin-academic-program-operator-ux.md` | REVIEW | TASK-009N = REVIEW; TASK-010 = DONE-WITH-DEFERRED |
 | TASK-009P | `tasks/TASK-009P-admin-curriculum-operator-ux.md` | REVIEW | TASK-009O = REVIEW; TASK-011 = DONE-WITH-DEFERRED |
@@ -492,3 +493,76 @@ lokal; dan penerapan migration `20261009001200` di production oleh one-shot
 `api-migrate` pada deploy berikutnya (verifikasi lewat `_prisma_migrations`
 `ok=true`, bukan status run). Detail di TASK-009AO. Tidak ada task setelah ini
 yang dimulai.
+
+## TASK-009AP — REVIEW (2026-10-04)
+
+Modul Foundation dirapikan dalam dua pekerjaan. **(A) Bahasa:** menu `Foundation`
+menjadi `Data Induk` dan seluruh antarmuka modul memakai satu glosarium
+(Foundation → Data Induk, Person → Data Individu, User Account → Akun Pengguna,
+Role → Peran, Permission → Hak Akses, Assignment → Penugasan, Organization Scope
+→ Cakupan Organisasi, Active/Inactive → Aktif/Nonaktif) lewat
+`features/foundation/display.ts` sebagai sumber label bersama. Nama tabel,
+kolom, endpoint, dan identifier kode **tidak** diterjemahkan; hanya route UI
+Admin yang berganti nama (`/personel` → `/data-individu`, `/roles` →
+`/peran-hak-akses`, `/assignments` → `/penugasan`) dengan redirect permanen agar
+tautan lama tetap hidup. Navigasi kini bergrup `Data Induk` dan
+`Manajemen Akses` tanpa menu duplikat.
+
+**(B) Pemisahan:** Data Individu (`/data-individu`, `/data-individu/[id]`) adalah
+sumber identitas orang dan **dapat dibuat tanpa akun** — formulirnya tidak punya
+satu pun field login. Akun Pengguna (`/akun-pengguna`) mengelola identitas
+login/SSO, status akun, peran, dan cakupan dengan **memilih** individu yang sudah
+terdaftar, bukan meminta pengisian ulang nama/NRP/NIP. Status individu dan status
+akun dibedakan: menonaktifkan akun hanya menghentikan login, sementara identitas
+dan riwayat akademik tetap tersimpan.
+
+**Tidak ada perubahan schema dan tidak ada migration.** `Person` dan
+`UserAccount` sudah berupa tabel terpisah dengan relasi 1:1
+(`user_accounts.person_id` unique, FK `onDelete: Restrict`), sehingga pekerjaan
+ini adalah pemisahan UI/API/workflow dan kardinalitas **satu akun per individu,
+banyak peran/penugasan** dipertahankan apa adanya.
+
+Backend menambahkan direktori akun `GET /api/v1/user-accounts` dengan permission
+`user_account.read` yang **sama** — batas otorisasi tidak diperluas, dan tanpa
+permission itu direktori menolak `403`, bukan diam-diam mengembalikan daftar
+kosong. Integritas identitas dilaporkan lewat `GET /api/v1/persons/identity-audit`
+(`DUPLICATE_EMAIL`, `DUPLICATE_NAME`, `ACCOUNT_EMAIL_MISMATCH`, akun tanpa
+individu, individu dengan banyak akun) dan panel `Pemeriksaan integritas
+identitas` di `/data-individu`. Audit **hanya melaporkan**: tidak menggabung,
+mengganti nama, atau menonaktifkan siapa pun secara otomatis.
+
+Verification: `pnpm turbo run typecheck lint` PASS (33 task); `pnpm turbo run
+test` PASS (6 package, 0 fail) — `@lms/api` 477 pass (+4 kontrak direktori/audit
+dan +1 otorisasi direktori), `@lms/admin` 25 pass (+9 regresi pemisahan Data
+Individu / Akun Pengguna); `pnpm turbo run build` PASS (11 task) dan build Admin
+merender route baru tanpa route lama; Prettier, ESLint, `git diff --check` PASS.
+
+Deferred: verifikasi runtime terhadap PostgreSQL + Keycloak production (membuat
+individu tanpa akun, menghubungkan akun, dan memastikan riwayat akademik tetap
+terbaca setelah akun dinonaktifkan) karena tidak ada container runtime lokal;
+serta eksekusi audit identitas pada dataset produksi, sehingga jumlah ambiguitas
+nyata belum diketahui dan belum ditinjau. Keputusan bisnis yang masih menunggu
+peninjauan: alamat email mana yang menjadi identitas login resmi, penggunaan
+email bersama oleh beberapa orang, dan penanganan nama lengkap yang sama. Detail
+di TASK-009AP. Tidak ada task setelah ini yang dimulai.
+
+
+## TASK-009AP — pemeriksaan lanjutan REVIEW (2026-10-05)
+
+Pemeriksaan ulang menemukan istilah Inggris tertinggal, pemilih individu yang
+belum mengecualikan pemilik akun di halaman lain, 404 akun yang ditampilkan
+sebagai error pada detail individu, dan audit identitas tanpa hak baca akun.
+Semuanya diperbaiki dalam task yang sama: glosarium/pesan mutasi Bahasa Indonesia,
+pemilihan berdasarkan pembacaan akun dengan 404 sebagai satu-satunya bukti belum
+memiliki akun, error pembacaan yang jujur, dan `user_account.read` untuk audit.
+Tidak ada schema/migrasi/dependensi baru, perubahan SSO, atau deployment.
+
+Verifikasi: API 478/478, Admin 29/29, api-client 12/12 PASS; Prisma validate
+PASS; lint/typecheck langsung melalui Turbo `--only` 22/22 PASS; build API
+TypeScript dan produksi Admin webpack PASS; Prettier file perubahan dan
+`git diff --check` PASS. `pnpm lint` repo-wide masih menemukan masalah format
+pre-existing di luar scope; `pnpm build` default Turbopack gagal karena proses/port
+Operation not permitted, termasuk retry eskalasi, sehingga build Admin diverifikasi
+melalui webpack. Detail perintah, file, batas pemilih 100 kandidat, aturan individu
+aktif pada autentikasi, dan verifikasi runtime yang DEFERRED dicatat pada TASK-009AP.
+Status kembali REVIEW; menunggu peninjauan manusia, tidak ada task berikutnya.

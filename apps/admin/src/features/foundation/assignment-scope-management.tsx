@@ -30,6 +30,11 @@ import {
   enterpriseInputClass,
 } from '@/components/admin';
 import {
+  assignmentStatusLabel,
+  assignmentStatusTone,
+  scopeTypeLabel,
+} from './display';
+import {
   addAssignmentScopeAction,
   createRoleAssignmentAction,
   removeAssignmentScopeAction,
@@ -114,9 +119,9 @@ export function AssignmentWorkspace({
   return (
     <AdminPage>
       <PageHeader
-        eyebrow="Foundation / Authorization"
-        title="Assignment & scope"
-        description="Kelola assignment role dan batas scope secara operasional. Validasi akses tetap berada di backend."
+        eyebrow="Manajemen Akses / Penugasan"
+        title="Penugasan & Cakupan"
+        description="Kelola penugasan peran dan batas cakupan kewenangan secara operasional. Validasi akses tetap berada di backend."
         actions={
           <PrimaryActionButton onClick={() => setDrawer({ kind: 'create' })}>
             + Buat assignment
@@ -130,13 +135,13 @@ export function AssignmentWorkspace({
         ) : items.length === 0 ? (
           <EmptyState>
             <p className="font-semibold text-slate-950">
-              Tidak ada assignment yang cocok.
+              Tidak ada penugasan yang cocok.
             </p>
             <p className="mt-2">
-              Coba ubah pencarian atau filter status, role, dan scope.
+              Coba ubah pencarian atau filter status, peran, dan cakupan.
             </p>
             <Link
-              href="/assignments"
+              href="/penugasan"
               className="mt-4 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700"
             >
               Tampilkan semua
@@ -183,7 +188,7 @@ function AssignmentToolbar({
   return (
     <div className="mx-5 space-y-3">
       <FilterToolbar
-        label="Filter assignment"
+        label="Filter penugasan"
         filters={
           <FilterTabs
             tabs={[
@@ -224,7 +229,7 @@ function AssignmentToolbar({
         }
       >
         <form
-          action="/assignments"
+          action="/penugasan"
           className="flex w-full flex-wrap gap-2 xl:w-auto"
         >
           <input type="hidden" name="status" value={filters.status ?? ''} />
@@ -239,7 +244,7 @@ function AssignmentToolbar({
             type="search"
             name="search"
             defaultValue={filters.search}
-            placeholder="Cari user, person, akun, atau role"
+            placeholder="Cari akun pengguna, data individu, atau peran"
             className={`${enterpriseInputClass} sm:w-80`}
           />
           <button
@@ -249,16 +254,16 @@ function AssignmentToolbar({
             Cari
           </button>
           <Link
-            href="/assignments"
+            href="/penugasan"
             className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700"
           >
-            Reset
+            Atur ulang
           </Link>
         </form>
       </FilterToolbar>
       <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-3">
         <select
-          aria-label="Filter role"
+          aria-label="Filter peran"
           defaultValue={filters.roleId ?? ''}
           onChange={(event) => {
             window.location.href = assignmentHref({
@@ -269,7 +274,7 @@ function AssignmentToolbar({
           }}
           className={`${enterpriseInputClass} w-auto`}
         >
-          <option value="">Semua role</option>
+          <option value="">Semua peran</option>
           {roles.map((role) => (
             <option key={role.id} value={role.id}>
               {role.name}
@@ -277,7 +282,7 @@ function AssignmentToolbar({
           ))}
         </select>
         <select
-          aria-label="Filter tipe scope"
+          aria-label="Filter tipe cakupan"
           defaultValue={filters.scopeType ?? ''}
           onChange={(event) => {
             window.location.href = assignmentHref({
@@ -288,7 +293,7 @@ function AssignmentToolbar({
           }}
           className={`${enterpriseInputClass} w-auto`}
         >
-          <option value="">Semua scope</option>
+          <option value="">Semua cakupan</option>
           {scopeTypes.map((scope) => (
             <option key={scope} value={scope}>
               {scope}
@@ -316,9 +321,9 @@ function AssignmentTable({
   return (
     <EnterpriseTable
       columns={[
-        { label: 'User / akun' },
-        { label: 'Role' },
-        { label: 'Scope' },
+        { label: 'Akun Pengguna' },
+        { label: 'Peran' },
+        { label: 'Cakupan' },
         { label: 'Status' },
         { label: 'Diperbarui' },
         { label: 'Aksi', sticky: true },
@@ -331,10 +336,8 @@ function AssignmentTable({
             <article key={assignment.id} className="space-y-3 p-4">
               <div className="flex justify-between gap-3">
                 <UserCell account={accountMap.get(assignment.userAccountId)} />
-                <StatusBadge
-                  tone={assignment.status === 'ACTIVE' ? 'green' : 'red'}
-                >
-                  {assignment.status}
+                <StatusBadge tone={assignmentStatusTone(assignment.status)}>
+                  {assignmentStatusLabel(assignment.status)}
                 </StatusBadge>
               </div>
               <p className="font-semibold text-slate-900">
@@ -394,8 +397,8 @@ function AssignmentRow({
         <ScopeBadges assignment={assignment} />
       </td>
       <td className="px-4 py-3">
-        <StatusBadge tone={assignment.status === 'ACTIVE' ? 'green' : 'red'}>
-          {assignment.status}
+        <StatusBadge tone={assignmentStatusTone(assignment.status)}>
+          {assignmentStatusLabel(assignment.status)}
         </StatusBadge>
       </td>
       <td className="px-4 py-3 text-xs text-slate-500">
@@ -417,12 +420,12 @@ function UserCell({ account }: { account?: AccountRow }) {
   return (
     <div>
       <p className="font-semibold text-slate-950">
-        {account?.person?.fullName ?? 'UserAccount tidak terpetakan'}
+        {account?.person?.fullName ?? 'Akun pengguna tidak terpetakan'}
       </p>
       <p className="mt-1 max-w-56 truncate text-xs text-slate-500">
         {account?.account.username ??
           account?.account.email ??
-          'Account ID tidak terbaca'}
+          'ID akun tidak terbaca'}
       </p>
     </div>
   );
@@ -433,11 +436,11 @@ function ScopeBadges({ assignment }: { assignment: RoleAssignment }) {
       {assignment.scopes.length ? (
         assignment.scopes.map((scope) => (
           <StatusBadge key={scope.id} tone="blue">
-            {scope.scopeType}
+            {scopeTypeLabel(scope.scopeType)}
           </StatusBadge>
         ))
       ) : (
-        <span className="text-xs text-slate-500">Tanpa scope</span>
+        <span className="text-xs text-slate-500">Tanpa cakupan</span>
       )}
     </div>
   );
@@ -457,10 +460,10 @@ function AssignmentActions({
     <ActionGroup>
       <ActionButton onClick={() => onDetail(assignment)}>Detail</ActionButton>
       <ActionButton onClick={() => onScope(assignment)}>
-        Kelola scope
+        Kelola cakupan
       </ActionButton>
       <ActionButton onClick={() => onStatus(assignment)}>Status</ActionButton>
-      <ActionButton disabled title="Endpoint edit assignment belum tersedia">
+      <ActionButton disabled title="Ubah penugasan belum tersedia">
         Edit
       </ActionButton>
     </ActionGroup>
@@ -489,17 +492,17 @@ function AssignmentDrawer({
   const assignment = drawer.kind === 'create' ? null : drawer.assignment;
   return (
     <EnterpriseDrawer
-      eyebrow="Assignment & scope"
+      eyebrow="Penugasan & Cakupan"
       title={
         drawer.kind === 'create'
-          ? 'Buat assignment'
+          ? 'Buat penugasan'
           : drawer.kind === 'detail'
-            ? 'Detail assignment'
+            ? 'Detail penugasan'
             : drawer.kind === 'scope'
-              ? 'Kelola scope'
+              ? 'Kelola cakupan'
               : 'Ubah status'
       }
-      description="Role assignment dan scope efektif tetap divalidasi oleh backend."
+      description="Penugasan peran dan cakupan efektif tetap divalidasi oleh backend."
       onClose={onClose}
     >
       <div className="space-y-5">
@@ -540,15 +543,15 @@ function CreateAssignmentForm({
   return (
     <form action={action} className="space-y-4">
       <SelectField
-        label="User / person"
+        label="Akun pengguna / data individu"
         name="userAccountId"
         options={accounts.map(({ account, person }) => ({
           value: account.id,
-          label: `${person?.fullName ?? 'Person tidak terbaca'} — ${account.username ?? account.email ?? account.id}`,
+          label: `${person?.fullName ?? 'Data individu tidak terbaca'} — ${account.username ?? account.email ?? account.id}`,
         }))}
       />
       <SelectField
-        label="Role"
+        label="Peran"
         name="roleId"
         options={roles
           .filter((role) => role.status === 'ACTIVE')
@@ -576,7 +579,7 @@ function CreateAssignmentForm({
         </label>
       </div>
       <ScopeFields organizations={organizations} />
-      <FormFooter pending={pending} state={state} label="Simpan assignment" />
+      <FormFooter pending={pending} state={state} label="Simpan Penugasan" />
     </form>
   );
 }
@@ -598,7 +601,9 @@ function ScopeForm({
   return (
     <div className="space-y-5">
       <div>
-        <p className="mb-2 text-sm font-semibold text-slate-950">Scope aktif</p>
+        <p className="mb-2 text-sm font-semibold text-slate-950">
+          Cakupan aktif
+        </p>
         <div className="space-y-2">
           {assignment.scopes.length ? (
             assignment.scopes.map((scope) => (
@@ -607,7 +612,9 @@ function ScopeForm({
                 className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
               >
                 <div>
-                  <StatusBadge tone="blue">{scope.scopeType}</StatusBadge>
+                  <StatusBadge tone="blue">
+                    {scopeTypeLabel(scope.scopeType)}
+                  </StatusBadge>
                   <p className="mt-1 font-mono text-xs text-slate-600">
                     {scope.scopeId}
                   </p>
@@ -630,7 +637,7 @@ function ScopeForm({
               </div>
             ))
           ) : (
-            <EmptyState>Assignment ini belum memiliki scope.</EmptyState>
+            <EmptyState>Penugasan ini belum memiliki cakupan.</EmptyState>
           )}
         </div>
         {removeState.message ? (
@@ -648,7 +655,7 @@ function ScopeForm({
         <FormFooter
           pending={addPending}
           state={addState}
-          label="Tambah scope"
+          label="Tambah cakupan"
         />
       </form>
     </div>
@@ -663,9 +670,12 @@ function StatusForm({ assignment }: { assignment: RoleAssignment }) {
     <form action={action} className="space-y-4">
       <input type="hidden" name="assignmentId" value={assignment.id} />
       <SelectField
-        label="Status assignment"
+        label="Status penugasan"
         name="status"
-        options={statuses.map((status) => ({ value: status, label: status }))}
+        options={statuses.map((status) => ({
+          value: status,
+          label: assignmentStatusLabel(status),
+        }))}
         defaultValue={assignment.status}
       />
       <FormFooter pending={pending} state={state} label="Simpan status" />
@@ -749,22 +759,22 @@ function AssignmentDetail({
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2">
-        <Info label="Person">
+        <Info label="Data Individu">
           {account?.person?.fullName ?? 'Tidak terbaca'}
         </Info>
-        <Info label="Akun">
+        <Info label="Akun Pengguna">
           {account?.account.username ??
             account?.account.email ??
             assignment.userAccountId}
         </Info>
-        <Info label="Role">{assignment.role?.name ?? assignment.roleId}</Info>
+        <Info label="Peran">{assignment.role?.name ?? assignment.roleId}</Info>
         <Info label="Status">
-          <StatusBadge tone={assignment.status === 'ACTIVE' ? 'green' : 'red'}>
-            {assignment.status}
+          <StatusBadge tone={assignmentStatusTone(assignment.status)}>
+            {assignmentStatusLabel(assignment.status)}
           </StatusBadge>
         </Info>
       </div>
-      <Info label="Scope aktif">
+      <Info label="Cakupan aktif">
         <div className="space-y-2">
           {assignment.scopes.length ? (
             assignment.scopes.map((scope) => (
@@ -772,14 +782,16 @@ function AssignmentDetail({
                 key={scope.id}
                 className="rounded-md border border-slate-200 bg-slate-50 p-3"
               >
-                <StatusBadge tone="blue">{scope.scopeType}</StatusBadge>
+                <StatusBadge tone="blue">
+                  {scopeTypeLabel(scope.scopeType)}
+                </StatusBadge>
                 <p className="mt-1 font-mono text-xs text-slate-600">
                   {scope.scopeId}
                 </p>
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-500">Tanpa scope.</p>
+            <p className="text-sm text-slate-500">Tanpa cakupan.</p>
           )}
         </div>
       </Info>
@@ -820,7 +832,7 @@ function Pagination({
       limit={filters.limit}
       total={total}
       totalPages={totalPages}
-      itemLabel="assignment"
+      itemLabel="penugasan"
       hrefFor={({ page, limit }) => assignmentHref({ ...filters, page, limit })}
     />
   );
@@ -833,7 +845,7 @@ function assignmentHref(filters: Filters) {
   if (filters.scopeType) params.set('scopeType', filters.scopeType);
   params.set('page', String(filters.page));
   params.set('limit', String(filters.limit));
-  return `/assignments?${params.toString()}`;
+  return `/penugasan?${params.toString()}`;
 }
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('id-ID', {

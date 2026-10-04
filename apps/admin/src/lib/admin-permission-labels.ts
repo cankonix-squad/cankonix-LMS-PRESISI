@@ -15,13 +15,13 @@
 
 export const PERMISSION_LABELS: Record<string, string> = {
   // authorization (TASK-004, TASK-009AI)
-  'authorization.role.read': 'Lihat Role',
-  'authorization.role.manage': 'Kelola Role',
-  'authorization.permission.read': 'Lihat Permission',
-  'authorization.permission.manage': 'Kelola Permission',
-  'authorization.assignment.read': 'Lihat Penugasan Role',
-  'authorization.assignment.manage': 'Kelola Penugasan Role',
-  'authorization.effective_permission.read': 'Lihat Permission Efektif',
+  'authorization.role.read': 'Lihat Peran',
+  'authorization.role.manage': 'Kelola Peran',
+  'authorization.permission.read': 'Lihat Hak Akses',
+  'authorization.permission.manage': 'Kelola Hak Akses',
+  'authorization.assignment.read': 'Lihat Penugasan',
+  'authorization.assignment.manage': 'Kelola Penugasan',
+  'authorization.effective_permission.read': 'Lihat Hak Akses Efektif',
 
   // user account + Keycloak provisioning (TASK-002, TASK-009AN)
   'user_account.read': 'Lihat Akun Pengguna',
@@ -94,7 +94,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export const PERMISSION_CATEGORIES: Record<string, string> = {
-  authorization: 'Akses & Otorisasi',
+  authorization: 'Akses & Kewenangan',
   attendance: 'Kehadiran',
   question: 'Bank Soal',
   assessment: 'Assessment & Penilaian',
@@ -175,7 +175,7 @@ export const ROLE_TEMPLATES: RoleTemplate[] = [
     id: 'admin_pusat',
     name: 'Admin Pusat',
     description:
-      'Akses penuh ke modul otorisasi: kelola role, permission, dan penugasan.',
+      'Akses penuh ke modul kewenangan: kelola peran, hak akses, dan penugasan.',
     permissionCodes: [
       'authorization.role.read',
       'authorization.role.manage',
@@ -191,18 +191,18 @@ export const ROLE_TEMPLATES: RoleTemplate[] = [
     id: 'peserta',
     name: 'Peserta',
     description:
-      'Template permission untuk peserta akan ditentukan setelah permission final disepakati.',
+      'Templat hak akses untuk peserta akan ditentukan setelah hak akses final disepakati.',
     permissionCodes: [],
     enabled: false,
-    disabledReason: 'Permission final belum disepakati.',
+    disabledReason: 'Hak akses final belum disepakati.',
   },
   {
     id: 'pimpinan',
     name: 'Pimpinan',
     description:
-      'Template permission untuk pimpinan akan ditentukan setelah permission final disepakati.',
+      'Templat hak akses untuk pimpinan akan ditentukan setelah hak akses final disepakati.',
     permissionCodes: [],
     enabled: false,
-    disabledReason: 'Permission final belum disepakati.',
+    disabledReason: 'Hak akses final belum disepakati.',
   },
 ];

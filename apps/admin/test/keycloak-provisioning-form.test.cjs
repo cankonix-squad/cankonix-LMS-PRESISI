@@ -5,16 +5,16 @@
  * Regression tests for the Admin Keycloak provisioning flow.
  *
  * Defect being locked down: the Keycloak panel rendered its `<form>` elements
- * INSIDE the account `<form>` in the Person -> Kelola Akun drawer. HTML forbids
- * a nested form, so the browser dropped the inner form while parsing; the
- * `Buat user Keycloak` submit was then handled by the OUTER account form, the
- * provisioning action never ran, the status stayed `NOT_PROVISIONED`, and the
- * console reported `A React form was unexpectedly submitted`.
+ * INSIDE the account `<form>`. HTML forbids a nested form, so the browser dropped
+ * the inner form while parsing; the `Buat akun Keycloak` submit was then handled
+ * by the OUTER account form, the provisioning action never ran, the status stayed
+ * `NOT_PROVISIONED`, and the console reported `A React form was unexpectedly
+ * submitted`.
  *
- * These tests run the REAL composed drawer (`PersonWorkspace`) and the REAL
- * server actions through `tsx-harness.cjs`, so they fail if the forms become
- * nested again OR if a click stops invoking provisioning and surfacing its
- * success/error message.
+ * The drawer now lives in the dedicated Akun Pengguna workspace, so these tests
+ * compose that REAL workspace and drive the REAL server actions through
+ * `tsx-harness.cjs`. They fail if the forms become nested again OR if a click
+ * stops invoking provisioning and surfacing its success/error message.
  */
 
 const test = require('node:test');
@@ -33,9 +33,9 @@ const {
 
 const dispatcher = installDispatcher();
 
-const personModule = loadSrcModule('features/foundation/person-management.tsx');
+const accountModule = loadSrcModule('features/foundation/account-management.tsx');
 const actions = loadSrcModule('features/foundation/keycloak-actions.ts');
-const { PersonWorkspace } = personModule;
+const { AccountWorkspace } = accountModule;
 
 const PERSON_ID = 'person-01102601';
 
@@ -55,41 +55,50 @@ function notProvisioned(overrides = {}) {
   };
 }
 
+const person = {
+  id: PERSON_ID,
+  personnelNumber: '01102601',
+  fullName: 'Ui Pengajar',
+  rank: null,
+  title: null,
+  email: 'ui.pengajar@example.id',
+  phone: null,
+  status: 'ACTIVE',
+  createdAt: '2026-10-01T00:00:00.000Z',
+  updatedAt: '2026-10-01T00:00:00.000Z',
+};
+
 const row = {
-  person: {
-    id: PERSON_ID,
-    personnelNumber: '01102601',
-    fullName: 'Ui Pengajar',
-    status: 'ACTIVE',
-    updatedAt: '2026-10-01T00:00:00.000Z',
-  },
   account: {
     id: 'account-1',
+    personId: PERSON_ID,
+    person,
     username: 'ui-pengajar-01102601',
     email: 'ui.pengajar@example.id',
-    status: 'ACTIVE',
     externalAuthId: null,
+    status: 'ACTIVE',
+    lastLoginAt: null,
+    createdAt: '2026-10-01T00:00:00.000Z',
+    updatedAt: '2026-10-01T00:00:00.000Z',
   },
-  accountError: null,
-  placements: [],
   keycloak: notProvisioned(),
 };
 
 /**
- * Render the real workspace with the `Kelola Akun` drawer already open.
+ * Render the real workspace with the edit drawer already open.
  *
- * `PersonWorkspace`'s single `useState` is the drawer state; queueing it makes
+ * `AccountWorkspace`'s single `useState` is the drawer state; queueing it makes
  * `AccountForm` mount, which is where the nested form defect lived.
  */
 function renderAccountDrawer(target = row) {
   dispatcher.reset();
-  dispatcher.queueState({ kind: 'account', row: target });
+  dispatcher.queueState({ kind: 'edit', row: target });
   return renderTree(
-    React.createElement(PersonWorkspace, {
-      result: { data: { data: [target.person], total: 1 }, error: null },
+    React.createElement(AccountWorkspace, {
+      result: { data: { data: [target.account], total: 1 }, error: null },
       filters: { page: 1, limit: 25 },
       rows: [target],
-      organizations: [],
+      personOptions: [],
     }),
   );
 }
@@ -107,11 +116,11 @@ function formWithButton(tree, label) {
   return null;
 }
 
-test('Kelola Akun drawer never nests a form (regression)', () => {
+test('Akun Pengguna drawer never nests a form (regression)', () => {
   const tree = renderAccountDrawer();
 
-  const accountForm = formWithButton(tree, 'Simpan Akun');
-  const provisioningForm = formWithButton(tree, 'Buat user Keycloak');
+  const accountForm = formWithButton(tree, 'Simpan Akun Pengguna');
+  const provisioningForm = formWithButton(tree, 'Buat akun Keycloak');
 
   assert.ok(accountForm, 'the account form must render');
   assert.ok(provisioningForm, 'the provisioning form must render');
@@ -143,29 +152,29 @@ test('every drawer form posts to its own action', () => {
   const tree = renderAccountDrawer();
   const labelToAction = new Map();
   for (const label of [
-    'Simpan Akun',
-    'Buat user Keycloak',
-    'Muat ulang status',
+    'Simpan Akun Pengguna',
+    'Buat akun Keycloak',
+    'Muat ulang status login',
   ]) {
     const form = formWithButton(tree, label);
     labelToAction.set(label, form && form.props.action);
   }
 
   assert.equal(
-    labelToAction.get('Simpan Akun').name,
+    labelToAction.get('Simpan Akun Pengguna').name,
     'updatePersonAccountAction',
   );
   assert.equal(
-    labelToAction.get('Buat user Keycloak').name,
+    labelToAction.get('Buat akun Keycloak').name,
     'provisionKeycloakUserAction',
   );
   assert.equal(
-    labelToAction.get('Muat ulang status').name,
+    labelToAction.get('Muat ulang status login').name,
     'refreshKeycloakStatusAction',
   );
 });
 
-test('clicking Buat user Keycloak calls provisioning and shows the API success', async () => {
+test('clicking Buat akun Keycloak calls provisioning and shows the API success', async () => {
   setAccessToken('access-token');
   let calls = 0;
   setApiStub({
@@ -190,7 +199,7 @@ test('clicking Buat user Keycloak calls provisioning and shows the API success',
     },
   });
 
-  const form = formWithButton(renderAccountDrawer(), 'Buat user Keycloak');
+  const form = formWithButton(renderAccountDrawer(), 'Buat akun Keycloak');
   const formData = new FormData();
   formData.set('personId', PERSON_ID);
 
@@ -214,7 +223,7 @@ test('a failed provisioning API call surfaces an error message, not silent succe
     },
   });
 
-  const form = formWithButton(renderAccountDrawer(), 'Buat user Keycloak');
+  const form = formWithButton(renderAccountDrawer(), 'Buat akun Keycloak');
   const formData = new FormData();
   formData.set('personId', PERSON_ID);
 

@@ -8,8 +8,10 @@ import { AUDIT_ACTIONS, AUDIT_RESOURCE_TYPES } from '../audit/audit-actions';
 import { AuditService } from '../audit/audit.service';
 import { PersonsService } from '../persons/persons.service';
 import { CreateUserAccountDto } from './dto/create-user-account.dto';
+import { ListUserAccountsQueryDto } from './dto/list-user-accounts-query.dto';
 import { UpdateUserAccountDto } from './dto/update-user-account.dto';
 import { UserAccountResponseDto } from './dto/user-account-response.dto';
+import { UserAccountListResponseDto } from './dto/user-account-with-person-response.dto';
 import { UserAccountStatusDto } from './dto/user-account-status.dto';
 import { UserAccountRecord, UserAccountUpdateData } from './user-account.types';
 import {
@@ -64,6 +66,33 @@ export class UserAccountsService {
     const account = await this.accounts.findByPersonId(personId);
     if (!account) throw new NotFoundException('User account not found');
     return toUserAccountResponse(account);
+  }
+
+  /**
+   * Account directory.
+   *
+   * Reads *through* the account, so a person without an account never appears:
+   * this page answers "who can log in", while person records live in their own
+   * directory. The owner identity is joined in, never re-entered by an operator.
+   */
+  async list(query: ListUserAccountsQueryDto): Promise<UserAccountListResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const { data, total } = await this.accounts.list({
+      search: query.search?.trim() || undefined,
+      status: query.status,
+      page,
+      limit,
+    });
+    return {
+      data: data.map((account) => ({
+        ...toUserAccountResponse(account),
+        person: account.person,
+      })),
+      page,
+      limit,
+      total,
+    };
   }
 
   async findOne(id: string): Promise<UserAccountResponseDto> {

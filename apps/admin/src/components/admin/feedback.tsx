@@ -116,8 +116,8 @@ function toFriendlyError(message: string) {
     return {
       title: 'Akses belum tersedia untuk akun ini.',
       description:
-        'Hubungi pengelola akses untuk menambahkan permission yang diperlukan, lalu muat ulang halaman setelah assignment aktif.',
-      detail: permission ? `Permission diperlukan: ${permission}` : message,
+        'Hubungi pengelola akses untuk menambahkan Hak Akses yang diperlukan, lalu muat ulang halaman setelah Penugasan aktif.',
+      detail: permission ? `Hak akses diperlukan: ${permission}` : message,
     };
   }
 
@@ -125,7 +125,7 @@ function toFriendlyError(message: string) {
     return {
       title: 'Sesi login belum aktif.',
       description:
-        'Masuk ulang lewat SSO Admin agar dashboard dapat membaca data protected dari API.',
+        'Masuk ulang lewat SSO Admin agar dashboard dapat membaca data terproteksi dari API.',
       detail: null,
     };
   }

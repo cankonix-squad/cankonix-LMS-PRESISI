@@ -17,6 +17,7 @@ import type {
   UpdateUserAccountInput,
 } from '@lms/api-client';
 import { revalidatePath } from 'next/cache';
+import { assignmentStatusLabel, foundationMutationError } from './display';
 import { createAdminApiClient, getAdminAccessToken } from '@/lib/api';
 import {
   ROLE_TEMPLATES,
@@ -56,7 +57,7 @@ export async function createOrganizationAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Organisasi gagal dibuat.',
+      message: foundationMutationError(result, 'Organisasi gagal dibuat.'),
     };
   }
 
@@ -98,7 +99,7 @@ export async function updateOrganizationAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Organisasi gagal diperbarui.',
+      message: foundationMutationError(result, 'Organisasi gagal diperbarui.'),
     };
   }
 
@@ -131,7 +132,10 @@ export async function updateOrganizationStatusAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Status organisasi gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Status organisasi gagal diperbarui.',
+      ),
     };
   }
 
@@ -143,7 +147,13 @@ export async function updateOrganizationStatusAction(
   };
 }
 
-export async function createPersonWithAccountAction(
+/**
+ * Create a person (Data Individu) — identity only.
+ *
+ * Deliberately has no account fields. A person can exist without ever logging
+ * in, and creating one must not be able to create a login as a side effect.
+ */
+export async function createPersonAction(
   _state: FoundationActionState,
   formData: FormData,
 ): Promise<FoundationActionState> {
@@ -153,10 +163,6 @@ export async function createPersonWithAccountAction(
   const title = getText(formData, 'title');
   const email = getText(formData, 'email').toLowerCase();
   const phone = getText(formData, 'phone');
-  const createAccount = formData.get('createAccount') === 'on';
-  const username = getText(formData, 'username');
-  const accountEmail = getText(formData, 'accountEmail').toLowerCase();
-  const externalAuthId = getText(formData, 'externalAuthId');
 
   if (!personnelNumber || !fullName) {
     return {
@@ -175,53 +181,70 @@ export async function createPersonWithAccountAction(
   if (email) personInput.email = email;
   if (phone) personInput.phone = phone;
 
-  const api = createAdminApiClient();
-  const personResult = await api.persons.create(personInput);
-  if (!personResult.ok) {
+  const result = await createAdminApiClient().persons.create(personInput);
+  if (!result.ok) {
     return {
       ok: false,
-      message: personResult.message || 'Person gagal dibuat.',
-    };
-  }
-
-  if (!createAccount) {
-    revalidatePath('/');
-    return {
-      ok: true,
-      message: `Person ${personResult.data.fullName} berhasil dibuat tanpa UserAccount.`,
-    };
-  }
-
-  const accountInput: CreateUserAccountInput = { status: 'ACTIVE' };
-  if (username) accountInput.username = username;
-  if (accountEmail || email) accountInput.email = accountEmail || email;
-  if (externalAuthId) accountInput.externalAuthId = externalAuthId;
-
-  if (!accountInput.username && !accountInput.email && !externalAuthId) {
-    revalidatePath('/');
-    return {
-      ok: true,
-      message:
-        'Person berhasil dibuat. UserAccount dilewati karena username, email akun, dan ID User Keycloak kosong.',
-    };
-  }
-
-  const accountResult = await api.persons.createAccount(
-    personResult.data.id,
-    accountInput,
-  );
-  if (!accountResult.ok) {
-    revalidatePath('/');
-    return {
-      ok: false,
-      message: `Person berhasil dibuat, tetapi UserAccount gagal dibuat: ${accountResult.message}`,
+      message: foundationMutationError(result, 'Data individu gagal dibuat.'),
     };
   }
 
   revalidatePath('/');
+  revalidatePath('/data-individu');
   return {
     ok: true,
-    message: `Person ${personResult.data.fullName} dan UserAccount ${accountResult.data.username ?? accountResult.data.email ?? accountResult.data.id} berhasil dibuat.`,
+    message: `Data individu ${result.data.fullName} berhasil dibuat tanpa akun pengguna.`,
+  };
+}
+
+/**
+ * Link a user account to a person that is already registered.
+ *
+ * The person is *selected*, never re-typed: the form sends only `personId` plus
+ * login metadata. That is what keeps one human from becoming two person rows
+ * when they receive a second role or a first account.
+ */
+export async function createPersonAccountAction(
+  _state: FoundationActionState,
+  formData: FormData,
+): Promise<FoundationActionState> {
+  const personId = getText(formData, 'personId');
+  const username = getText(formData, 'username');
+  const accountEmail = getText(formData, 'accountEmail').toLowerCase();
+  const externalAuthId = getText(formData, 'externalAuthId');
+  const status = getText(
+    formData,
+    'accountStatus',
+  ) as CreateUserAccountInput['status'];
+
+  if (!personId) {
+    return { ok: false, message: 'Data individu wajib dipilih.' };
+  }
+
+  const input: CreateUserAccountInput = {
+    status: status || 'ACTIVE',
+  };
+  if (username) input.username = username;
+  if (accountEmail) input.email = accountEmail;
+  if (externalAuthId) input.externalAuthId = externalAuthId;
+
+  const result = await createAdminApiClient().persons.createAccount(
+    personId,
+    input,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: foundationMutationError(result, 'Akun pengguna gagal dibuat.'),
+    };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/akun-pengguna');
+  revalidatePath(`/data-individu/${personId}`);
+  return {
+    ok: true,
+    message: `Akun pengguna ${result.data.username ?? result.data.email ?? result.data.id} berhasil dihubungkan.`,
   };
 }
 
@@ -247,13 +270,17 @@ export async function updatePersonAction(
   if (!result.ok)
     return {
       ok: false,
-      message: result.message || 'Data personel gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Data individu gagal diperbarui.',
+      ),
     };
-  revalidatePath('/personel');
+  revalidatePath('/data-individu');
+  revalidatePath(`/data-individu/${id}`);
   revalidatePath('/');
   return {
     ok: true,
-    message: `Data ${result.data.fullName} berhasil diperbarui.`,
+    message: `Data individu ${result.data.fullName} berhasil diperbarui.`,
   };
 }
 
@@ -262,7 +289,8 @@ export async function updatePersonAccountAction(
   formData: FormData,
 ): Promise<FoundationActionState> {
   const personId = getText(formData, 'personId');
-  if (!personId) return { ok: false, message: 'Personel akun wajib dipilih.' };
+  if (!personId)
+    return { ok: false, message: 'Data individu pemilik akun wajib dipilih.' };
   const input: UpdateUserAccountInput = {
     username: getText(formData, 'username') || undefined,
     email: getText(formData, 'accountEmail').toLowerCase() || undefined,
@@ -279,10 +307,14 @@ export async function updatePersonAccountAction(
   if (!result.ok)
     return {
       ok: false,
-      message: result.message || 'Akun login gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Akun pengguna gagal diperbarui.',
+      ),
     };
-  revalidatePath('/personel');
-  return { ok: true, message: 'Akun login berhasil diperbarui.' };
+  revalidatePath('/akun-pengguna');
+  revalidatePath(`/data-individu/${personId}`);
+  return { ok: true, message: 'Akun pengguna berhasil diperbarui.' };
 }
 
 export async function createRoleAssignmentAction(
@@ -292,7 +324,7 @@ export async function createRoleAssignmentAction(
   if (!(await getAdminAccessToken())) {
     return {
       ok: false,
-      message: 'Sesi berakhir. Masuk kembali lalu ulangi assignment.',
+      message: 'Sesi berakhir. Masuk kembali lalu ulangi penugasan.',
     };
   }
   const userAccountId = getText(formData, 'userAccountId');
@@ -304,7 +336,7 @@ export async function createRoleAssignmentAction(
   if (!userAccountId || !roleId) {
     return {
       ok: false,
-      message: 'UserAccount dan role wajib dipilih.',
+      message: 'Akun pengguna dan peran wajib dipilih.',
     };
   }
 
@@ -318,15 +350,15 @@ export async function createRoleAssignmentAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Role assignment gagal dibuat.',
+      message: foundationMutationError(result, 'Penugasan gagal dibuat.'),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/assignments');
+  revalidatePath('/penugasan');
   return {
     ok: true,
-    message: `Assignment ${result.data.role?.name ?? result.data.roleId} berhasil dibuat.`,
+    message: `Penugasan ${result.data.role?.name ?? result.data.roleId} berhasil dibuat.`,
   };
 }
 
@@ -340,7 +372,7 @@ export async function addAssignmentScopeAction(
   if (!assignmentId || !scope) {
     return {
       ok: false,
-      message: 'Assignment, scope type, dan scope ID wajib diisi.',
+      message: 'Penugasan, tipe cakupan, dan ID cakupan wajib diisi.',
     };
   }
 
@@ -352,13 +384,13 @@ export async function addAssignmentScopeAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Scope gagal ditambahkan.',
+      message: foundationMutationError(result, 'Cakupan gagal ditambahkan.'),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/assignments');
-  return { ok: true, message: 'Scope assignment berhasil ditambahkan.' };
+  revalidatePath('/penugasan');
+  return { ok: true, message: 'Cakupan penugasan berhasil ditambahkan.' };
 }
 
 export async function updateAssignmentStatusAction(
@@ -371,7 +403,7 @@ export async function updateAssignmentStatusAction(
   if (!assignmentId || !isRoleAssignmentStatus(status)) {
     return {
       ok: false,
-      message: 'Assignment dan status wajib dipilih.',
+      message: 'Penugasan dan status wajib dipilih.',
     };
   }
 
@@ -383,13 +415,19 @@ export async function updateAssignmentStatusAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Status assignment gagal diubah.',
+      message: foundationMutationError(
+        result,
+        'Status penugasan gagal diubah.',
+      ),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/assignments');
-  return { ok: true, message: `Status assignment diubah menjadi ${status}.` };
+  revalidatePath('/penugasan');
+  return {
+    ok: true,
+    message: `Status penugasan diubah menjadi ${assignmentStatusLabel(status)}.`,
+  };
 }
 
 export async function removeAssignmentScopeAction(
@@ -402,7 +440,7 @@ export async function removeAssignmentScopeAction(
   if (!assignmentId || !scopeId) {
     return {
       ok: false,
-      message: 'Assignment dan scope wajib dipilih.',
+      message: 'Penugasan dan cakupan wajib dipilih.',
     };
   }
 
@@ -414,13 +452,13 @@ export async function removeAssignmentScopeAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Scope gagal dihapus.',
+      message: foundationMutationError(result, 'Cakupan gagal dihapus.'),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/assignments');
-  return { ok: true, message: 'Scope assignment berhasil dihapus.' };
+  revalidatePath('/penugasan');
+  return { ok: true, message: 'Cakupan penugasan berhasil dihapus.' };
 }
 
 export async function createRoleAction(
@@ -434,7 +472,7 @@ export async function createRoleAction(
   if (!code || !name) {
     return {
       ok: false,
-      message: 'Kode role dan nama role wajib diisi.',
+      message: 'Kode peran dan nama peran wajib diisi.',
     };
   }
 
@@ -445,15 +483,15 @@ export async function createRoleAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Role gagal dibuat.',
+      message: foundationMutationError(result, 'Peran gagal dibuat.'),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/roles');
+  revalidatePath('/peran-hak-akses');
   return {
     ok: true,
-    message: `Role ${result.data.name} berhasil dibuat.`,
+    message: `Peran ${result.data.name} berhasil dibuat.`,
   };
 }
 
@@ -469,7 +507,7 @@ export async function updateRoleAction(
   if (!id || !code || !name) {
     return {
       ok: false,
-      message: 'ID, kode role, dan nama role wajib diisi.',
+      message: 'ID, kode peran, dan nama peran wajib diisi.',
     };
   }
 
@@ -487,15 +525,15 @@ export async function updateRoleAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Role gagal diperbarui.',
+      message: foundationMutationError(result, 'Peran gagal diperbarui.'),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/roles');
+  revalidatePath('/peran-hak-akses');
   return {
     ok: true,
-    message: `Role ${result.data.name} berhasil diperbarui.`,
+    message: `Peran ${result.data.name} berhasil diperbarui.`,
   };
 }
 
@@ -510,7 +548,7 @@ export async function updateRoleStatusAction(
   if (!id || !['ACTIVE', 'INACTIVE'].includes(status)) {
     return {
       ok: false,
-      message: 'Role dan status target wajib valid.',
+      message: 'Peran dan status target wajib valid.',
     };
   }
 
@@ -520,12 +558,15 @@ export async function updateRoleStatusAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Status role gagal diperbarui.',
+      message: foundationMutationError(
+        result,
+        'Status peran gagal diperbarui.',
+      ),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/roles');
+  revalidatePath('/peran-hak-akses');
   return {
     ok: true,
     message: `${name || result.data.name} berhasil ${status === 'ACTIVE' ? 'diaktifkan' : 'dinonaktifkan'}.`,
@@ -542,7 +583,7 @@ export async function grantPermissionAction(
   if (!roleId || !permissionId) {
     return {
       ok: false,
-      message: 'Role dan permission wajib dipilih.',
+      message: 'Peran dan hak akses wajib dipilih.',
     };
   }
 
@@ -553,13 +594,16 @@ export async function grantPermissionAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Permission gagal ditambahkan ke role.',
+      message: foundationMutationError(
+        result,
+        'Hak akses gagal ditambahkan ke peran.',
+      ),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/roles');
-  return { ok: true, message: 'Permission berhasil ditambahkan ke role.' };
+  revalidatePath('/peran-hak-akses');
+  return { ok: true, message: 'Hak akses berhasil ditambahkan ke peran.' };
 }
 
 export async function revokePermissionAction(
@@ -572,7 +616,7 @@ export async function revokePermissionAction(
   if (!roleId || !permissionId) {
     return {
       ok: false,
-      message: 'Role dan permission wajib dipilih.',
+      message: 'Peran dan hak akses wajib dipilih.',
     };
   }
 
@@ -583,13 +627,16 @@ export async function revokePermissionAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: result.message || 'Permission gagal dilepas dari role.',
+      message: foundationMutationError(
+        result,
+        'Hak akses gagal dilepas dari peran.',
+      ),
     };
   }
 
   revalidatePath('/');
-  revalidatePath('/roles');
-  return { ok: true, message: 'Permission berhasil dilepas dari role.' };
+  revalidatePath('/peran-hak-akses');
+  return { ok: true, message: 'Hak akses berhasil dilepas dari peran.' };
 }
 
 /**
@@ -609,7 +656,7 @@ export async function applyTemplateAction(
   if (!roleId || !templateId) {
     return {
       ok: false,
-      message: 'Role dan template wajib dipilih.',
+      message: 'Peran dan templat wajib dipilih.',
     };
   }
 
@@ -617,12 +664,12 @@ export async function applyTemplateAction(
     (item) => item.id === templateId,
   );
   if (!template) {
-    return { ok: false, message: 'Template role tidak ditemukan.' };
+    return { ok: false, message: 'Templat peran tidak ditemukan.' };
   }
   if (!template.enabled) {
     return {
       ok: false,
-      message: 'Template ini belum tersedia untuk dipakai.',
+      message: 'Templat ini belum tersedia untuk dipakai.',
     };
   }
 
@@ -656,18 +703,18 @@ export async function applyTemplateAction(
   }
 
   revalidatePath('/');
-  revalidatePath('/roles');
+  revalidatePath('/peran-hak-akses');
 
   if (failed.length > 0) {
     return {
       ok: false,
-      message: `Sebagian permission template gagal dipasang: ${failed.join(', ')}.`,
+      message: `Sebagian hak akses templat gagal dipasang: ${failed.join(', ')}.`,
     };
   }
 
   return {
     ok: true,
-    message: `Template ${template.name} berhasil dipasang (${template.permissionCodes.length} permission).`,
+    message: `Templat ${template.name} berhasil dipasang (${template.permissionCodes.length} hak akses).`,
   };
 }
 

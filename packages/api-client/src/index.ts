@@ -227,6 +227,49 @@ export type UserAccount = {
   updatedAt: string;
 };
 
+/**
+ * Owner identity of an account, read from Data Individu.
+ *
+ * Present so the Akun Pengguna screen can show *who* the account belongs to
+ * without asking an operator to retype a name or NRP/NIP. It is a read-only
+ * projection of `Person`; writes still go to the person endpoints.
+ */
+export type UserAccountPerson = {
+  id: string;
+  personnelNumber: string;
+  fullName: string;
+  rank: string | null;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+};
+
+export type UserAccountWithPerson = UserAccount & { person: UserAccountPerson };
+
+/**
+ * Identity integrity audit report.
+ *
+ * `ambiguities` are review findings, never applied changes: the LMS reports
+ * shared names/emails instead of merging people.
+ */
+export type IdentityAmbiguity = {
+  kind: 'DUPLICATE_EMAIL' | 'DUPLICATE_NAME' | 'ACCOUNT_EMAIL_MISMATCH';
+  key: string;
+  personIds: string[];
+  personLabels: string[];
+  message: string;
+};
+
+export type IdentityAuditReport = {
+  totalPersons: number;
+  personsWithAccount: number;
+  personsWithoutAccount: number;
+  orphanedAccounts: number;
+  personsWithMultipleAccounts: number;
+  ambiguities: IdentityAmbiguity[];
+};
+
 export type CreateUserAccountInput = {
   externalAuthId?: string;
   username?: string;
@@ -2302,10 +2345,16 @@ export function createApiClient(
       getAccount(personId: string) {
         return request<UserAccount>(`/persons/${personId}/account`);
       },
+      get(personId: string) {
+        return request<Person>(`/persons/${personId}`);
+      },
       getKeycloakProvisioning(personId: string) {
         return request<KeycloakProvisioningStatusResult>(
           `/persons/${personId}/keycloak/status`,
         );
+      },
+      identityAudit() {
+        return request<IdentityAuditReport>('/persons/identity-audit');
       },
       provisionKeycloakUser(personId: string) {
         return mutate<KeycloakProvisioningOperationResult>(
@@ -2351,6 +2400,40 @@ export function createApiClient(
       update(personId: string, input: UpdatePersonInput) {
         return mutate<Person>(`/persons/${personId}`, {
           method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+      updateAccount(personId: string, input: UpdateUserAccountInput) {
+        return mutate<UserAccount>(`/persons/${personId}/account`, {
+          method: 'PATCH',
+          body: JSON.stringify(input),
+        });
+      },
+    },
+
+    /**
+     * Account directory. Separate from `persons` because it answers a different
+     * question: `persons.*` follows one person, this follows accounts.
+     */
+    userAccounts: {
+      list(
+        params: {
+          search?: string;
+          status?: UserAccount['status'];
+          page?: number;
+          limit?: number;
+        } = {},
+      ) {
+        return request<ApiListResponse<UserAccountWithPerson>>(
+          `/user-accounts${buildQuery({ page: 1, limit: 20, ...params })}`,
+        );
+      },
+      getAccount(personId: string) {
+        return request<UserAccount>(`/persons/${personId}/account`);
+      },
+      createAccount(personId: string, input: CreateUserAccountInput) {
+        return mutate<UserAccount>(`/persons/${personId}/account`, {
+          method: 'POST',
           body: JSON.stringify(input),
         });
       },
