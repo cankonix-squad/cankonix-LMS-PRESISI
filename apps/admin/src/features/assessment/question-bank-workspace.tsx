@@ -6,7 +6,7 @@ import type {
   Curriculum,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -14,10 +14,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -45,10 +48,7 @@ type Result = {
   data: ApiListResponse<QuestionBank> | null;
   error: string | null;
 };
-type Drawer =
-  | { mode: 'create' }
-  | { mode: 'edit'; bank: QuestionBank }
-  | null;
+type Drawer = { mode: 'create' } | { mode: 'edit'; bank: QuestionBank } | null;
 
 export function QuestionBankWorkspace({
   result,
@@ -94,7 +94,8 @@ export function QuestionBankWorkspace({
               Belum ada bank soal yang cocok.
             </p>
             <p className="mt-2">
-              Bank soal dikaitkan dengan kurikulum subject. Coba ubah pencarian atau filter.
+              Bank soal dikaitkan dengan kurikulum subject. Coba ubah pencarian
+              atau filter.
             </p>
             <Link
               href="/bank-soal"
@@ -116,19 +117,25 @@ export function QuestionBankWorkspace({
             total={total}
             totalPages={totalPages}
             itemLabel="bank soal"
-            hrefFor={({ page, limit }) =>
-              bankHref({ ...filters, page, limit })
-            }
+            hrefFor={({ page, limit }) => bankHref({ ...filters, page, limit })}
           />
         ) : null}
       </div>
 
-      {drawer ? (
-        <BankDrawer
-          drawer={drawer}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.mode === 'create'
+              ? 'create'
+              : `edit:${drawer.bank.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <BankDrawer drawer={drawer} onClose={() => setDrawer(null)} />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -153,18 +160,17 @@ function BankToolbar({
           tabs={statuses.map((s) => ({
             label: s.label,
             href: bankHref({ ...filters, status: s.value, page: 1 }),
-            active:
-              filters.status === s.value ||
-              (!filters.status && !s.value),
+            active: filters.status === s.value || (!filters.status && !s.value),
           }))}
         />
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/bank-soal"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter options={statuses} value={String(filters.status ?? '')} />
         <input type="hidden" name="limit" value={filters.limit} />
         <select
           name="curriculumId"
@@ -181,6 +187,7 @@ function BankToolbar({
         </select>
         <input
           type="search"
+          aria-label="Pencarian daftar"
           name="search"
           defaultValue={filters.search}
           placeholder="Cari nama atau kode bank soal"
@@ -190,13 +197,13 @@ function BankToolbar({
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/bank-soal"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -240,9 +247,7 @@ function BankTable({
           </td>
           <td className="px-4 py-3 font-medium text-slate-600">{bank.code}</td>
           <td className="px-4 py-3">
-            <StatusBadge
-              tone={bank.status === 'ACTIVE' ? 'green' : 'red'}
-            >
+            <StatusBadge tone={bank.status === 'ACTIVE' ? 'green' : 'red'}>
               {bank.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}
             </StatusBadge>
           </td>
@@ -272,9 +277,7 @@ function BankCard({
           <p className="truncate font-semibold text-slate-950">{bank.name}</p>
           <p className="mt-1 text-xs font-medium text-slate-500">{bank.code}</p>
         </div>
-        <StatusBadge
-          tone={bank.status === 'ACTIVE' ? 'green' : 'red'}
-        >
+        <StatusBadge tone={bank.status === 'ACTIVE' ? 'green' : 'red'}>
           {bank.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}
         </StatusBadge>
       </div>
@@ -299,7 +302,7 @@ function BankActions({
   onEdit: () => void;
 }) {
   const targetStatus = bank.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-  const [state, action, isPending] = useActionState(
+  const [state, action, isPending] = useDrawerActionState(
     updateQuestionBankStatusAction,
     { ok: false, message: null },
   );
@@ -338,7 +341,7 @@ function BankDrawer({
 }) {
   const isEdit = drawer.mode === 'edit';
   const bank = isEdit ? drawer.bank : null;
-  const [state, action, isPending] = useActionState(
+  const [state, action, isPending] = useDrawerActionState(
     isEdit ? updateQuestionBankAction : createQuestionBankAction,
     { ok: false, message: null },
   );

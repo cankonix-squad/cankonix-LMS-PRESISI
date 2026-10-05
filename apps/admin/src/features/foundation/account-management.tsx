@@ -8,7 +8,7 @@ import type {
   UserAccountWithPerson,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -16,10 +16,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -156,14 +159,25 @@ export function AccountWorkspace({
           />
         ) : null}
       </div>
-      {drawer ? (
-        <AccountDrawer
-          drawer={drawer}
-          personOptions={personOptions}
-          personOptionsError={personOptionsError}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.kind === 'create'
+              ? 'create'
+              : `edit:${drawer.row.account.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <AccountDrawer
+            drawer={drawer}
+            personOptions={personOptions}
+            personOptionsError={personOptionsError}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -192,20 +206,30 @@ function AccountToolbar({ filters }: { filters: AccountFilters }) {
         }
       >
         <form
+          key={JSON.stringify(filters)}
           action="/akun-pengguna"
           className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
         >
-          <input type="hidden" name="status" value={filters.status ?? ''} />
+          <StatusFilter
+            options={[
+              { label: 'Semua', value: undefined },
+              { label: 'Aktif', value: 'ACTIVE' },
+              { label: 'Nonaktif', value: 'INACTIVE' },
+              { label: 'Ditangguhkan', value: 'SUSPENDED' },
+            ]}
+            value={String(filters.status ?? '')}
+          />
           <input type="hidden" name="limit" value={filters.limit} />
           <input
             type="search"
+            aria-label="Pencarian daftar"
             name="search"
             defaultValue={filters.search}
             placeholder="Cari nama, NRP/NIP, nama pengguna, atau email"
             className="min-h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-80 xl:w-[28rem]"
           />
           <button className="min-h-10 flex-1 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white sm:flex-none">
-            Cari
+            Terapkan filter
           </button>
           <Link
             href="/akun-pengguna"
@@ -440,10 +464,13 @@ function CreateAccountForm({
   personOptions: Person[];
   onClose: () => void;
 }) {
-  const [state, action, pending] = useActionState(createPersonAccountAction, {
-    ok: false,
-    message: null,
-  });
+  const [state, action, pending] = useDrawerActionState(
+    createPersonAccountAction,
+    {
+      ok: false,
+      message: null,
+    },
+  );
   const [selectedId, setSelectedId] = useState(personOptions[0]?.id ?? '');
   const selected = personOptions.find((person) => person.id === selectedId);
 
@@ -587,10 +614,13 @@ function AccountForm({
   row: AccountRow;
   onClose: () => void;
 }) {
-  const [state, action, pending] = useActionState(updatePersonAccountAction, {
-    ok: false,
-    message: null,
-  });
+  const [state, action, pending] = useDrawerActionState(
+    updatePersonAccountAction,
+    {
+      ok: false,
+      message: null,
+    },
+  );
   const account = row.account;
   return (
     // The account form and the Keycloak panel must be SIBLING forms, never

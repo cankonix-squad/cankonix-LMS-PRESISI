@@ -68,3 +68,31 @@ export function Toolbar({
     </div>
   );
 }
+
+/** A visible status control, with only the values supported by this list. */
+export function StatusFilter({
+  options,
+  value,
+  name = 'status',
+}: {
+  options: ReadonlyArray<{ label: string; value?: string }>;
+  value?: string;
+  name?: string;
+}) {
+  return (
+    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+      Filter status
+      <select
+        name={name}
+        defaultValue={value ?? ''}
+        className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950"
+      >
+        {options.map((option) => (
+          <option key={option.value ?? ''} value={option.value ?? ''}>
+            {option.value ? option.label : 'Semua status'}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}

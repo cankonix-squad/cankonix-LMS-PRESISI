@@ -10,7 +10,7 @@ import type {
 } from '@lms/api-client';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { useActionState, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -18,10 +18,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   PageHeader,
   PaginationBar,
   PrimaryActionButton,
@@ -164,16 +167,27 @@ export function AssignmentWorkspace({
           />
         ) : null}
       </div>
-      {drawer ? (
-        <AssignmentDrawer
-          drawer={drawer}
-          roles={roles}
-          accounts={accounts}
-          organizations={organizations}
-          accountMap={accountMap}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.kind === 'create'
+              ? 'create'
+              : `${drawer.kind}:${drawer.assignment.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <AssignmentDrawer
+            drawer={drawer}
+            roles={roles}
+            accounts={accounts}
+            organizations={organizations}
+            accountMap={accountMap}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -229,10 +243,19 @@ function AssignmentToolbar({
         }
       >
         <form
+          key={JSON.stringify(filters)}
           action="/penugasan"
           className="flex w-full flex-wrap gap-2 xl:w-auto"
         >
-          <input type="hidden" name="status" value={filters.status ?? ''} />
+          <StatusFilter
+            options={[
+              { label: 'Semua', value: undefined },
+              { label: 'Aktif', value: 'ACTIVE' },
+              { label: 'Nonaktif', value: 'INACTIVE' },
+              { label: 'Dicabut', value: 'REVOKED' },
+            ]}
+            value={String(filters.status ?? '')}
+          />
           <input type="hidden" name="roleId" value={filters.roleId ?? ''} />
           <input
             type="hidden"
@@ -242,6 +265,7 @@ function AssignmentToolbar({
           <input type="hidden" name="limit" value={filters.limit} />
           <input
             type="search"
+            aria-label="Pencarian daftar"
             name="search"
             defaultValue={filters.search}
             placeholder="Cari akun pengguna, data individu, atau peran"
@@ -251,7 +275,7 @@ function AssignmentToolbar({
             type="submit"
             className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white"
           >
-            Cari
+            Terapkan filter
           </button>
           <Link
             href="/penugasan"
@@ -536,10 +560,13 @@ function CreateAssignmentForm({
   accounts: AccountRow[];
   organizations: Organization[];
 }) {
-  const [state, action, pending] = useActionState(createRoleAssignmentAction, {
-    ok: false,
-    message: null,
-  });
+  const [state, action, pending] = useDrawerActionState(
+    createRoleAssignmentAction,
+    {
+      ok: false,
+      message: null,
+    },
+  );
   return (
     <form action={action} className="space-y-4">
       <SelectField
@@ -590,11 +617,11 @@ function ScopeForm({
   assignment: RoleAssignment;
   organizations: Organization[];
 }) {
-  const [addState, addAction, addPending] = useActionState(
+  const [addState, addAction, addPending] = useDrawerActionState(
     addAssignmentScopeAction,
     { ok: false, message: null },
   );
-  const [removeState, removeAction, removePending] = useActionState(
+  const [removeState, removeAction, removePending] = useDrawerActionState(
     removeAssignmentScopeAction,
     { ok: false, message: null },
   );
@@ -662,7 +689,7 @@ function ScopeForm({
   );
 }
 function StatusForm({ assignment }: { assignment: RoleAssignment }) {
-  const [state, action, pending] = useActionState(
+  const [state, action, pending] = useDrawerActionState(
     updateAssignmentStatusAction,
     { ok: false, message: null },
   );

@@ -7,17 +7,20 @@ import type {
   GraduationDecisionStatus,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   PageHeader,
   PaginationBar,
   StatusBadge,
@@ -85,7 +88,8 @@ export function GraduationDecisionWorkspace({
               Belum ada keputusan kelulusan yang cocok.
             </p>
             <p className="mt-2">
-              Keputusan dicatat setelah evaluasi kelulusan dilakukan. Gunakan filter status untuk mempersempit daftar.
+              Keputusan dicatat setelah evaluasi kelulusan dilakukan. Gunakan
+              filter status untuk mempersempit daftar.
             </p>
             <Link
               href="/keputusan-kelulusan"
@@ -114,12 +118,17 @@ export function GraduationDecisionWorkspace({
         )}
       </div>
 
-      {drawer ? (
-        <DecisionDetailDrawer
-          decision={drawer.decision}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={drawer ? `detail:${drawer.decision.id}` : null}
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <DecisionDetailDrawer
+            decision={drawer.decision}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -149,10 +158,11 @@ function DecisionToolbar({ filters }: { filters: Filters }) {
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/keputusan-kelulusan"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter options={statuses} value={String(filters.status ?? '')} />
         <input type="hidden" name="limit" value={filters.limit} />
         <select
           name="decision"
@@ -170,13 +180,13 @@ function DecisionToolbar({ filters }: { filters: Filters }) {
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Terapkan
+          Terapkan filter
         </button>
         <Link
           href="/keputusan-kelulusan"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -264,9 +274,7 @@ function DecisionCard({
       {decision.note ? (
         <p className="text-xs text-slate-500">{decision.note}</p>
       ) : null}
-      <p className="text-xs text-slate-500">
-        {formatDate(decision.createdAt)}
-      </p>
+      <p className="text-xs text-slate-500">{formatDate(decision.createdAt)}</p>
       <div className="flex gap-2">
         <ActionButton onClick={onDetail}>Detail</ActionButton>
         <DecisionActions decision={decision} onDetail={onDetail} />
@@ -292,7 +300,7 @@ function DecisionActions({
 }
 
 function ApproveAction({ decision }: { decision: GraduationDecision }) {
-  const [, action, isPending] = useActionState(
+  const [, action, isPending] = useDrawerActionState(
     approveGraduationDecisionAction,
     { ok: true, message: null },
   );
@@ -301,7 +309,11 @@ function ApproveAction({ decision }: { decision: GraduationDecision }) {
     <form
       action={action}
       onSubmit={(event) => {
-        if (!window.confirm('Setujui keputusan kelulusan ini? Keputusan akan berlaku resmi.'))
+        if (
+          !window.confirm(
+            'Setujui keputusan kelulusan ini? Keputusan akan berlaku resmi.',
+          )
+        )
           event.preventDefault();
       }}
     >
@@ -318,7 +330,7 @@ function ApproveAction({ decision }: { decision: GraduationDecision }) {
 }
 
 function RevokeAction({ decision }: { decision: GraduationDecision }) {
-  const [, action, isPending] = useActionState(
+  const [, action, isPending] = useDrawerActionState(
     revokeGraduationDecisionAction,
     { ok: true, message: null },
   );
@@ -327,7 +339,11 @@ function RevokeAction({ decision }: { decision: GraduationDecision }) {
     <form
       action={action}
       onSubmit={(event) => {
-        if (!window.confirm('Cabut keputusan kelulusan ini? Status peserta akan kembali ke belum lulus.'))
+        if (
+          !window.confirm(
+            'Cabut keputusan kelulusan ini? Status peserta akan kembali ke belum lulus.',
+          )
+        )
           event.preventDefault();
       }}
     >

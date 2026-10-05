@@ -1,12 +1,14 @@
 'use client';
 
 import type { GradingScheme, GradingSchemeStatus } from '@lms/api-client';
-import { useActionState, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActionMessage,
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FormActions,
@@ -17,9 +19,7 @@ import {
   StickyActionCell,
   enterpriseInputClass,
 } from '@/components/admin';
-import {
-  createGradingSchemeAction,
-} from './grading-actions';
+import { createGradingSchemeAction } from './grading-actions';
 import { gradingStatusLabel, gradingStatusTone } from './assessment-labels';
 
 type Result = {
@@ -135,7 +135,8 @@ export function GradingWorkspace({
                 Belum ada skema penilaian yang cocok.
               </p>
               <p className="mt-2">
-                Skema penilaian dikaitkan dengan class subject. Coba ubah kata pencarian atau filter status.
+                Skema penilaian dikaitkan dengan class subject. Coba ubah kata
+                pencarian atau filter status.
               </p>
             </EmptyState>
           ) : (
@@ -144,10 +145,17 @@ export function GradingWorkspace({
           {!result.error && total > 0 ? (
             <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
               <p>
-                Menampilkan <span className="font-semibold text-slate-950">{(currentPage - 1) * PAGE_SIZE + 1}</span>
+                Menampilkan{' '}
+                <span className="font-semibold text-slate-950">
+                  {(currentPage - 1) * PAGE_SIZE + 1}
+                </span>
                 {' - '}
-                <span className="font-semibold text-slate-950">{Math.min(total, currentPage * PAGE_SIZE)}</span>{' '}
-                dari <span className="font-semibold text-slate-950">{total}</span> skema
+                <span className="font-semibold text-slate-950">
+                  {Math.min(total, currentPage * PAGE_SIZE)}
+                </span>{' '}
+                dari{' '}
+                <span className="font-semibold text-slate-950">{total}</span>{' '}
+                skema
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -175,9 +183,12 @@ export function GradingWorkspace({
         </div>
       </div>
 
-      {drawer ? (
-        <GradingDrawer onClose={() => setDrawer(null)} />
-      ) : null}
+      <DrawerHost
+        activeKey={drawer ? 'create' : null}
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? <GradingDrawer onClose={() => setDrawer(null)} /> : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -277,12 +288,8 @@ function SchemeCard({
   );
 }
 
-function GradingDrawer({
-  onClose,
-}: {
-  onClose: () => void;
-}) {
-  const [state, action, isPending] = useActionState(
+function GradingDrawer({ onClose }: { onClose: () => void }) {
+  const [state, action, isPending] = useDrawerActionState(
     createGradingSchemeAction,
     { ok: false, message: null },
   );
@@ -316,7 +323,11 @@ function GradingDrawer({
           />
         </FormField>
         <FormField label="Status" required>
-          <select name="status" defaultValue="DRAFT" className={enterpriseInputClass}>
+          <select
+            name="status"
+            defaultValue="DRAFT"
+            className={enterpriseInputClass}
+          >
             <option value="DRAFT">Draft</option>
             <option value="PUBLISHED">Dipublikasikan</option>
             <option value="ARCHIVED">Diarsipkan</option>

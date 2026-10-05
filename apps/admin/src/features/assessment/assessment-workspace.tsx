@@ -7,7 +7,7 @@ import type {
   ClassSubject,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -15,10 +15,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -47,9 +50,7 @@ type Result = {
   error: string | null;
 };
 type Drawer =
-  | { mode: 'create' }
-  | { mode: 'edit'; assessment: Assessment }
-  | null;
+  { mode: 'create' } | { mode: 'edit'; assessment: Assessment } | null;
 
 export function AssessmentWorkspace({
   result,
@@ -101,7 +102,8 @@ export function AssessmentWorkspace({
               Belum ada assessment yang cocok.
             </p>
             <p className="mt-2">
-              Assessment dikaitkan dengan class subject. Coba ubah pencarian atau filter status.
+              Assessment dikaitkan dengan class subject. Coba ubah pencarian
+              atau filter status.
             </p>
             <Link
               href="/assessment"
@@ -131,14 +133,25 @@ export function AssessmentWorkspace({
         ) : null}
       </div>
 
-      {drawer ? (
-        <AssessmentDrawer
-          drawer={drawer}
-          assessmentTypes={assessmentTypes}
-          classSubjects={classSubjects}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.mode === 'create'
+              ? 'create'
+              : `edit:${drawer.assessment.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <AssessmentDrawer
+            drawer={drawer}
+            assessmentTypes={assessmentTypes}
+            classSubjects={classSubjects}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -175,10 +188,11 @@ function AssessmentToolbar({
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/assessment"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter options={statuses} value={String(filters.status ?? '')} />
         <input type="hidden" name="limit" value={filters.limit} />
         <select
           name="assessmentTypeId"
@@ -195,6 +209,7 @@ function AssessmentToolbar({
         </select>
         <input
           type="search"
+          aria-label="Pencarian daftar"
           name="search"
           defaultValue={filters.search}
           placeholder="Cari judul assessment"
@@ -204,13 +219,13 @@ function AssessmentToolbar({
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/assessment"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -262,7 +277,8 @@ function AssessmentTable({
             ) : null}
           </td>
           <td className="px-4 py-3 text-slate-600">
-            {typeNames.get(item.assessmentTypeId) ?? `Tipe ${item.assessmentTypeId}`}
+            {typeNames.get(item.assessmentTypeId) ??
+              `Tipe ${item.assessmentTypeId}`}
           </td>
           <td className="px-4 py-3 font-medium text-slate-700">
             {item.maxScore}
@@ -276,10 +292,7 @@ function AssessmentTable({
             {formatDate(item.updatedAt)}
           </td>
           <StickyActionCell>
-            <AssessmentActions
-              assessment={item}
-              onEdit={() => onEdit(item)}
-            />
+            <AssessmentActions assessment={item} onEdit={() => onEdit(item)} />
           </StickyActionCell>
         </tr>
       ))}
@@ -340,21 +353,41 @@ function AssessmentActions({
   assessment: Assessment;
   onEdit: () => void;
 }) {
-  const [state, action, isPending] = useActionState(
+  const [state, action, isPending] = useDrawerActionState(
     changeAssessmentStatusAction,
     { ok: false, message: null },
   );
-  const lifecycleActions: { label: string; status: Assessment['status']; tone: 'default' | 'warning' }[] = [];
+  const lifecycleActions: {
+    label: string;
+    status: Assessment['status'];
+    tone: 'default' | 'warning';
+  }[] = [];
   switch (assessment.status) {
     case 'DRAFT':
-      lifecycleActions.push({ label: 'Publikasikan', status: 'PUBLISHED', tone: 'default' });
+      lifecycleActions.push({
+        label: 'Publikasikan',
+        status: 'PUBLISHED',
+        tone: 'default',
+      });
       break;
     case 'PUBLISHED':
-      lifecycleActions.push({ label: 'Tutup', status: 'CLOSED', tone: 'warning' });
-      lifecycleActions.push({ label: 'Kembali Draft', status: 'DRAFT', tone: 'warning' });
+      lifecycleActions.push({
+        label: 'Tutup',
+        status: 'CLOSED',
+        tone: 'warning',
+      });
+      lifecycleActions.push({
+        label: 'Kembali Draft',
+        status: 'DRAFT',
+        tone: 'warning',
+      });
       break;
     case 'CLOSED':
-      lifecycleActions.push({ label: 'Arsipkan', status: 'ARCHIVED', tone: 'warning' });
+      lifecycleActions.push({
+        label: 'Arsipkan',
+        status: 'ARCHIVED',
+        tone: 'warning',
+      });
       break;
     default:
       break;
@@ -411,7 +444,7 @@ function AssessmentDrawer({
 }) {
   const isEdit = drawer.mode === 'edit';
   const assessment = isEdit ? drawer.assessment : null;
-  const [state, action, isPending] = useActionState(
+  const [state, action, isPending] = useDrawerActionState(
     isEdit ? updateAssessmentAction : createAssessmentAction,
     { ok: false, message: null },
   );

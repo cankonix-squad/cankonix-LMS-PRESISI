@@ -68,6 +68,7 @@ Deferred verification tersebut bukan blocker untuk development task berikutnya s
 | TASK-009AM | `tasks/TASK-009AM-seed-educator-role-permissions.md` | REVIEW | TASK-009AI = REVIEW; TASK-009AL = REVIEW |
 | TASK-009AN | `tasks/TASK-009AN-admin-keycloak-user-provisioning.md` | REVIEW | TASK-003 = DONE-WITH-DEFERRED; TASK-009AM = REVIEW |
 | TASK-009AO | `tasks/TASK-009AO-admin-portal-access-boundary.md` | REVIEW | TASK-005 = DONE-WITH-DEFERRED; TASK-009AI = REVIEW; TASK-009AN = REVIEW |
+| TASK-009AQ | `tasks/TASK-009AQ-admin-drawer-workflow-rollout.md` | REVIEW | TASK-009K = DONE; existing Admin UI/API contracts |
 | TASK-009AP | `tasks/TASK-009AP-foundation-identity-account-separation.md` | REVIEW | TASK-002 = DONE; TASK-009L = REVIEW; TASK-009AN = REVIEW; TASK-009AO = REVIEW |
 | TASK-009N | `tasks/TASK-009N-admin-assignment-scope-operator-ux-polish.md` | REVIEW | TASK-009M = REVIEW |
 | TASK-009O | `tasks/TASK-009O-admin-academic-program-operator-ux.md` | REVIEW | TASK-009N = REVIEW; TASK-010 = DONE-WITH-DEFERRED |
@@ -566,3 +567,23 @@ Operation not permitted, termasuk retry eskalasi, sehingga build Admin diverifik
 melalui webpack. Detail perintah, file, batas pemilih 100 kandidat, aturan individu
 aktif pada autentikasi, dan verifikasi runtime yang DEFERRED dicatat pada TASK-009AP.
 Status kembali REVIEW; menunggu peninjauan manusia, tidak ada task berikutnya.
+
+## TASK-009K — reopened correction REVIEW (2026-10-05)
+
+Explicit organization operator feedback implemented: Esc closes while retaining separate create/edit drafts; closing is blocked during save; successful save clears the saved draft, closes the panel, and reports success on the revalidated list; failure retains inputs. Status dropdown plus name/code search and reset use the existing server-side contract. Drafts last only while the workspace stays mounted, not across refresh/navigation.
+
+Admin tests 35/35, ESLint, sequential typecheck, production webpack build (36 routes), targeted Prettier, and git diff --check PASS. Browser/real API end-to-end is DEFERRED: CUA inventory has no apps or browsers. No schema/migration/dependency change or deployment. TASK-009K is reopened from its historical DONE approval and now awaits human review of this correction. No subsequent task started.
+
+## TASK-009K approved; TASK-009AQ — REVIEW (2026-10-05)
+
+User approved the organization correction ("sudah oke") and explicitly requested rollout to all Admin surfaces. TASK-009K is DONE by that human approval. TASK-009AQ implements one shared Admin drawer/filter correction: Esc/close/cancel retain per-operation/record live drafts; pending guards protect forms and dismissal; successful mutations return to the revalidated list with feedback and clear only the saved panel; failed/uncertain saves retain input. Read-only Keycloak refresh stays open. All existing Admin drawers are covered, including read-only graduation/certificate details; Organization retains its approved local draft handling with the shared keyboard/focus panel.
+
+Visible status selectors use only supported domain values. Academic program/batch/class filters replace search controls ignored by the Angkatan/Enrollment API. Role/permission filtering preserves the other list's filters and page sizes. Existing Grading, Reporting and Audit filters were inspected and remain available; no fake filters/CRUD added to unsupported Ujian/Nilai Akhir placeholder contracts. No API/auth/Permission + Scope/schema/migration/dependency or other-app change, commit, push or deployment.
+
+Verification: `pnpm test` PASS (491 API + 12 api-client + 62 Admin = 565; 6/6 Turbo tasks), Admin ESLint PASS, `pnpm turbo run typecheck --only` PASS (11/11), Admin production webpack build PASS (36 routes), scoped Prettier and git diff --check PASS. `pnpm lint` Turbo ESLint 11/11 PASS but root Prettier reports 36 pre-existing files outside the changed task set. Default `pnpm typecheck`/`pnpm build` fail in Admin Turbopack due to process/port `Operation not permitted`; independent typechecking and production webpack verify the changed app. Live browser/real API keyboard/focus/form-reset/end-to-end verification DEFERRED: CUA apps/browser inventory is empty. Drafts are memory-only until workspace unmount/reload/navigation; existing bounded lookup/list limits remain. Detail and test-method limitations are in TASK-009AQ.
+
+TASK-009AQ is REVIEW, awaiting human review; no following task started.
+
+### TASK-009AQ publication preparation — 2026-10-05
+
+User authorized commit/push to GitHub `main`. Isolated candidate starts from `origin/main` 926a5e06 and includes only TASK-009K/009AQ; unrelated local 404, login/runtime, and API/Educator work stays local. Admin 61/61 tests, ESLint, typegen/tsc PASS on the isolated candidate (earlier 62 included an unrelated 404 regression). TASK-009AQ remains REVIEW. Production webpack result is recorded in its task file before publication.

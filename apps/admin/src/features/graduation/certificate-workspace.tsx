@@ -6,17 +6,20 @@ import type {
   CertificateStatus,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   PageHeader,
   PaginationBar,
   StatusBadge,
@@ -78,7 +81,8 @@ export function CertificateWorkspace({
               Belum ada sertifikat yang cocok.
             </p>
             <p className="mt-2">
-              Sertifikat diterbitkan dari keputusan kelulusan yang sudah disetujui. Ubah filter status atau pencarian.
+              Sertifikat diterbitkan dari keputusan kelulusan yang sudah
+              disetujui. Ubah filter status atau pencarian.
             </p>
             <Link
               href="/sertifikat"
@@ -100,19 +104,28 @@ export function CertificateWorkspace({
               totalPages={totalPages}
               itemLabel="sertifikat"
               hrefFor={(next) =>
-                certificateHref({ ...filters, page: next.page, limit: next.limit })
+                certificateHref({
+                  ...filters,
+                  page: next.page,
+                  limit: next.limit,
+                })
               }
             />
           </>
         )}
       </div>
 
-      {drawer ? (
-        <CertificateDetailDrawer
-          certificate={drawer.certificate}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={drawer ? `detail:${drawer.certificate.id}` : null}
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <CertificateDetailDrawer
+            certificate={drawer.certificate}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -140,9 +153,26 @@ function CertificateToolbar({ filters }: { filters: Filters }) {
         />
       }
     >
-      <span className="text-sm text-slate-500">
-        Filter berdasarkan status sertifikat. Sertifikat dicabut tetap tersimpan sebagai bukti penerbitan.
-      </span>
+      <form
+        key={JSON.stringify(filters)}
+        action="/sertifikat"
+        className="flex flex-wrap items-center gap-2"
+      >
+        <StatusFilter options={statuses} value={filters.status} />
+        <input type="hidden" name="limit" value={filters.limit} />
+        <button
+          type="submit"
+          className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
+        >
+          Terapkan filter
+        </button>
+        <Link
+          href="/sertifikat"
+          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700"
+        >
+          Atur ulang
+        </Link>
+      </form>
     </FilterToolbar>
   );
 }
@@ -166,7 +196,11 @@ function CertificateTable({
       ]}
       colWidths={['10rem', '1fr', '1fr', '6rem', '9rem', '6rem']}
       mobile={certificates.map((c) => (
-        <CertificateCard key={c.id} certificate={c} onDetail={() => onDetail(c)} />
+        <CertificateCard
+          key={c.id}
+          certificate={c}
+          onDetail={() => onDetail(c)}
+        />
       ))}
     >
       {certificates.map((c) => (
@@ -190,10 +224,7 @@ function CertificateTable({
             {formatDate(c.issuedAt)}
           </td>
           <StickyActionCell>
-            <CertificateActions
-              certificate={c}
-              onDetail={() => onDetail(c)}
-            />
+            <CertificateActions certificate={c} onDetail={() => onDetail(c)} />
           </StickyActionCell>
         </tr>
       ))}
@@ -212,7 +243,9 @@ function CertificateCard({
     <div className="p-4 space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-slate-950">{certificate.holderName}</p>
+          <p className="font-semibold text-slate-950">
+            {certificate.holderName}
+          </p>
           <p className="mt-0.5 font-mono text-xs text-slate-500">
             {certificate.certificateNumber}
           </p>
@@ -256,17 +289,25 @@ function CertificateActions({
   );
 }
 
-function RevokeCertificateAction({ certificate }: { certificate: Certificate }) {
-  const [, action, isPending] = useActionState(
-    revokeCertificateAction,
-    { ok: true, message: null },
-  );
+function RevokeCertificateAction({
+  certificate,
+}: {
+  certificate: Certificate;
+}) {
+  const [, action, isPending] = useDrawerActionState(revokeCertificateAction, {
+    ok: true,
+    message: null,
+  });
   if (certificate.status !== 'ISSUED') return null;
   return (
     <form
       action={action}
       onSubmit={(event) => {
-        if (!window.confirm('Cabut sertifikat ini? Sertifikat akan ditandai tidak valid untuk verifikasi publik.'))
+        if (
+          !window.confirm(
+            'Cabut sertifikat ini? Sertifikat akan ditandai tidak valid untuk verifikasi publik.',
+          )
+        )
           event.preventDefault();
       }}
     >

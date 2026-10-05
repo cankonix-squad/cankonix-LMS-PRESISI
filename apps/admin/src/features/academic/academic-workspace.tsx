@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -9,10 +9,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -191,7 +194,7 @@ export function AcademicWorkspace({
         }
       />
       <section className="px-5">
-        <Toolbar kind={kind} filters={filters} />
+        <Toolbar kind={kind} filters={filters} options={options} />
       </section>
       <div className="px-5 pb-5">
         {!result ? (
@@ -221,15 +224,24 @@ export function AcademicWorkspace({
           />
         ) : null}
       </div>
-      {editing !== undefined ? (
-        <Panel
-          kind={kind}
-          config={config}
-          row={editing}
-          options={options}
-          onClose={() => setEditing(undefined)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          editing === undefined
+            ? null
+            : `${kind}:${editing ? `edit:${editing.id}` : 'create'}`
+        }
+        onClose={() => setEditing(undefined)}
+      >
+        {editing !== undefined ? (
+          <Panel
+            kind={kind}
+            config={config}
+            row={editing}
+            options={options}
+            onClose={() => setEditing(undefined)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -237,17 +249,33 @@ export function AcademicWorkspace({
 function Toolbar({
   kind,
   filters,
+  options,
 }: {
   kind: Kind;
   filters: Record<string, string | number | undefined>;
+  options: Record<string, Option[]>;
 }) {
+  const relationFilters =
+    kind === 'batch'
+      ? [{ name: 'educationProgramId', label: 'Program' }]
+      : kind === 'class'
+        ? [{ name: 'educationBatchId', label: 'Angkatan' }]
+        : kind === 'enrollment'
+          ? [
+              { name: 'educationBatchId', label: 'Angkatan' },
+              { name: 'academicClassId', label: 'Kelas' },
+            ]
+          : [];
   const statuses = [
     { label: 'Semua', value: undefined },
     { label: 'Aktif', value: 'ACTIVE' },
-    { label: 'Nonaktif', value: 'INACTIVE' },
-    { label: 'Arsip', value: 'ARCHIVED' },
-    { label: 'Withdrawn', value: 'WITHDRAWN' },
-    { label: 'Selesai', value: 'COMPLETED' },
+    ...(kind === 'enrollment'
+      ? [
+          { label: 'Mengundurkan diri', value: 'WITHDRAWN' },
+          { label: 'Selesai', value: 'COMPLETED' },
+        ]
+      : [{ label: 'Nonaktif', value: 'INACTIVE' }]),
+    ...(kind === 'class' ? [{ label: 'Arsip', value: 'ARCHIVED' }] : []),
   ];
 
   return (
@@ -270,30 +298,60 @@ function Toolbar({
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action={basePath(kind)}
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input
-          type="hidden"
-          name="status"
-          value={String(filters.status ?? '')}
-        />
+        <StatusFilter options={statuses} value={String(filters.status ?? '')} />
         <input type="hidden" name="limit" value={String(filters.limit ?? 25)} />
-        <input
-          type="search"
-          name="search"
-          defaultValue={String(filters.search ?? '')}
-          placeholder="Cari kode atau nama"
-          className={`${enterpriseInputClass} sm:w-72`}
-        />
+        {relationFilters.map((filter) => {
+          const selected = String(filters[filter.name] ?? '');
+          const choices = options[filter.name] ?? [];
+          return (
+            <label
+              key={filter.name}
+              className="grid gap-1 text-xs font-semibold text-slate-600"
+            >
+              {filter.label}
+              <select
+                name={filter.name}
+                defaultValue={selected}
+                className={enterpriseInputClass}
+              >
+                <option value="">Semua {filter.label.toLowerCase()}</option>
+                {selected &&
+                !choices.some((choice) => choice.id === selected) ? (
+                  <option value={selected}>
+                    Pilihan saat ini ({selected})
+                  </option>
+                ) : null}
+                {choices.map((choice) => (
+                  <option key={choice.id} value={choice.id}>
+                    {choice.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          );
+        })}
+        {kind === 'subject' || kind === 'class' ? (
+          <input
+            type="search"
+            aria-label="Pencarian daftar"
+            name="search"
+            defaultValue={String(filters.search ?? '')}
+            placeholder="Cari kode atau nama"
+            className={`${enterpriseInputClass} sm:w-72`}
+          />
+        ) : null}
         <button className="min-h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white">
-          Cari
+          Terapkan filter
         </button>
         <Link
           href={basePath(kind)}
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -401,7 +459,7 @@ function Panel({
   options: Record<string, Option[]>;
   onClose: () => void;
 }) {
-  const [state, action] = useActionState<AcademicActionState, FormData>(
+  const [state, action] = useDrawerActionState<AcademicActionState, FormData>(
     saveAcademicRecord,
     { ok: false, message: null },
   );

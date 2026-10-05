@@ -13,19 +13,18 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   PageHeader,
   PaginationBar,
   StatusBadge,
   StickyActionCell,
 } from '@/components/admin';
-import {
-  templateStatusLabel,
-  templateStatusTone,
-} from './graduation-labels';
+import { templateStatusLabel, templateStatusTone } from './graduation-labels';
 
 type Filters = {
   code?: string;
@@ -78,7 +77,8 @@ export function CertificateTemplateWorkspace({
               Belum ada template sertifikat yang cocok.
             </p>
             <p className="mt-2">
-              Gunakan filter status atau ubah pencarian untuk menemukan template.
+              Gunakan filter status atau ubah pencarian untuk menemukan
+              template.
             </p>
             <Link
               href="/template-sertifikat"
@@ -107,12 +107,17 @@ export function CertificateTemplateWorkspace({
         )}
       </div>
 
-      {drawer ? (
-        <TemplateDetailDrawer
-          template={drawer.template}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={drawer ? `detail:${drawer.template.id}` : null}
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <TemplateDetailDrawer
+            template={drawer.template}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -142,13 +147,15 @@ function TemplateToolbar({ filters }: { filters: Filters }) {
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/template-sertifikat"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter options={statuses} value={String(filters.status ?? '')} />
         <input type="hidden" name="limit" value={filters.limit} />
         <input
           type="search"
+          aria-label="Pencarian daftar"
           name="code"
           defaultValue={filters.code}
           placeholder="Cari kode template"
@@ -158,13 +165,13 @@ function TemplateToolbar({ filters }: { filters: Filters }) {
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/template-sertifikat"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -249,7 +256,9 @@ function TemplateCard({
         </StatusBadge>
       </div>
       {template.description ? (
-        <p className="text-xs text-slate-500 line-clamp-2">{template.description}</p>
+        <p className="text-xs text-slate-500 line-clamp-2">
+          {template.description}
+        </p>
       ) : null}
       <div className="flex gap-2">
         <ActionButton onClick={onDetail}>Detail</ActionButton>
@@ -287,7 +296,9 @@ function TemplateDetailDrawer({
             {template.description ? (
               <div>
                 <p className="text-xs text-slate-500">Deskripsi</p>
-                <p className="mt-1 text-sm text-slate-700">{template.description}</p>
+                <p className="mt-1 text-sm text-slate-700">
+                  {template.description}
+                </p>
               </div>
             ) : null}
             <div className="grid grid-cols-2 gap-4">

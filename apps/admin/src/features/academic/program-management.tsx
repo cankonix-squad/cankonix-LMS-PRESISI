@@ -6,7 +6,7 @@ import type {
   Organization,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -14,10 +14,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -122,18 +125,31 @@ export function ProgramWorkspace({
             total={total}
             totalPages={totalPages}
             itemLabel="program"
-            hrefFor={({ page, limit }) => programHref({ ...filters, page, limit })}
+            hrefFor={({ page, limit }) =>
+              programHref({ ...filters, page, limit })
+            }
           />
         ) : null}
       </div>
 
-      {drawer ? (
-        <ProgramDrawer
-          drawer={drawer}
-          organizations={organizations}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.mode === 'create'
+              ? 'create'
+              : `edit:${drawer.program.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <ProgramDrawer
+            drawer={drawer}
+            organizations={organizations}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -166,10 +182,11 @@ function ProgramToolbar({
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/program"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter options={statuses} value={String(filters.status ?? '')} />
         <input type="hidden" name="limit" value={filters.limit} />
         <select
           name="organizationId"
@@ -186,6 +203,7 @@ function ProgramToolbar({
         </select>
         <input
           type="search"
+          aria-label="Pencarian daftar"
           name="search"
           defaultValue={filters.search}
           placeholder="Cari nama atau kode program"
@@ -195,13 +213,13 @@ function ProgramToolbar({
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/program"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -252,7 +270,9 @@ function ProgramTable({
               </p>
             ) : null}
           </td>
-          <td className="px-4 py-3 font-medium text-slate-600">{program.code}</td>
+          <td className="px-4 py-3 font-medium text-slate-600">
+            {program.code}
+          </td>
           <td className="px-4 py-3 text-slate-600">
             {organizationNames.get(program.organizationId) ??
               'Organisasi tidak terbaca'}
@@ -267,10 +287,7 @@ function ProgramTable({
             {formatDate(program.updatedAt)}
           </td>
           <StickyActionCell>
-            <ProgramActions
-              program={program}
-              onEdit={() => onEdit(program)}
-            />
+            <ProgramActions program={program} onEdit={() => onEdit(program)} />
           </StickyActionCell>
         </tr>
       ))}
@@ -332,18 +349,18 @@ function ProgramActions({
   program: EducationProgram;
   onEdit: () => void;
 }) {
-  const [state, action, isPending] = useActionState(updateProgramStatusAction, {
-    ok: false,
-    message: null,
-  });
+  const [state, action, isPending] = useDrawerActionState(
+    updateProgramStatusAction,
+    {
+      ok: false,
+      message: null,
+    },
+  );
   const targetStatus = program.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
   return (
     <div className="flex flex-col gap-2">
       <ActionGroup>
-        <ActionButton
-          disabled
-          title="Detail belum tersedia pada kontrak Admin"
-        >
+        <ActionButton disabled title="Detail belum tersedia pada kontrak Admin">
           Detail
         </ActionButton>
         <ActionButton onClick={onEdit}>Edit</ActionButton>
@@ -391,7 +408,7 @@ function ProgramDrawer({
 }) {
   const isEdit = drawer.mode === 'edit';
   const program = isEdit ? drawer.program : null;
-  const [state, action, isPending] = useActionState(
+  const [state, action, isPending] = useDrawerActionState(
     isEdit ? updateProgramAction : createProgramAction,
     { ok: false, message: null },
   );

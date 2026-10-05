@@ -33,7 +33,9 @@ const {
 
 const dispatcher = installDispatcher();
 
-const accountModule = loadSrcModule('features/foundation/account-management.tsx');
+const accountModule = loadSrcModule(
+  'features/foundation/account-management.tsx',
+);
 const actions = loadSrcModule('features/foundation/keycloak-actions.ts');
 const { AccountWorkspace } = accountModule;
 
@@ -142,36 +144,50 @@ test('Akun Pengguna drawer never nests a form (regression)', () => {
     false,
     'no form in the drawer may contain another form',
   );
-  assert.equal(
-    provisioningForm.props.action,
-    actions.provisionKeycloakUserAction,
-  );
+  assert.equal(typeof provisioningForm.props.action, 'function');
+  assert.notEqual(provisioningForm.props.action, accountForm.props.action);
 });
 
-test('every drawer form posts to its own action', () => {
-  const tree = renderAccountDrawer();
-  const labelToAction = new Map();
-  for (const label of [
-    'Simpan Akun Pengguna',
-    'Buat akun Keycloak',
-    'Muat ulang status login',
+test('every drawer form dispatches to its own API operation', async () => {
+  setAccessToken('access-token');
+  const calls = [];
+  setApiStub({
+    persons: {
+      updateAccount: async (id) => {
+        calls.push(['account', id]);
+        return { ok: true, data: row.account };
+      },
+      provisionKeycloakUser: async (id) => {
+        calls.push(['provision', id]);
+        return {
+          ok: true,
+          data: {
+            success: true,
+            message: 'Tersimpan',
+            provisioning: notProvisioned(),
+          },
+        };
+      },
+      getKeycloakProvisioning: async (id) => {
+        calls.push(['refresh', id]);
+        return notProvisioned();
+      },
+    },
+  });
+  for (const [label, operation] of [
+    ['Simpan Akun Pengguna', 'account'],
+    ['Buat akun Keycloak', 'provision'],
+    ['Muat ulang status login', 'refresh'],
   ]) {
-    const form = formWithButton(tree, label);
-    labelToAction.set(label, form && form.props.action);
+    const form = formWithButton(renderAccountDrawer(), label);
+    assert.ok(form);
+    const data = new FormData();
+    data.set('personId', PERSON_ID);
+    data.set('accountStatus', 'ACTIVE');
+    await form.props.action({ ok: false, message: null, result: null }, data);
+    assert.deepEqual(calls.at(-1), [operation, PERSON_ID]);
   }
-
-  assert.equal(
-    labelToAction.get('Simpan Akun Pengguna').name,
-    'updatePersonAccountAction',
-  );
-  assert.equal(
-    labelToAction.get('Buat akun Keycloak').name,
-    'provisionKeycloakUserAction',
-  );
-  assert.equal(
-    labelToAction.get('Muat ulang status login').name,
-    'refreshKeycloakStatusAction',
-  );
+  assert.equal(calls.length, 3);
 });
 
 test('clicking Buat akun Keycloak calls provisioning and shows the API success', async () => {

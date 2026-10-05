@@ -14,7 +14,7 @@ Admin feature pages should start with:
 
 List-oriented pages should use:
 
-- `FilterToolbar` and `FilterTabs` for search/status filters.
+- `FilterToolbar`, `FilterTabs`, and `StatusFilter` for search/status filters. Status options must match that domain API. GET filter forms reset the affected page to 1, preserve page size and related filters, and use a filter-derived React key to reflect URL navigation.
 - `EnterpriseTable` for desktop/tablet tables.
 - Mobile card content through the `mobile` prop.
 - `StickyActionCell` for action columns that must remain reachable on narrow desktop.
@@ -25,7 +25,10 @@ List-oriented pages should use:
 
 Create/edit/account workflows should use:
 
-- `EnterpriseDrawer` for right-side operational panels.
+- `DrawerHost` permanently mounted in the workspace, around its conditional drawer. Give each operation/record a stable `activeKey` (e.g. `create`, `edit:${id}`, `scope:${id}`). Include the parent id for a parent-specific create flow. Closing sets the active key to `null`; the host retains live form/component state separately for each key.
+- `EnterpriseDrawer` for right-side operational panels. It handles Esc, focus, dialog semantics, pending controls, and cancelling React's automatic form reset. All forms in a hosted panel are disabled while any action is pending.
+- `useDrawerActionState` for hosted form mutations instead of React's bare `useActionState`. An actual successful mutation clears only that panel, closes it, and places feedback on the list; ordinary API failures and transport exceptions retain it. Next.js navigation exceptions are rethrown. Outside a host, normal action results remain available without a drawer close. Use `{ closeOnSuccess: false }` for read-only refresh operations.
+- Drafts stay in memory only for the mounted workspace: reload/navigation ends their lifetime. Do not add browser storage of form data or credentials. Organization retains its approved local controlled-draft implementation and also uses the shared keyboard/focus drawer.
 - `FormField` and `enterpriseInputClass` for form inputs.
 - `FormActions` for save/cancel controls.
 - `ActionMessage` for server-action feedback.

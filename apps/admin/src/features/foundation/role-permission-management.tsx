@@ -3,7 +3,7 @@
 import type { ApiListResponse, Permission, Role } from '@lms/api-client';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -11,10 +11,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -108,7 +111,10 @@ export function RolePermissionWorkspace({
       />
 
       <section className="space-y-4 px-5">
-        <RoleToolbar filters={roleFilters} />
+        <RoleToolbar
+          filters={roleFilters}
+          permissionFilters={permissionFilters}
+        />
         {roles.error ? (
           <PermissionErrorState message={roles.error} />
         ) : roleItems.length === 0 ? (
@@ -184,27 +190,38 @@ export function RolePermissionWorkspace({
         ) : null}
       </section>
 
-      {drawer?.mode === 'detail' && drawer.role ? (
-        <RoleDetailDrawer
-          role={drawer.role}
-          permissions={selectedPermissions}
-          availablePermissions={permissionItems}
-          onClose={() => setDrawer(null)}
-          onEdit={(role) => setDrawer({ mode: 'edit', role })}
-        />
-      ) : drawer?.mode === 'create' ? (
-        <RoleFormDrawer
-          mode="create"
-          role={null}
-          onClose={() => setDrawer(null)}
-        />
-      ) : drawer?.mode === 'edit' && drawer.role ? (
-        <RoleFormDrawer
-          mode="edit"
-          role={drawer.role}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.mode === 'create'
+              ? 'create'
+              : `${drawer.mode}:${drawer.role.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer?.mode === 'detail' && drawer.role ? (
+          <RoleDetailDrawer
+            role={drawer.role}
+            permissions={selectedPermissions}
+            availablePermissions={permissionItems}
+            onClose={() => setDrawer(null)}
+            onEdit={(role) => setDrawer({ mode: 'edit', role })}
+          />
+        ) : drawer?.mode === 'create' ? (
+          <RoleFormDrawer
+            mode="create"
+            role={null}
+            onClose={() => setDrawer(null)}
+          />
+        ) : drawer?.mode === 'edit' && drawer.role ? (
+          <RoleFormDrawer
+            mode="edit"
+            role={drawer.role}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -290,7 +307,13 @@ function Metric({ label, value }: { label: string; value: number }) {
   );
 }
 
-function RoleToolbar({ filters }: { filters: RoleFilters }) {
+function RoleToolbar({
+  filters,
+  permissionFilters,
+}: {
+  filters: RoleFilters;
+  permissionFilters: PermissionFilters;
+}) {
   return (
     <FilterToolbar
       label="Filter peran"
@@ -299,17 +322,26 @@ function RoleToolbar({ filters }: { filters: RoleFilters }) {
           tabs={[
             {
               label: 'Semua',
-              href: roleHref({ ...filters, status: undefined, page: 1 }),
+              href: roleHref(
+                { ...filters, status: undefined, page: 1 },
+                permissionFilters,
+              ),
               active: !filters.status,
             },
             {
               label: 'Aktif',
-              href: roleHref({ ...filters, status: 'ACTIVE', page: 1 }),
+              href: roleHref(
+                { ...filters, status: 'ACTIVE', page: 1 },
+                permissionFilters,
+              ),
               active: filters.status === 'ACTIVE',
             },
             {
               label: 'Nonaktif',
-              href: roleHref({ ...filters, status: 'INACTIVE', page: 1 }),
+              href: roleHref(
+                { ...filters, status: 'INACTIVE', page: 1 },
+                permissionFilters,
+              ),
               active: filters.status === 'INACTIVE',
             },
           ]}
@@ -321,7 +353,13 @@ function RoleToolbar({ filters }: { filters: RoleFilters }) {
         name="roleSearch"
         value={filters.search}
         placeholder="Cari nama atau kode peran"
-        hidden={{ roleStatus: filters.status }}
+        hidden={{
+          roleStatus: filters.status,
+          roleLimit: filters.limit,
+          permissionSearch: permissionFilters.search,
+          permissionPage: permissionFilters.page,
+          permissionLimit: permissionFilters.limit,
+        }}
       />
     </FilterToolbar>
   );
@@ -352,6 +390,9 @@ function PermissionToolbar({
         hidden={{
           roleSearch: roleFilters.search,
           roleStatus: roleFilters.status,
+          rolePage: roleFilters.page,
+          roleLimit: roleFilters.limit,
+          permissionLimit: filters.limit,
         }}
       />
     </div>
@@ -372,10 +413,27 @@ function SearchForm({
   hidden: Record<string, string | number | undefined>;
 }) {
   return (
-    <form action={action} className="flex w-full flex-wrap gap-2 xl:w-auto">
-      {Object.entries(hidden).map(([key, item]) => (
-        <input key={key} type="hidden" name={key} value={item ?? ''} />
-      ))}
+    <form
+      key={JSON.stringify([value, hidden])}
+      action={action}
+      className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
+    >
+      {name === 'roleSearch' ? (
+        <StatusFilter
+          name="roleStatus"
+          value={String(hidden.roleStatus ?? '')}
+          options={[
+            { label: 'Semua' },
+            { label: 'Aktif', value: 'ACTIVE' },
+            { label: 'Nonaktif', value: 'INACTIVE' },
+          ]}
+        />
+      ) : null}
+      {Object.entries(hidden)
+        .filter(([key]) => name !== 'roleSearch' || key !== 'roleStatus')
+        .map(([key, item]) => (
+          <input key={key} type="hidden" name={key} value={item ?? ''} />
+        ))}
       <input
         type="hidden"
         name={name === 'roleSearch' ? 'rolePage' : 'permissionPage'}
@@ -383,6 +441,7 @@ function SearchForm({
       />
       <input
         type="search"
+        aria-label={placeholder}
         name={name}
         defaultValue={value}
         placeholder={placeholder}
@@ -392,7 +451,7 @@ function SearchForm({
         type="submit"
         className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
       >
-        Cari
+        Terapkan filter
       </button>
       <Link
         href="/peran-hak-akses"
@@ -538,7 +597,7 @@ function RoleRowActions({
   onDetail: (role: Role) => void;
   onEdit: (role: Role) => void;
 }) {
-  const [statusState, statusAction, statusPending] = useActionState(
+  const [statusState, statusAction, statusPending] = useDrawerActionState(
     updateRoleStatusAction,
     { ok: true, message: null },
   );
@@ -680,7 +739,7 @@ function RoleForm({
   ) => Promise<{ ok: boolean; message: string | null }>;
   onClose: () => void;
 }) {
-  const [state, formAction, isPending] = useActionState(action, {
+  const [state, formAction, isPending] = useDrawerActionState(action, {
     ok: true,
     message: null,
   });
@@ -782,17 +841,17 @@ function RoleDetailDrawer({
     (p) => !attachedIds.has(p.id),
   );
 
-  const [grantState, grantAction, grantPending] = useActionState(
+  const [grantState, grantAction, grantPending] = useDrawerActionState(
     grantPermissionAction,
     { ok: true, message: null },
   );
 
-  const [revokeState, revokeAction, revokePending] = useActionState(
+  const [revokeState, revokeAction, revokePending] = useDrawerActionState(
     revokePermissionAction,
     { ok: true, message: null },
   );
 
-  const [templateState, templateAction, templatePending] = useActionState(
+  const [templateState, templateAction, templatePending] = useDrawerActionState(
     applyTemplateAction,
     { ok: true, message: null },
   );
@@ -1053,8 +1112,8 @@ function permissionLabel(count?: number) {
   return count === undefined ? 'Belum dihitung' : `${count} hak akses`;
 }
 
-function roleHref(filters: RoleFilters) {
-  return `/peran-hak-akses?${new URLSearchParams({ ...(filters.search ? { roleSearch: filters.search } : {}), ...(filters.status ? { roleStatus: filters.status } : {}), rolePage: String(filters.page), roleLimit: String(filters.limit) }).toString()}`;
+function roleHref(filters: RoleFilters, permissionFilters?: PermissionFilters) {
+  return `/peran-hak-akses?${new URLSearchParams({ ...(permissionFilters ? { permissionSearch: permissionFilters.search ?? '', permissionPage: String(permissionFilters.page), permissionLimit: String(permissionFilters.limit) } : {}), ...(filters.search ? { roleSearch: filters.search } : {}), ...(filters.status ? { roleStatus: filters.status } : {}), rolePage: String(filters.page), roleLimit: String(filters.limit) }).toString()}`;
 }
 
 function Pagination({

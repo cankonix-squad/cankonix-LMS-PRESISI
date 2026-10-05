@@ -2,7 +2,7 @@
 
 import type { ApiListResponse, Organization } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useMemo, useState } from 'react';
+import { useActionState, useEffect, useMemo, useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -56,6 +56,26 @@ export function OrganizationWorkspace({
     | { mode: 'edit'; organization: Organization }
     | null
   >(null);
+  const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>(
+    {},
+  );
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const draftKey = drawer?.mode === 'edit' ? drawer.organization.id : 'create';
+  const closeDrawer = () => {
+    if (!saving) setDrawer(null);
+  };
+  useEffect(() => {
+    if (!drawer) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (!saving) setDrawer(null);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [drawer, saving]);
   const items = result.data?.data ?? [];
   const total = result.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / filters.limit));
@@ -82,6 +102,11 @@ export function OrganizationWorkspace({
         }
       />
 
+      {notice ? (
+        <div role="status" className="px-5">
+          <ActionMessage state={{ ok: true, message: notice }} />
+        </div>
+      ) : null}
       <div className="px-5 pt-1">
         <OrganizationToolbar filters={filters} />
       </div>
@@ -129,7 +154,21 @@ export function OrganizationWorkspace({
           mode={drawer.mode}
           organization={drawer.mode === 'edit' ? drawer.organization : null}
           parentOptions={parentOptions}
-          onClose={() => setDrawer(null)}
+          onClose={closeDrawer}
+          draft={drafts[draftKey]}
+          onDraft={(draft) =>
+            setDrafts((current) => ({ ...current, [draftKey]: draft }))
+          }
+          onSaving={setSaving}
+          onSaved={(message) => {
+            setDrafts((current) => {
+              const next = { ...current };
+              delete next[draftKey];
+              return next;
+            });
+            setNotice(message);
+            setDrawer(null);
+          }}
         />
       ) : null}
     </AdminPage>
@@ -161,12 +200,25 @@ function OrganizationToolbar({ filters }: { filters: OrganizationFilters }) {
       }
     >
       <form
+        key={`${filters.status ?? ''}:${filters.search ?? ''}`}
         action="/organisasi"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <label className="grid gap-1 text-xs font-semibold text-slate-600">
+          Filter status
+          <select
+            name="status"
+            defaultValue={filters.status ?? ''}
+            className={enterpriseInputClass}
+          >
+            <option value="">Semua status</option>
+            <option value="ACTIVE">Aktif</option>
+            <option value="INACTIVE">Nonaktif</option>
+          </select>
+        </label>
         <input type="hidden" name="limit" value={filters.limit} />
         <input
+          aria-label="Cari nama atau kode organisasi"
           type="search"
           name="search"
           defaultValue={filters.search}
@@ -177,7 +229,7 @@ function OrganizationToolbar({ filters }: { filters: OrganizationFilters }) {
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/organisasi"
@@ -365,11 +417,19 @@ function OrganizationDrawer({
   organization,
   parentOptions,
   onClose,
+  draft,
+  onDraft,
+  onSaving,
+  onSaved,
 }: {
   mode: 'create' | 'edit';
   organization: Organization | null;
   parentOptions: Organization[];
   onClose: () => void;
+  draft?: Record<string, string>;
+  onDraft: (draft: Record<string, string>) => void;
+  onSaving: (saving: boolean) => void;
+  onSaved: (message: string | null) => void;
 }) {
   return (
     <EnterpriseDrawer
@@ -383,6 +443,10 @@ function OrganizationDrawer({
         organization={organization}
         parentOptions={parentOptions}
         onClose={onClose}
+        draft={draft}
+        onDraft={onDraft}
+        onSaving={onSaving}
+        onSaved={onSaved}
       />
     </EnterpriseDrawer>
   );
@@ -393,99 +457,142 @@ function OrganizationDrawerForm({
   organization,
   parentOptions,
   onClose,
+  draft,
+  onDraft,
+  onSaving,
+  onSaved,
 }: {
   mode: 'create' | 'edit';
   organization: Organization | null;
   parentOptions: Organization[];
   onClose: () => void;
+  draft?: Record<string, string>;
+  onDraft: (draft: Record<string, string>) => void;
+  onSaving: (saving: boolean) => void;
+  onSaved: (message: string | null) => void;
 }) {
   const actionFn =
     mode === 'create' ? createOrganizationAction : updateOrganizationAction;
-  const [state, action, isPending] = useActionState(actionFn, {
-    ok: false,
-    message: null,
-  });
+  const [state, action, isPending] = useActionState(
+    async (previous: Parameters<typeof actionFn>[0], formData: FormData) => {
+      onSaving(true);
+      try {
+        const next = await actionFn(previous, formData);
+        if (next.ok) onSaved(next.message);
+        return next;
+      } finally {
+        onSaving(false);
+      }
+    },
+    {
+      ok: false,
+      message: null,
+    },
+  );
   const availableParents = parentOptions.filter(
     (parent) => parent.id !== organization?.id,
   );
 
   return (
-    <form action={action} className="grid gap-4">
-      {organization ? (
-        <input type="hidden" name="id" value={organization.id} />
-      ) : null}
-      <FormField label="Kode organisasi" required>
-        <input
-          name="code"
-          id="organization-code"
-          defaultValue={organization?.code ?? ''}
-          placeholder="Contoh: LEMDIKLAT"
-          required
-          maxLength={64}
-          pattern="[A-Za-z0-9_-]+"
-          title="Gunakan huruf, angka, garis bawah, atau tanda hubung."
-          className={enterpriseInputClass}
-        />
-      </FormField>
-      <FormField label="Nama organisasi" required>
-        <input
-          name="name"
-          id="organization-name"
-          defaultValue={organization?.name ?? ''}
-          placeholder="Contoh: Lemdiklat Polri"
-          required
-          maxLength={255}
-          minLength={2}
-          className={enterpriseInputClass}
-        />
-      </FormField>
-      <FormField label="Jenis organisasi">
-        <input
-          name="organizationType"
-          defaultValue={organization?.organizationType ?? ''}
-          placeholder="Contoh: Nasional, Satdik, Admin"
-          maxLength={100}
-          className={enterpriseInputClass}
-        />
-      </FormField>
-      <FormField label="Induk organisasi">
-        <select
-          name="parentId"
-          defaultValue={organization?.parentId ?? ''}
-          className={enterpriseInputClass}
-        >
-          <option value="">Tanpa induk</option>
-          {availableParents.map((parent) => (
-            <option key={parent.id} value={parent.id}>
-              {parent.name} ({parent.code})
-            </option>
-          ))}
-        </select>
-      </FormField>
-      {mode === 'edit' ? (
-        <FormField label="Status">
+    <form
+      action={action}
+      className="grid gap-4"
+      onChange={(event) => {
+        const data = new FormData(event.currentTarget);
+        onDraft(
+          Object.fromEntries(
+            Array.from(data.entries()).filter(
+              (entry): entry is [string, string] =>
+                typeof entry[1] === 'string',
+            ),
+          ),
+        );
+      }}
+    >
+      <fieldset disabled={isPending} className="grid gap-4">
+        {organization ? (
+          <input type="hidden" name="id" value={organization.id} />
+        ) : null}
+        <FormField label="Kode organisasi" required>
+          <input
+            name="code"
+            id="organization-code"
+            onChange={() => {}}
+            value={draft?.code ?? organization?.code ?? ''}
+            placeholder="Contoh: LEMDIKLAT"
+            required
+            maxLength={64}
+            pattern="[A-Za-z0-9_-]+"
+            title="Gunakan huruf, angka, garis bawah, atau tanda hubung."
+            className={enterpriseInputClass}
+          />
+        </FormField>
+        <FormField label="Nama organisasi" required>
+          <input
+            name="name"
+            id="organization-name"
+            onChange={() => {}}
+            value={draft?.name ?? organization?.name ?? ''}
+            placeholder="Contoh: Lemdiklat Polri"
+            required
+            maxLength={255}
+            minLength={2}
+            className={enterpriseInputClass}
+          />
+        </FormField>
+        <FormField label="Jenis organisasi">
+          <input
+            name="organizationType"
+            onChange={() => {}}
+            value={
+              draft?.organizationType ?? organization?.organizationType ?? ''
+            }
+            placeholder="Contoh: Nasional, Satdik, Admin"
+            maxLength={100}
+            className={enterpriseInputClass}
+          />
+        </FormField>
+        <FormField label="Induk organisasi">
           <select
-            name="status"
-            defaultValue={organization?.status ?? 'ACTIVE'}
+            name="parentId"
+            onChange={() => {}}
+            value={draft?.parentId ?? organization?.parentId ?? ''}
             className={enterpriseInputClass}
           >
-            <option value="ACTIVE">Aktif</option>
-            <option value="INACTIVE">Nonaktif</option>
+            <option value="">Tanpa induk</option>
+            {availableParents.map((parent) => (
+              <option key={parent.id} value={parent.id}>
+                {parent.name} ({parent.code})
+              </option>
+            ))}
           </select>
         </FormField>
-      ) : null}
-      <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
-        Tips: gunakan nama yang mudah dikenali operator. Kode organisasi cukup
-        singkat dan konsisten.
-      </p>
-      <FormActions
-        onCancel={onClose}
-        pending={isPending}
-        submitLabel={
-          mode === 'create' ? 'Simpan Organisasi' : 'Simpan Perubahan'
-        }
-      />
-      {state.message ? <ActionMessage state={state} /> : null}
+        {mode === 'edit' ? (
+          <FormField label="Status">
+            <select
+              name="status"
+              onChange={() => {}}
+              value={draft?.status ?? organization?.status ?? 'ACTIVE'}
+              className={enterpriseInputClass}
+            >
+              <option value="ACTIVE">Aktif</option>
+              <option value="INACTIVE">Nonaktif</option>
+            </select>
+          </FormField>
+        ) : null}
+        <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
+          Tips: gunakan nama yang mudah dikenali operator. Kode organisasi cukup
+          singkat dan konsisten.
+        </p>
+        <FormActions
+          onCancel={onClose}
+          pending={isPending}
+          submitLabel={
+            mode === 'create' ? 'Simpan Organisasi' : 'Simpan Perubahan'
+          }
+        />
+        {state.message ? <ActionMessage state={state} /> : null}
+      </fieldset>
     </form>
   );
 }

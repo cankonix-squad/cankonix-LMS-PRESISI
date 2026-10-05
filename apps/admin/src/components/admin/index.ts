@@ -1,5 +1,6 @@
 export * from './actions';
 export * from './drawer';
+export * from './drawer-workflow';
 export * from './feedback';
 export * from './form';
 export * from './page';

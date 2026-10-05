@@ -5,7 +5,8 @@ import type {
   KeycloakProvisioningStatus,
   KeycloakProvisioningStatusResult,
 } from '@lms/api-client';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
+import { useDrawerActionState } from '@/components/admin';
 import { ActionMessage, FormField, Pill } from '@/components/admin';
 import {
   type KeycloakActionState,
@@ -60,29 +61,26 @@ export function KeycloakProvisioningPanel({
   personId: string;
   provisioning: KeycloakProvisioningStatusResult;
 }) {
-  const [provisionState, provisionAction, provisionPending] = useActionState(
-    provisionKeycloakUserAction,
-    ONLY,
-  );
-  const [linkState, linkAction, linkPending] = useActionState(
+  const [provisionState, provisionAction, provisionPending] =
+    useDrawerActionState(provisionKeycloakUserAction, ONLY);
+  const [linkState, linkAction, linkPending] = useDrawerActionState(
     linkExistingKeycloakUserAction,
     ONLY,
   );
-  const [passwordState, passwordAction, passwordPending] = useActionState(
+  const [passwordState, passwordAction, passwordPending] = useDrawerActionState(
     setKeycloakPasswordAction,
     ONLY,
   );
-  const [activationState, activationAction, activationPending] = useActionState(
-    requestKeycloakActivationAction,
-    ONLY,
-  );
-  const [statusState, statusAction, statusPending] = useActionState(
+  const [activationState, activationAction, activationPending] =
+    useDrawerActionState(requestKeycloakActivationAction, ONLY);
+  const [statusState, statusAction, statusPending] = useDrawerActionState(
     setKeycloakUserStatusAction,
     ONLY,
   );
-  const [refreshState, refreshAction, refreshPending] = useActionState(
+  const [refreshState, refreshAction, refreshPending] = useDrawerActionState(
     refreshKeycloakStatusAction,
     ONLY,
+    { closeOnSuccess: false },
   );
   const [showPassword, setShowPassword] = useState(false);
 

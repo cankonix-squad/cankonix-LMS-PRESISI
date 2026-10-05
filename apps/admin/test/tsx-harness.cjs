@@ -26,6 +26,7 @@ const React = require('react');
 
 const SRC_ROOT = path.resolve(__dirname, '..', 'src');
 const CACHE = new Map();
+const CONTEXT_VALUES = new Map();
 
 /**
  * The access-token cookie `lib/api.ts` sees through `next/headers`. `null`
@@ -75,6 +76,9 @@ const aliasLoaders = {
     }),
   }),
   'next/navigation': () => ({
+    unstable_rethrow(error) {
+      if (error?.digest?.startsWith('NEXT_')) throw error;
+    },
     redirect(url) {
       const error = new Error(`NEXT_REDIRECT: ${url}`);
       error.digest = `NEXT_REDIRECT;replace;${url};307;`;
@@ -174,7 +178,15 @@ function installDispatcher() {
   React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = {
     useActionState: (action, initial) => [initial, action, false],
     useState: (initial) =>
-      stateOverrides.length ? stateOverrides.shift() : [initial, () => {}],
+      stateOverrides.length
+        ? stateOverrides.shift()
+        : [typeof initial === 'function' ? initial() : initial, () => {}],
+    useContext: (context) =>
+      CONTEXT_VALUES.get(context) ?? context._currentValue,
+    useRef: (initial) => ({ current: initial }),
+    useId: () => 'test-dialog-title',
+    useEffect: () => {},
+    useMemo: (fn) => fn(),
   };
   return {
     /** Queue the value the Nth `useState` call should return. */
@@ -209,6 +221,16 @@ function renderTree(element) {
   }
   if (!element || typeof element !== 'object') return null;
 
+  if (element.type?.$$typeof === Symbol.for('react.context')) {
+    const previous = CONTEXT_VALUES.get(element.type);
+    CONTEXT_VALUES.set(element.type, element.props.value);
+    try {
+      return renderTree(element.props.children);
+    } finally {
+      if (previous === undefined) CONTEXT_VALUES.delete(element.type);
+      else CONTEXT_VALUES.set(element.type, previous);
+    }
+  }
   if (typeof element.type === 'function') {
     return renderTree(element.type(element.props || {}));
   }

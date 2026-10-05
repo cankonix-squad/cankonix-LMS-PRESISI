@@ -6,27 +6,27 @@ import type {
   GraduationRuleStatus,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   PageHeader,
   PaginationBar,
   StatusBadge,
   StickyActionCell,
 } from '@/components/admin';
 import { changeGraduationRuleStatusAction } from './graduation-actions';
-import {
-  ruleStatusLabel,
-  ruleStatusTone,
-} from './graduation-labels';
+import { ruleStatusLabel, ruleStatusTone } from './graduation-labels';
 
 type Filters = {
   code?: string;
@@ -79,7 +79,8 @@ export function GraduationWorkspace({
               Belum ada aturan kelulusan yang cocok.
             </p>
             <p className="mt-2">
-              Aturan kelulusan dikaitkan dengan angkatan. Gunakan filter status atau ubah pencarian.
+              Aturan kelulusan dikaitkan dengan angkatan. Gunakan filter status
+              atau ubah pencarian.
             </p>
             <Link
               href="/kelulusan"
@@ -101,19 +102,28 @@ export function GraduationWorkspace({
               totalPages={totalPages}
               itemLabel="aturan kelulusan"
               hrefFor={(next) =>
-                graduationHref({ ...filters, page: next.page, limit: next.limit })
+                graduationHref({
+                  ...filters,
+                  page: next.page,
+                  limit: next.limit,
+                })
               }
             />
           </>
         )}
       </div>
 
-      {drawer ? (
-        <GraduationDetailDrawer
-          rule={drawer.rule}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={drawer ? `detail:${drawer.rule.id}` : null}
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <GraduationDetailDrawer
+            rule={drawer.rule}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -143,13 +153,15 @@ function GraduationToolbar({ filters }: { filters: Filters }) {
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/kelulusan"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter options={statuses} value={String(filters.status ?? '')} />
         <input type="hidden" name="limit" value={filters.limit} />
         <input
           type="search"
+          aria-label="Pencarian daftar"
           name="code"
           defaultValue={filters.code}
           placeholder="Cari kode aturan"
@@ -159,13 +171,13 @@ function GraduationToolbar({ filters }: { filters: Filters }) {
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/kelulusan"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -252,7 +264,9 @@ function GraduationCard({
         </StatusBadge>
       </div>
       {rule.description ? (
-        <p className="text-xs text-slate-500 line-clamp-2">{rule.description}</p>
+        <p className="text-xs text-slate-500 line-clamp-2">
+          {rule.description}
+        </p>
       ) : null}
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <span>{rule.components.length} komponen</span>
@@ -284,7 +298,7 @@ function GraduationRuleActions({
 }
 
 function PublishAction({ rule }: { rule: GraduationRule }) {
-  const [, action, isPending] = useActionState(
+  const [, action, isPending] = useDrawerActionState(
     changeGraduationRuleStatusAction,
     { ok: true, message: null },
   );
@@ -293,7 +307,11 @@ function PublishAction({ rule }: { rule: GraduationRule }) {
     <form
       action={action}
       onSubmit={(event) => {
-        if (!window.confirm('Terbitkan aturan kelulusan ini? Aturan yang sudah diterbitkan tidak dapat diubah.'))
+        if (
+          !window.confirm(
+            'Terbitkan aturan kelulusan ini? Aturan yang sudah diterbitkan tidak dapat diubah.',
+          )
+        )
           event.preventDefault();
       }}
     >
@@ -311,7 +329,7 @@ function PublishAction({ rule }: { rule: GraduationRule }) {
 }
 
 function ArchiveAction({ rule }: { rule: GraduationRule }) {
-  const [, action, isPending] = useActionState(
+  const [, action, isPending] = useDrawerActionState(
     changeGraduationRuleStatusAction,
     { ok: true, message: null },
   );
@@ -366,7 +384,9 @@ function GraduationDetailDrawer({
             {rule.description ? (
               <div>
                 <p className="text-xs text-slate-500">Deskripsi</p>
-                <p className="mt-1 text-sm text-slate-700">{rule.description}</p>
+                <p className="mt-1 text-sm text-slate-700">
+                  {rule.description}
+                </p>
               </div>
             ) : null}
             <div className="grid grid-cols-2 gap-4">

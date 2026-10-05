@@ -8,7 +8,7 @@ import type {
   UserAccount,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -16,10 +16,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -143,9 +146,20 @@ export function PersonWorkspace({
           />
         ) : null}
       </div>
-      {drawer ? (
-        <PersonDrawer drawer={drawer} onClose={() => setDrawer(null)} />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.kind === 'create'
+              ? 'create'
+              : `edit:${drawer.row.person.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <PersonDrawer drawer={drawer} onClose={() => setDrawer(null)} />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -283,20 +297,29 @@ function PersonToolbar({ filters }: { filters: PersonFilters }) {
         }
       >
         <form
+          key={JSON.stringify(filters)}
           action="/data-individu"
           className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
         >
-          <input type="hidden" name="status" value={filters.status ?? ''} />
+          <StatusFilter
+            options={[
+              { label: 'Semua', value: undefined },
+              { label: 'Aktif', value: 'ACTIVE' },
+              { label: 'Nonaktif', value: 'INACTIVE' },
+            ]}
+            value={String(filters.status ?? '')}
+          />
           <input type="hidden" name="limit" value={filters.limit} />
           <input
             type="search"
+            aria-label="Pencarian daftar"
             name="search"
             defaultValue={filters.search}
             placeholder="Cari nama atau NRP/NIP"
             className="min-h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm sm:w-80 xl:w-[28rem]"
           />
           <button className="min-h-10 flex-1 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white sm:flex-none">
-            Cari
+            Terapkan filter
           </button>
           <Link
             href="/data-individu"
@@ -520,7 +543,7 @@ function PersonForm({
   row: PersonRow | null;
   onClose: () => void;
 }) {
-  const [state, action, pending] = useActionState(
+  const [state, action, pending] = useDrawerActionState(
     row ? updatePersonAction : createPersonAction,
     { ok: false, message: null },
   );

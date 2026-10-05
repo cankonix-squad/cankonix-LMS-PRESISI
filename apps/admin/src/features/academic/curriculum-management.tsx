@@ -6,7 +6,7 @@ import type {
   EducationProgram,
 } from '@lms/api-client';
 import Link from 'next/link';
-import { useActionState, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActionButton,
   ActionGroup,
@@ -14,10 +14,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -94,9 +97,7 @@ export function CurriculumWorkspace({
             <p className="font-semibold text-slate-950">
               Belum ada kurikulum yang cocok.
             </p>
-            <p className="mt-2">
-              Coba ubah filter program atau status.
-            </p>
+            <p className="mt-2">Coba ubah filter program atau status.</p>
             <Link
               href="/kurikulum"
               className="mt-4 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-4 font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
@@ -118,18 +119,31 @@ export function CurriculumWorkspace({
             total={total}
             totalPages={totalPages}
             itemLabel="kurikulum"
-            hrefFor={({ page, limit }) => curriculumHref({ ...filters, page, limit })}
+            hrefFor={({ page, limit }) =>
+              curriculumHref({ ...filters, page, limit })
+            }
           />
         ) : null}
       </div>
 
-      {drawer ? (
-        <CurriculumDrawer
-          drawer={drawer}
-          programs={programs}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.mode === 'create'
+              ? 'create'
+              : `edit:${drawer.curriculum.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <CurriculumDrawer
+            drawer={drawer}
+            programs={programs}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -157,17 +171,24 @@ function CurriculumToolbar({
               status: s.value as Filters['status'],
               page: 1,
             }),
-            active:
-              filters.status === s.value || (!filters.status && !s.value),
+            active: filters.status === s.value || (!filters.status && !s.value),
           }))}
         />
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/kurikulum"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter
+          options={[
+            { label: 'Semua', value: undefined },
+            { label: 'Aktif', value: 'ACTIVE' },
+            { label: 'Nonaktif', value: 'INACTIVE' },
+          ]}
+          value={String(filters.status ?? '')}
+        />
         <input type="hidden" name="limit" value={filters.limit} />
         <select
           name="educationProgramId"
@@ -186,13 +207,13 @@ function CurriculumToolbar({
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Terapkan
+          Terapkan filter
         </button>
         <Link
           href="/kurikulum"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -239,7 +260,8 @@ function CurriculumTable({
             <p className="mt-1 text-xs text-slate-500">Versi {item.version}</p>
           </td>
           <td className="px-4 py-3 text-slate-600">
-            {programNames.get(item.educationProgramId) ?? 'Program tidak terbaca'}
+            {programNames.get(item.educationProgramId) ??
+              'Program tidak terbaca'}
           </td>
           <td className="px-4 py-3 text-slate-600">
             {item.effectiveFrom
@@ -317,7 +339,7 @@ function CurriculumActions({
   item: Curriculum;
   onEdit: () => void;
 }) {
-  const [state, action, pending] = useActionState(
+  const [state, action, pending] = useDrawerActionState(
     updateCurriculumStatusAction,
     { ok: false, message: null },
   );
@@ -365,7 +387,7 @@ function CurriculumDrawer({
 }) {
   const edit = drawer.mode === 'edit';
   const item = edit ? drawer.curriculum : null;
-  const [state, action, pending] = useActionState(
+  const [state, action, pending] = useDrawerActionState(
     edit ? updateCurriculumAction : createCurriculumAction,
     { ok: false, message: null },
   );

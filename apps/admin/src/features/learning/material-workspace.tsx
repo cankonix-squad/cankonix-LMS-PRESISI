@@ -4,7 +4,7 @@ import type {
   LearningActivity,
   LearningActivityContent,
 } from '@lms/api-client';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   ActionButton,
@@ -12,10 +12,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -95,7 +98,8 @@ export function MaterialWorkspace({
               Belum ada materi yang cocok.
             </p>
             <p className="mt-2">
-              Materi dikelola di dalam aktivitas pembelajaran. Coba ubah pencarian atau filter status.
+              Materi dikelola di dalam aktivitas pembelajaran. Coba ubah
+              pencarian atau filter status.
             </p>
             <Link
               href="/materi"
@@ -124,12 +128,20 @@ export function MaterialWorkspace({
         ) : null}
       </div>
 
-      {drawer ? (
-        <MaterialDrawer
-          drawer={drawer}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.mode === 'create'
+              ? `create:${drawer.activity.id}`
+              : `edit:${drawer.item.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <MaterialDrawer drawer={drawer} onClose={() => setDrawer(null)} />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -153,20 +165,30 @@ function MaterialToolbar({ filters }: { filters: Filters }) {
               status: s.value as Filters['status'],
               page: 1,
             }),
-            active:
-              filters.status === s.value || (!filters.status && !s.value),
+            active: filters.status === s.value || (!filters.status && !s.value),
           }))}
         />
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/materi"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter
+          options={[
+            { label: 'Semua' },
+            { label: 'Draf', value: 'DRAFT' },
+            { label: 'Tayang', value: 'PUBLISHED' },
+            { label: 'Diganti', value: 'SUPERSEDED' },
+            { label: 'Arsip', value: 'ARCHIVED' },
+          ]}
+          value={String(filters.status ?? '')}
+        />
         <input type="hidden" name="limit" value={filters.limit} />
         <input
           type="search"
+          aria-label="Pencarian daftar"
           name="search"
           defaultValue={filters.search}
           placeholder="Cari judul materi"
@@ -176,13 +198,13 @@ function MaterialToolbar({ filters }: { filters: Filters }) {
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/materi"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -302,14 +324,14 @@ function MaterialDrawer({
 }) {
   const isEdit = drawer.mode === 'edit';
   const item = isEdit ? drawer.item : null;
-  const [state, action, pending] = useActionState<
+  const [state, action, pending] = useDrawerActionState<
     MaterialActionState,
     FormData
   >(isEdit ? updateMaterialAction : createMaterialAction, {
     ok: false,
     message: null,
   });
-  const [statusState, statusAction, statusPending] = useActionState<
+  const [statusState, statusAction, statusPending] = useDrawerActionState<
     MaterialActionState,
     FormData
   >(updateMaterialStatusAction, { ok: false, message: null });

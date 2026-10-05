@@ -5,7 +5,7 @@ import type {
   LearningActivityType,
   LearningMeeting,
 } from '@lms/api-client';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   ActionButton,
@@ -13,10 +13,13 @@ import {
   AdminPage,
   EmptyState,
   EnterpriseDrawer,
+  DrawerHost,
+  useDrawerActionState,
   EnterpriseTable,
   ErrorState,
   FilterTabs,
   FilterToolbar,
+  StatusFilter,
   FormActions,
   FormField,
   PageHeader,
@@ -119,14 +122,25 @@ export function ActivityWorkspace({
         ) : null}
       </div>
 
-      {drawer ? (
-        <ActivityDrawer
-          drawer={drawer}
-          meetings={meetings}
-          types={types}
-          onClose={() => setDrawer(null)}
-        />
-      ) : null}
+      <DrawerHost
+        activeKey={
+          drawer
+            ? drawer.mode === 'create'
+              ? 'create'
+              : `edit:${drawer.item.id}`
+            : null
+        }
+        onClose={() => setDrawer(null)}
+      >
+        {drawer ? (
+          <ActivityDrawer
+            drawer={drawer}
+            meetings={meetings}
+            types={types}
+            onClose={() => setDrawer(null)}
+          />
+        ) : null}
+      </DrawerHost>
     </AdminPage>
   );
 }
@@ -150,20 +164,30 @@ function ActivityToolbar({ filters }: { filters: Filters }) {
               status: s.value as Filters['status'],
               page: 1,
             }),
-            active:
-              filters.status === s.value || (!filters.status && !s.value),
+            active: filters.status === s.value || (!filters.status && !s.value),
           }))}
         />
       }
     >
       <form
+        key={JSON.stringify(filters)}
         action="/aktivitas"
         className="flex w-full flex-wrap items-center gap-2 xl:w-auto"
       >
-        <input type="hidden" name="status" value={filters.status ?? ''} />
+        <StatusFilter
+          options={[
+            { label: 'Semua' },
+            { label: 'Draf', value: 'DRAFT' },
+            { label: 'Tayang', value: 'PUBLISHED' },
+            { label: 'Ditutup', value: 'CLOSED' },
+            { label: 'Arsip', value: 'ARCHIVED' },
+          ]}
+          value={String(filters.status ?? '')}
+        />
         <input type="hidden" name="limit" value={filters.limit} />
         <input
           type="search"
+          aria-label="Pencarian daftar"
           name="search"
           defaultValue={filters.search}
           placeholder="Cari judul aktivitas"
@@ -173,13 +197,13 @@ function ActivityToolbar({ filters }: { filters: Filters }) {
           type="submit"
           className="inline-flex min-h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700"
         >
-          Cari
+          Terapkan filter
         </button>
         <Link
           href="/aktivitas"
           className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700"
         >
-          Reset
+          Atur ulang
         </Link>
       </form>
     </FilterToolbar>
@@ -216,7 +240,8 @@ function ActivityTable({
                     {item.title}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {meetingNames.get(item.meetingId) ?? 'Pertemuan tidak terbaca'}
+                    {meetingNames.get(item.meetingId) ??
+                      'Pertemuan tidak terbaca'}
                   </p>
                 </div>
                 <ActivityStatus status={item.status} />
@@ -303,14 +328,14 @@ function ActivityDrawer({
 }) {
   const isEdit = drawer.mode === 'edit';
   const item = isEdit ? drawer.item : null;
-  const [state, action, pending] = useActionState<
+  const [state, action, pending] = useDrawerActionState<
     ActivityActionState,
     FormData
   >(isEdit ? updateActivityAction : createActivityAction, {
     ok: false,
     message: null,
   });
-  const [statusState, statusAction, statusPending] = useActionState<
+  const [statusState, statusAction, statusPending] = useDrawerActionState<
     ActivityActionState,
     FormData
   >(updateActivityStatusAction, { ok: false, message: null });
